@@ -29,7 +29,15 @@ class BoardView extends FileView {
     if (state.path && !state.file) state = { ...state, file: state.path };
     await super.setState(state, result);
   }
+  cacheEditorSession() {
+    if (this.board && this.boardPath) {
+      const session = this.board.getEditorSession();
+      if (session) this.plugin.editorSessions.set(this.boardPath, session);
+      else this.plugin.editorSessions.delete(this.boardPath);
+    }
+  }
   async onLoadFile(file) {
+    this.cacheEditorSession();
     await this.board?.flush();
     this.board?.destroy();
     this.contentEl.empty();
@@ -43,6 +51,7 @@ class BoardView extends FileView {
       );
       return;
     }
+    this.boardPath = file.path;
     this.board = mount(this.contentEl, {
       title: file.basename,
       source,
@@ -50,6 +59,15 @@ class BoardView extends FileView {
       snap: this.plugin.settings.snap,
       background: this.plugin.settings.background,
       showGrid: this.plugin.settings.showGrid,
+      counterEnabled: this.plugin.settings.counterEnabled,
+      characterTarget: this.plugin.settings.characterTarget,
+      setTextPreferences: (patch) => this.plugin.setTextPreferences(patch),
+      editorSession: this.plugin.editorSessions.get(file.path),
+      resolveLinkTitle: (target) =>
+        this.app.metadataCache.getFirstLinkpathDest(
+          target.split("#")[0],
+          file.path,
+        )?.basename,
       setAppearance: (patch) => this.plugin.setAppearance(patch),
       setSnap: (value) => this.plugin.setSnap(value),
       pickLink: () => pickNoteLink(this.app),
@@ -95,9 +113,11 @@ class BoardView extends FileView {
   }
   async onRename(file) {
     await super.onRename(file);
+    this.boardPath = file.path;
     this.board?.setTitle(file.basename);
   }
   async onUnloadFile() {
+    this.cacheEditorSession();
     await this.board?.flush();
     this.board?.destroy();
     this.board = null;
@@ -107,6 +127,18 @@ class BoardView extends FileView {
   }
 }
 export default class ReaWhimsical extends Plugin {
+  async setTextPreferences(patch) {
+    if (patch.counterEnabled !== undefined)
+      this.settings.counterEnabled = !!patch.counterEnabled;
+    if (patch.characterTarget !== undefined)
+      this.settings.characterTarget = Math.max(
+        1,
+        Math.min(10000, Math.round(Number(patch.characterTarget) || 280)),
+      );
+    for (const leaf of this.app.workspace.getLeavesOfType(VIEW))
+      leaf.view.board?.setTextPreferences(patch);
+    await this.saveSettings();
+  }
   async setAppearance(patch) {
     if (patch.background !== undefined && !backgroundHex(patch.background))
       throw new Error("Unknown background");
@@ -130,11 +162,14 @@ export default class ReaWhimsical extends Plugin {
     await this.saveSettings();
   }
   async onload() {
+    this.editorSessions = new Map();
     const stored = (await this.loadData()) || {};
     this.settings = {
       theme: "light",
       background: "#fffdf5",
       showGrid: true,
+      counterEnabled: false,
+      characterTarget: 280,
       snap: true,
       bridgeEnabled: false,
       bridgeReadNotes: false,

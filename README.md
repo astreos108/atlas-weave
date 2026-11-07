@@ -19,6 +19,10 @@ REA Board is an independent community project. It is not affiliated with Obsidia
 - Four-direction quick add, Tab-to-add-child, hex backgrounds with Ivory/Ice/Sage shortcuts, optional dots, light/dark modes, keyboard presentation, floating filename rename and offscreen recovery.
 - Paste Mermaid directly or through right-click → Paste. Import files. Copy selected shapes as Mermaid, PNG or SVG.
 - Link to vault notes, headings and blocks. Optional external MCP bridge and reusable assistant skill.
+- Optional character counter with a personal soft target; typing is never blocked. Full-shape text editing stays open across app/tab switches.
+- Basic Markdown text: `**bold**`, `*italic*`, `==highlight==`, inline code, `[[Note|alias]]` and `[label](https://example.com)`. Command/Ctrl-click links to follow them; note titles/aliases appear instead of raw wiki syntax.
+- Numbered/bullet list tools, selection wrapping with brackets/parentheses, text undo/redo and per-paragraph left/center/right/justify alignment. Select text or place the caret in a paragraph, then use the floating text toolbar.
+- Double-click a selected shape border/handle to fit text. Overflow keeps the full source and shows an ellipsis; the editing chevron expands the field. Frame titles edit from the header; double-click empty interior space to add a member.
 
 ## Install
 
@@ -127,3 +131,13 @@ Core editing, recovery, export and local MCP remain free. A small heart in More 
 ## Credits and license
 
 MIT © 2026 Prasanjit Sahoo. Mermaid, DOMPurify and the MCP SDK retain their upstream licenses; bundled notices are generated in `THIRD_PARTY_NOTICES.txt` and release assets. REA was used earlier for public-page interface research; its code is not bundled or copied into this original plugin. Whimsical's public releases informed feature prioritization, not implementation recovery.
+
+### Writing details
+
+The counter is a **soft target**, off by default, configured in More or REA Board settings. It counts Unicode grapheme characters, including spaces and line breaks; it is not Twitter's weighted URL counting algorithm. No truncation or payment gate is applied.
+
+The editor uses Markdown source with a small formatting toolbar, rather than Obsidian's full Markdown editor. Supported inline formatting renders in the shape. Embedded images, callouts, tables and plugin-provided Markdown extensions are not promised. Use Shift+Enter for an ordinary new line; Enter continues a list, an empty list item ends it, and Command/Ctrl+Enter or the checkmark commits. Escape cancels the current edit. Alignment applies to selected source paragraphs and may differ between paragraphs; ordinary justify leaves the final wrapped line ragged.
+
+App/window blur leaves the current field open. Navigating away from a Board saves and caches its active draft/cursor for restoration within that running Obsidian session. This session cache is not a cross-device or crash-recovery history. Version 5 layout comments persist paragraph alignment; older Board versions safely treat those files as source-only rather than silently deleting alignment metadata.
+
+Grid dots use fixed world-space levels at 20, 100 and 500 units. Their origin stays attached to the board during pan and zoom. Fine marks fade from use when too dense; snapping remains at 20 units. Existing off-grid positions and manually chosen dimensions are preserved rather than silently changing your layout.

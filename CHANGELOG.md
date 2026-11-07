@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.8.0 — writing and stable grid levels
+
+- Added an optional grapheme character counter with an adjustable soft target; it never blocks typing.
+- Made the inline editor fill its shape, with expandable overflow and bounded labels that retain their complete Mermaid text.
+- Added inline bold, italic, highlight, code, wiki links and web links, consistent numbered/bullet lists, selection wrapping, and text undo/redo.
+- Added left/center/right/justify alignment per source paragraph, saved in version 5 metadata.
+- Double-click selected borders or handles to fit a shape to its text. Empty frame interiors create a new member; only the header edits the frame title.
+- Kept editing sessions open on blur and restored drafts/cursor selections when navigating away and back within the same Obsidian session.
+- Replaced changing grid strides with fixed 20/100/500-unit levels sharing one world origin.
+
 ## 0.7.0 — first public release
 
 - Added hex paper colors with Ivory/Ice/Sage shortcuts, zoom-scaled dots and task-appropriate skill color guidance. Simplified border resizing, stabilized detours against unrelated shapes and kept connector labels above crossing lines.

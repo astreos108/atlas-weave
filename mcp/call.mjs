@@ -20,7 +20,7 @@ if (!name) {
 const args = JSON.parse(
     raw.startsWith("@") ? await readFile(raw.slice(1), "utf8") : raw,
   ),
-  client = new Client({ name: "rea-board-local-client", version: "0.7.0" }),
+  client = new Client({ name: "rea-board-local-client", version: "0.8.0" }),
   transport = new StdioClientTransport({
     command: process.execPath,
     args: [resolve(project, "mcp/server.mjs"), "--bridge-file", bridgeFile],

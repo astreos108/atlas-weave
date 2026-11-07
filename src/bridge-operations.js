@@ -32,6 +32,8 @@ const NODE_FIELDS = [
     "size",
     "link",
     "members",
+    "textAlign",
+    "textAlignments",
   ],
   EDGE_FIELDS = BRIDGE_CAPABILITIES.edgeFields;
 function pickChanges(changes, fields) {

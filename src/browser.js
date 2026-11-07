@@ -16,6 +16,13 @@ mount(document.querySelector("#app"), {
     localStorage.setItem("rea-board-background", background);
     localStorage.setItem("rea-board-grid", String(showGrid));
   },
+  counterEnabled: localStorage.getItem("rea-board-counter") === "true",
+  characterTarget:
+    Number(localStorage.getItem("rea-board-character-target")) || 280,
+  setTextPreferences: ({ counterEnabled, characterTarget }) => {
+    localStorage.setItem("rea-board-counter", String(counterEnabled));
+    localStorage.setItem("rea-board-character-target", String(characterTarget));
+  },
   snap: localStorage.getItem("rea-whimsical-snap") !== "false",
   setSnap: (value) => localStorage.setItem("rea-whimsical-snap", String(value)),
   theme: localStorage.getItem("rea-whimsical-theme") || "light",

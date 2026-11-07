@@ -7,6 +7,16 @@ export class BoardSettings extends PluginSettingTab {
   getSettingDefinitions() {
     return [
       {
+        name: "Character counter",
+        desc: "Show a soft character target while editing; typing is never blocked.",
+        control: { type: "toggle", key: "counterEnabled", defaultValue: false },
+      },
+      {
+        name: "Character target",
+        desc: "A personal writing target from 1 to 10000 characters.",
+        control: { type: "text", key: "characterTarget", defaultValue: "280" },
+      },
+      {
         name: "Board background",
         desc: "Enter a hex color, for example #fffdf5, #f5fbff or #f5faf3.",
         control: {
@@ -63,7 +73,16 @@ export class BoardSettings extends PluginSettingTab {
       })),
     ];
   }
+  getControlValue(key) {
+    return key === "characterTarget"
+      ? String(this.plugin.settings.characterTarget || 280)
+      : super.getControlValue(key);
+  }
   async setControlValue(key, value) {
+    if (["counterEnabled", "characterTarget"].includes(key)) {
+      await this.plugin.setTextPreferences({ [key]: value });
+      return;
+    }
     if (key === "background") {
       await this.plugin.setAppearance({ background: value });
       return;

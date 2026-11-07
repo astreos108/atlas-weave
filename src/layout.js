@@ -1,3 +1,4 @@
+import { richLines, inlineRuns } from "./text-format.js";
 import {
   projectedEdges,
   insetEndpoints,
@@ -234,7 +235,7 @@ export function wireGeometry(a, b, self = false, edge = {}) {
     };
   return geo;
 }
-export function createLayout(svg, model, identify) {
+export function createLayout(svg, model, identify, options = {}) {
   const doc = svg.ownerDocument,
     element = (tag, attrs) => svgElement(tag, attrs, doc);
   const nodes = new Map(),
@@ -291,7 +292,8 @@ export function createLayout(svg, model, identify) {
       rgb[0] * 0.299 + rgb[1] * 0.587 + rgb[2] * 0.114 < 130
         ? "#f8f6ff"
         : "#353344";
-    el.append(n.shapeEl, n.textEl);
+    n.textMarks = element("g", { class: "rea-text-marks" });
+    el.append(n.shapeEl, n.textMarks, n.textEl);
   }
   svg
     .querySelectorAll(
@@ -364,22 +366,58 @@ export function createLayout(svg, model, identify) {
   function position(n) {
     n.el.setAttribute("transform", `translate(${n.x},${n.y})`);
   }
+  function measureRun(text, run = {}) {
+    measureContext.font = `${run.italic ? "italic " : ""}${run.bold ? "600 " : ""}16px ${run.code ? "monospace" : "system-ui"}`;
+    return measureContext.measureText(text).width;
+  }
+  function fitText(id) {
+    const n = nodes.get(id);
+    if (!n) return null;
+    const natural = Math.max(
+      ...n.label
+        .split("\n")
+        .map((p) =>
+          inlineRuns(p, options.resolveLinkTitle).reduce(
+            (sum, r) => sum + measureRun(r.text, r),
+            0,
+          ),
+        ),
+      120,
+    );
+    const width =
+      Math.ceil(Math.max(160, Math.min(640, natural + 40)) / 40) * 40;
+    const lines = richLines(
+      n.label,
+      width - (n.shape === "diamond" ? width * 0.55 : 32),
+      measureRun,
+      options.resolveLinkTitle,
+    );
+    return {
+      width,
+      height:
+        Math.ceil(
+          Math.max(80, lines.length * 23 + (n.shape === "diamond" ? 60 : 32)) /
+            40,
+        ) * 40,
+    };
+  }
   function resize(id, size) {
     const n = nodes.get(id);
     if (!n) return;
-    const w = Math.min(4000, Math.max(80, size.width)),
-      inset = n.shape === "diamond" ? w * 0.55 : 28,
-      lines = wrapText(n.label, Math.max(32, w - inset), measure),
-      lineHeight = 21;
-    n.width = w;
-    n.height = Math.min(
-      4000,
-      Math.max(
-        48,
-        size.height,
-        lines.length * lineHeight + (n.shape === "diamond" ? 50 : 26),
-      ),
+    n.width = Math.min(4000, Math.max(80, size.width));
+    n.height = Math.min(4000, Math.max(48, size.height));
+    const inset = n.shape === "diamond" ? n.width * 0.55 : 32,
+      lineHeight = 23;
+    const allLines = richLines(
+      n.label,
+      Math.max(32, n.width - inset),
+      measureRun,
+      options.resolveLinkTitle,
     );
+    const capacity = Math.max(1, Math.floor((n.height - 28) / lineHeight));
+    const lines =
+      n.shape === "frame" ? allLines.slice(0, 2) : allLines.slice(0, capacity);
+    n.textOverflow = n.shape !== "frame" && allLines.length > capacity;
     if (n.shape === "diamond")
       n.shapeEl.setAttribute(
         "points",
@@ -395,22 +433,81 @@ export function createLayout(svg, model, identify) {
         ry: n.shape === "round" ? n.height / 2 : 10,
       }))
         n.shapeEl.setAttribute(key, value);
-    if (n.shape === "frame") {
-      n.shapeEl.setAttribute("fill-opacity", ".09");
-      n.textEl.setAttribute("text-anchor", "start");
-    }
+    if (n.shape === "frame") n.shapeEl.setAttribute("fill-opacity", ".09");
+    n.textEl.setAttribute("text-anchor", "start");
     n.textEl.replaceChildren();
+    n.textMarks.replaceChildren();
     lines.forEach((line, i) => {
-      const span = element("tspan", {
-        x: n.shape === "frame" ? -n.width / 2 + 18 : 0,
-        y:
-          n.shape === "frame"
-            ? -n.height / 2 + 28 + i * lineHeight
-            : (i - (lines.length - 1) / 2) * lineHeight + 5,
-      });
-      span.textContent = line;
-      n.textEl.append(span);
+      const alignment =
+        n.shape === "frame"
+          ? "left"
+          : n.textAlignments?.[line.paragraph] || n.textAlign || "center";
+      const usable = n.width - inset,
+        total = line.runs.reduce((sum, r) => sum + measureRun(r.text, r), 0);
+      let x =
+        alignment === "center"
+          ? -total / 2
+          : alignment === "right"
+            ? n.width / 2 - inset / 2 - total
+            : -n.width / 2 + inset / 2;
+      if (n.shape === "frame") x = -n.width / 2 + 18;
+      const y =
+        n.shape === "frame"
+          ? -n.height / 2 + 28 + i * lineHeight
+          : (i - (lines.length - 1) / 2) * lineHeight + 5;
+      const spaces = line.runs.filter((r) => /^\s+$/.test(r.text)).length;
+      const extra =
+        alignment === "justify" && !line.last && spaces
+          ? Math.max(0, (usable - total) / spaces)
+          : 0;
+      for (const run of line.runs) {
+        const w = measureRun(run.text, run);
+        if (run.highlight)
+          n.textMarks.append(
+            element("rect", {
+              x: x - 1,
+              y: y - 16,
+              width: w + 2,
+              height: 21,
+              rx: 2,
+              fill: "#ffe68a",
+              opacity: ".85",
+            }),
+          );
+        const span = element("tspan", { x, y });
+        span.textContent = run.text;
+        if (run.bold) span.setAttribute("font-weight", "600");
+        if (run.italic) span.setAttribute("font-style", "italic");
+        if (run.code) span.setAttribute("font-family", "monospace");
+        if (run.link) {
+          const a = element("a", {
+            "data-text-link": run.link,
+            "data-internal": String(run.internal),
+            role: "link",
+            tabindex: 0,
+            "aria-label": run.text,
+            class: "rea-inline-link",
+          });
+          span.setAttribute("text-decoration", "underline");
+          a.append(span);
+          n.textEl.append(a);
+        } else n.textEl.append(span);
+        x += w + (/^\s+$/.test(run.text) ? extra : 0);
+      }
     });
+    if (n.textOverflow) {
+      const hint = element("tspan", {
+        x: n.width / 2 - 16,
+        y: n.height / 2 - 9,
+        class: "rea-text-truncated",
+        "text-anchor": "end",
+      });
+      hint.textContent = "…";
+      n.textEl.append(hint);
+    }
+    const title = element("title");
+    title.textContent = n.label;
+    if (n.textOverflow) n.textEl.append(title);
     position(n);
     return { width: n.width, height: n.height };
   }
@@ -639,6 +736,7 @@ export function createLayout(svg, model, identify) {
     links,
     move,
     resize,
+    fitText,
     redraw,
     bounds,
     positions() {

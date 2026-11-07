@@ -1,9 +1,15 @@
-REA Board 0.7.0 is the first public desktop release of the local Mermaid board editor.
+REA Board 0.8.0 improves writing and editing while keeping Mermaid as the document source.
 
-Includes true frames with saved membership, align/distribute controls, side/corner resizing, improved grid/guide behavior, separated automatic ports/lanes, crossing hops, rounded elbows and endpoint gaps. Hex backgrounds with Ivory, Ice and Sage shortcuts support light/dark mode, with optional grid dots that scale with zoom. Unrelated shapes no longer stretch obstructed connector detours. Earlier direct editing, Mermaid paste, selection PNG/SVG clipboard, native links and external MCP tools are included.
+- Optional character counter with an adjustable soft target, never a typing limit.
+- Full-shape editing, overflow indicators/expansion and edge double-click to fit text.
+- Bold, italic, native-theme highlights, inline code, note aliases and safe web links; list tools, pair wrapping and text undo/redo.
+- Per-paragraph left, center, right and justify alignment in version 5 metadata.
+- Editing stays open on blur; draft and cursor restore when navigating away and back in the same Obsidian session.
+- Frame interior double-click creates a member; the header edits its title.
+- Fixed 20/100/500-unit grid levels share one world origin at every zoom.
 
-Safety changes: MCP and note reading default off; failed saves retain recoverable drafts and reject flush; external edits guard memory and disk revisions; plugin CSS is scoped; generated markup is sanitized. Official lint, tests, dependency audit and clean rebuild comparison run in CI. Release assets include license notices, checksums and GitHub build provenance.
+Desktop Obsidian 1.13+. Basic Markdown source editing is supported, not every Obsidian Markdown extension. Existing user geometry is preserved. Older Board versions render version 5 files as source-only. This GitHub release is not an Obsidian directory approval.
 
-Support: desktop Obsidian 1.13.0+. Mobile, nested frames, perfect dense routing and universal cross-app clipboard compatibility are not claimed. Read README and SECURITY before enabling the optional bridge. This GitHub release is not an Obsidian directory approval.
+Release checks include official lint, unit/browser tests, dependency auditing and independent clean rebuilds. Assets include checksums, bundled license notices and GitHub build provenance.
 
 Optional support: https://ko-fi.com/theprasanjitsahoo

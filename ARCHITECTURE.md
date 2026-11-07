@@ -4,10 +4,10 @@ The Board source is the durable truth. UI selections, viewport, computed connect
 
 | Owner | Modules | Responsibility |
 |---|---|---|
-| Domain | `src/domain/`, `model.js` | Frame membership, move/arrange/resize invariants, Mermaid codec and validated persisted fields |
+| Domain | `src/domain/`, `model.js`, `text-format.js` | Frame membership, move/arrange/resize invariants, Mermaid codec and validated persisted fields |
 | Workflows | `src/workflows/`, `bridge-operations.js` | Serialized persistence, failed-save state, semantic operations and bounded mutations |
-| Projections | `layout.js`, `connector-projection.js`, routing/alignment | SVG geometry, port/lane separation, gaps/hops, obstacle detours and guides |
-| UI | `canvas.js`, `icons.js`, `markup.js` | Intent collection, selection, source dialog and sanitized rendering |
+| Projections | `layout.js`, `connector-projection.js`, `grid.js`, routing/alignment | SVG geometry, port/lane separation, gaps/hops, obstacle detours and guides |
+| UI | `canvas.js`, `text-editor.js`, `icons.js`, `markup.js` | Intent collection, selection, source dialog and sanitized rendering |
 | Adapters | `plugin.js`, `plugin-settings.js`, `note-links.js`, `desktop-clipboard.js`, `bridge-server.js`, `mcp/` | Obsidian lifecycle, file/link/clipboard, optional loopback and stdio transport |
 
 ## Invariants
@@ -31,3 +31,7 @@ MCP defaults off. Note content access requires separate opt-in. Credentials rota
 This is a small JavaScript codebase, not a new generic framework. The UI module is still sizeable; the durable frame/arrangement rules, save workflow, connector projection and desktop capabilities have been separated where correctness changes independently. Source changes plus undo history are the local action record; no separate analytics/event ledger duplicates document truth. More UI extraction should follow concrete ownership pressure.
 
 Initial public support is desktop-only. Mobile, optimal dense-graph routing, nested frames and complete cross-app clipboard adapters need their own verification before being advertised. See `docs/adr/0001-board-ownership.md` and `docs/RELEASE_READINESS.md`.
+
+## Text ownership
+
+Markdown label source and paragraph alignments are durable. Rich SVG runs, wrapping and overflow are projections. The editor owns a transient draft, cursor and local undo stack; blur does not imply commit. Obsidian's adapter caches active editor sessions by Board path while navigation saves the draft. Character targets are preferences, never content validation constraints. Version 5 metadata distinguishes alignment from earlier codecs so older releases cannot silently strip it. Inline links use explicit user navigation; rendered labels never load external images or execute HTML.

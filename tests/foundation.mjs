@@ -218,9 +218,11 @@ try {
   for (let i = 0; i < 12; i++)
     await page.getByRole("button", { name: "Zoom out", exact: true }).click();
   assert.ok(
-    await page
-      .locator(".rea-canvas")
-      .evaluate((el) => parseFloat(getComputedStyle(el).backgroundSize) >= 12),
+    await page.locator(".rea-canvas").evaluate((el) =>
+      getComputedStyle(el)
+        .backgroundSize.split(",")
+        .some((size) => parseFloat(size) >= 8),
+    ),
     "Overview grid must not collapse into dense subpixel tiles",
   );
   await page.getByRole("button", { name: "Fit diagram", exact: true }).click();

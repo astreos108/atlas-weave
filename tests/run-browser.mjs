@@ -47,6 +47,7 @@ try {
     "connector-editing",
     "foundation",
     "public-release",
+    "text-editing",
   ])
     await run(file);
 } finally {

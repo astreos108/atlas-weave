@@ -49,3 +49,7 @@ Use a restrained palette when it improves comprehension: for example, violet for
 ## Readable layout clearance
 
 Reserve dedicated connector gutters between groups; measure wrapped label bounds, not just node centers. Leave enough space for the entire connector phrase plus padding between boxes. Route cross-group relationships outside frames with separate lanes; place labels beside their own routes, clear of nodes, frame titles and other labels. A frame must own its explicit members and leave header padding. Inspect a representative dense section at a readable zoom, then the overall map. Fix collisions by spacing/routing before reducing font size. Preserve all concepts and relationship text during a layout-only cleanup; save a recoverable pre-edit copy and use revision-guarded edits.
+
+## Concise, formatted labels
+
+When requested, use short labels and a personal character target as a writing aid, never an automatic truncation rule. The optional counter is a soft UI preference. Preserve Markdown `**bold**`, `*italic*`, `==highlight==`, `[[Note|alias]]` and `[label](https://...)` in label source. Use consistent numbering for lists. `textAlign` is a node default; `textAlignments` is an array of left/center/right/justify values per source paragraph. Keep important text visible by fitting or resizing the shape before reducing text size. An overflow ellipsis indicates retained source, not removed content.

@@ -1,3 +1,5 @@
+import { createTextEditor } from "./text-editor.js";
+import { gridLayers } from "./grid.js";
 import { backgroundHex, paperColors } from "./appearance.js";
 import { setMarkup, appendMarkup } from "./markup.js";
 import {
@@ -72,7 +74,7 @@ export function mount(root, options) {
     root,
     `<main class="rea-workspace"><div class="rea-canvas" tabindex="0" aria-label="Board. Drag shapes to move. Double-click to edit text."><div class="rea-transform"><div class="rea-diagram"></div></div><div class="rea-empty" hidden>A little room to think.<small>Add a shape to get started.</small></div></div>
     <button class="rea-title" aria-label="Rename board" title="Rename board"></button><button class="rea-recover" data-action="fit" hidden>Zoom to content</button><svg class="rea-guides"></svg><div class="rea-paste-menu rea-popover" hidden role="menu"></div><nav class="rea-toolbar" aria-label="Board tools">${button("select", "Select (V)", 'data-tool="select"')}${button("hand", "Pan (H or Space)", 'data-tool="hand"')}<i></i>${button("rect", "Add rectangle (R)", 'data-tool="rect"')}${button("round", "Add pill (O)", 'data-tool="round"')}${button("diamond", "Add decision (D)", 'data-tool="diamond"')}${button("connect", "Connect shapes (C)", 'data-tool="connect"')}<i></i>${button("more", "More board options", 'data-action="more" aria-expanded="false"')}</nav>
-    <div class="rea-more rea-popover" hidden role="menu" aria-label="Board options"><div class="rea-board-name"></div><div class="rea-menu-actions">${button("board", "New board", 'data-action="new"')}${button("import", "Import file", 'data-action="import"')}${button("source", "Mermaid source", 'data-action="source"')}${button("arrange", "Auto layout", 'data-action="arrange"')}${button("frame", "Frame selection", 'data-action="frame"')}${button("export", "Export Markdown", 'data-action="export"')}${button("image", "Copy as PNG (⌘⇧C)", 'data-action="copy-png"')}${button("vector", "Copy as SVG", 'data-action="copy-svg"')}${button("grid", "Snap to grid", 'data-action="snap"')}${button("dots", "Show grid dots", 'data-action="grid"')}${button("present", "Present board", 'data-action="present"')}${button("support", "Support development on Ko-fi", 'data-action="support"')}</div><div class="rea-background-controls" role="group" aria-label="Board background"><button data-background="ivory" aria-label="Ivory background" title="Ivory background"><span class="rea-background-swatch rea-bg-ivory"></span></button><button data-background="ice" aria-label="Ice background" title="Ice background"><span class="rea-background-swatch rea-bg-ice"></span></button><button data-background="sage" aria-label="Sage background" title="Sage background"><span class="rea-background-swatch rea-bg-sage"></span></button><input class="rea-background-hex" aria-label="Background hex color" title="Background hex color" placeholder="#fffdf5" maxlength="7" spellcheck="false"></div><div class="rea-theme-controls">${button("sun", "Light mode", 'data-action="light"')}${button("moon", "Dark mode", 'data-action="dark"')}</div></div>
+    <div class="rea-more rea-popover" hidden role="menu" aria-label="Board options"><div class="rea-board-name"></div><div class="rea-menu-actions">${button("board", "New board", 'data-action="new"')}${button("import", "Import file", 'data-action="import"')}${button("source", "Mermaid source", 'data-action="source"')}${button("arrange", "Auto layout", 'data-action="arrange"')}${button("frame", "Frame selection", 'data-action="frame"')}${button("export", "Export Markdown", 'data-action="export"')}${button("image", "Copy as PNG (⌘⇧C)", 'data-action="copy-png"')}${button("vector", "Copy as SVG", 'data-action="copy-svg"')}${button("grid", "Snap to grid", 'data-action="snap"')}${button("dots", "Show grid dots", 'data-action="grid"')}${button("present", "Present board", 'data-action="present"')}${button("support", "Support development on Ko-fi", 'data-action="support"')}</div><div class="rea-background-controls" role="group" aria-label="Board background"><button data-background="ivory" aria-label="Ivory background" title="Ivory background"><span class="rea-background-swatch rea-bg-ivory"></span></button><button data-background="ice" aria-label="Ice background" title="Ice background"><span class="rea-background-swatch rea-bg-ice"></span></button><button data-background="sage" aria-label="Sage background" title="Sage background"><span class="rea-background-swatch rea-bg-sage"></span></button><input class="rea-background-hex" aria-label="Background hex color" title="Background hex color" placeholder="#fffdf5" maxlength="7" spellcheck="false"></div><div class="rea-text-preferences"><button data-action="counter" aria-label="Character counter" title="Character counter" aria-pressed="false">Aa</button><input type="number" class="rea-character-target" aria-label="Character target" title="Soft character target" min="1" max="10000" value="280"></div><div class="rea-theme-controls">${button("sun", "Light mode", 'data-action="light"')}${button("moon", "Dark mode", 'data-action="dark"')}</div></div>
     <div class="rea-context rea-popover" hidden role="toolbar" aria-label="Selection options"></div><div class="rea-palette rea-popover" hidden aria-label="Shape colors"></div><div class="rea-handles" hidden></div><div class="rea-resizers" hidden></div><div class="rea-edge-controls" hidden></div><div class="rea-selection-bounds" hidden></div><div class="rea-marquee" hidden></div>
     <svg class="rea-preview" hidden><defs><marker id="rea-preview-${uid}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10" fill="#7956d9"/></marker></defs><path class="rea-preview-line" marker-end="url(#rea-preview-${uid})"/></svg>
     <div class="rea-zoom">${button("undo", "Undo", 'data-action="undo"')}${button("redo", "Redo", 'data-action="redo"')}<i></i>${button("minus", "Zoom out", 'data-action="out"')}<button class="rea-percent" data-action="fit" title="Fit diagram" aria-label="Fit diagram">100%</button>${button("plus", "Zoom in", 'data-action="in"')}</div>
@@ -101,6 +103,7 @@ export function mount(root, options) {
       root.style.setProperty("--paper", colors.paper);
       root.style.setProperty("--grid", colors.grid);
     }
+    if (layout) view();
     if (save)
       Promise.resolve(options.setTheme?.(theme)).catch(() =>
         status("Could not save theme preference.", true),
@@ -123,6 +126,7 @@ export function mount(root, options) {
         String(backgroundHex(button.dataset.background) === background),
       );
     $("[data-action=grid]").setAttribute("aria-pressed", String(showGrid));
+    if (layout) view();
     if (save)
       Promise.resolve(options.setAppearance?.({ background, showGrid })).catch(
         () => status("Could not save background preference.", true),
@@ -158,6 +162,37 @@ export function mount(root, options) {
       { signal: abort.signal },
     );
   }
+  let textPreferences = {
+    counterEnabled: options.counterEnabled === true,
+    characterTarget: options.characterTarget || 280,
+  };
+  function setTextPreferences(patch, save = true) {
+    textPreferences = { ...textPreferences, ...patch };
+    textPreferences.characterTarget = Math.max(
+      1,
+      Math.min(
+        10000,
+        Math.round(Number(textPreferences.characterTarget) || 280),
+      ),
+    );
+    $("[data-action=counter]").setAttribute(
+      "aria-pressed",
+      String(textPreferences.counterEnabled),
+    );
+    $(".rea-character-target").value = textPreferences.characterTarget;
+    $(".rea-character-target").hidden = !textPreferences.counterEnabled;
+    editing?.editor.update();
+    if (save)
+      Promise.resolve(options.setTextPreferences?.(textPreferences)).catch(() =>
+        status("Could not save text preferences.", true),
+      );
+  }
+  setTextPreferences({}, false);
+  $(".rea-character-target").addEventListener(
+    "change",
+    (e) => setTextPreferences({ characterTarget: e.target.value }),
+    { signal: abort.signal },
+  );
   function setSnap(value, save = true) {
     snapping = value;
     root.dataset.snap = String(value);
@@ -261,13 +296,20 @@ export function mount(root, options) {
   function view() {
     transform.style.transform = `translate(${pan.x}px,${pan.y}px) scale(${zoom})`;
     $(".rea-percent").textContent = `${Math.round(zoom * 100)}%`;
-    // Show major grid points at overview zooms; subpixel repeated gradients
-    // otherwise become a solid wash in Chromium/Electron on Retina displays.
-    const stride = 2 ** Math.max(0, Math.ceil(Math.log2(12 / (GRID * zoom)))),
-      gridSize = GRID * zoom * stride;
-    canvas.style.setProperty("--grid-radius", "0.7px");
-    canvas.style.backgroundSize = `${gridSize}px ${gridSize}px`;
-    canvas.style.backgroundPosition = `${pan.x - gridSize / 2}px ${pan.y - gridSize / 2}px`;
+    const layers = gridLayers(zoom, pan),
+      color = getComputedStyle(root).getPropertyValue("--grid").trim();
+    canvas.style.backgroundImage = layers
+      .map(
+        (l) =>
+          `radial-gradient(${l.visible ? color : "transparent"} ${l.radius}px, transparent ${l.radius}px)`,
+      )
+      .join(",");
+    canvas.style.backgroundSize = layers
+      .map((l) => `${l.size}px ${l.size}px`)
+      .join(",");
+    canvas.style.backgroundPosition = layers
+      .map((l) => `${l.x}px ${l.y}px`)
+      .join(",");
     placeControls();
     const b = layout?.bounds();
     $(".rea-recover").hidden =
@@ -489,6 +531,16 @@ export function mount(root, options) {
 
     $(".rea-resizers").append(b);
   }
+  on(handles, "dblclick", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (selected) fitText(selected);
+  });
+  on($(".rea-resizers"), "dblclick", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (selected) fitText(selected);
+  });
   on($(".rea-resizers"), "pointerdown", (e) => {
     const corner = e.target.closest("[data-resize]")?.dataset.resize;
     if (e.button !== 0 || !corner || !selected) return;
@@ -529,7 +581,9 @@ export function mount(root, options) {
             el.classList.add("node");
             existing.append(el);
           }
-        layout = createLayout(existing, model, nodeId);
+        layout = createLayout(existing, model, nodeId, {
+          resolveLinkTitle: options.resolveLinkTitle,
+        });
         $(".rea-empty").hidden = !!model.nodes.length;
         if (autoFit) fit();
         selectionControls();
@@ -543,7 +597,11 @@ export function mount(root, options) {
       const box = svg.viewBox.baseVal;
       svg.setAttribute("width", box.width);
       svg.setAttribute("height", box.height);
-      layout = model ? createLayout(svg, model, nodeId) : null;
+      layout = model
+        ? createLayout(svg, model, nodeId, {
+            resolveLinkTitle: options.resolveLinkTitle,
+          })
+        : null;
       $(".rea-empty").hidden = !!model?.nodes.length || !model;
       if (autoFit) fit();
       selectionControls();
@@ -620,7 +678,7 @@ export function mount(root, options) {
     canvas.classList.toggle("rea-hand-tool", next === "hand");
     highlight();
   }
-  function add(shape, position) {
+  function add(shape, position, frameId) {
     finishText();
     hideMenus();
     let id;
@@ -654,6 +712,7 @@ export function mount(root, options) {
           stroke: "#a78bfa",
           position: snapped(p),
         });
+        if (frameId) m.nodes.find((n) => n.id === frameId)?.members.push(id);
         selected = id;
         selection = new Set([id]);
         selectedEdge = null;
@@ -843,60 +902,119 @@ export function mount(root, options) {
       );
       width = (edge.labelWidth || 180) * zoom;
     }
-    const input = doc.createElement("textarea");
-    input.rows = 1;
-    input.className = "rea-inline-text";
-    input.setAttribute("aria-label", n ? "Shape text" : "Connection text");
-    input.value = n ? n.label : edge.label;
-    input.style.width = `${Math.min(width, canvas.clientWidth - 32)}px`;
-    input.style.left = `${Math.max(16 + Math.min(width, canvas.clientWidth - 32) / 2, Math.min(canvas.clientWidth - 16 - Math.min(width, canvas.clientWidth - 32) / 2, p.x))}px`;
-    input.style.top = `${Math.max(24, Math.min(canvas.clientHeight - 24, p.y))}px`;
+    const editor = createTextEditor({
+      doc,
+      root,
+      signal: abort.signal,
+      value: n ? n.label : edge.label,
+      label: n ? "Shape text" : "Connection text",
+      alignment: n?.textAlign || "center",
+      alignments: n?.textAlignments || [],
+      getPreferences: () => textPreferences,
+      onCommit: () => {
+        finishText();
+        canvas.focus();
+      },
+      onCancel: () => {
+        finishText(true);
+        canvas.focus();
+      },
+    });
+    const { input, wrapper } = editor;
+    const editorWidth = Math.min(width, canvas.clientWidth - 32),
+      height = n
+        ? n.shape === "frame"
+          ? 52
+          : n.height * zoom - 4
+        : Math.max(70, (edge.labelFontSize || 13) * zoom * 4);
+    wrapper.style.width = `${editorWidth}px`;
+    wrapper.style.height = `${Math.min(canvas.clientHeight - 130, Math.max(40, height))}px`;
+    wrapper.style.left = `${Math.max(16 + editorWidth / 2, Math.min(canvas.clientWidth - 16 - editorWidth / 2, p.x))}px`;
+    wrapper.style.top = `${Math.max(80 + height / 2, Math.min(canvas.clientHeight - 40 - height / 2, n?.shape === "frame" ? toLocal({ x: n.x, y: n.y - n.height / 2 }).y + 30 : p.y))}px`;
     input.style.fontSize = `${Math.max(10, (edge ? edge.labelFontSize || 13 : 16) * zoom)}px`;
-    editing = { input, id, edgeIndex, original: input.value };
-    root.append(input);
+    editing = {
+      input,
+      editor,
+      id,
+      edgeIndex,
+      original: input.value,
+      originalAlignments: JSON.stringify(n?.textAlignments || []),
+    };
     if (n) n.el.classList.add("rea-editing");
     selectionControls();
     input.focus();
     input.select();
-    on(input, "keydown", (e) => {
-      e.stopPropagation();
-      if (e.key === "Enter" && !e.shiftKey && !e.isComposing) {
-        e.preventDefault();
-        finishText();
-        canvas.focus();
-      } else if (e.key === "Escape") {
-        e.preventDefault();
-        finishText(true);
-        canvas.focus();
-      }
-    });
-    on(input, "input", () => {
-      input.style.removeProperty("height");
-      input.style.height = `${Math.min(220, Math.max(34, input.scrollHeight))}px`;
-    });
-    input.style.height = `${Math.min(220, Math.max(34, input.scrollHeight))}px`;
-    on(input, "blur", () => finishText());
+    editor.update();
+  }
+  function getEditorSession() {
+    return editing
+      ? {
+          id: editing.id,
+          edgeIndex: editing.edgeIndex,
+          value: editing.input.value,
+          start: editing.input.selectionStart,
+          end: editing.input.selectionEnd,
+          alignments: editing.editor.getAlignments(),
+          viewport: { zoom, pan: { ...pan } },
+        }
+      : null;
+  }
+  function restoreEditorSession(session) {
+    if (!session) return;
+    if (
+      Number.isFinite(session.viewport?.zoom) &&
+      Number.isFinite(session.viewport?.pan?.x) &&
+      Number.isFinite(session.viewport?.pan?.y)
+    ) {
+      zoom = Math.max(0.05, Math.min(3, session.viewport.zoom));
+      pan = { ...session.viewport.pan };
+      view();
+    }
+    startText(session.id, session.edgeIndex);
+    if (editing) {
+      editing.input.value = session.value;
+      editing.input.setSelectionRange(session.start, session.end);
+      editing.editor.update();
+    }
   }
   function finishText(cancel = false) {
     if (!editing) return;
-    const current = editing;
+    const current = editing,
+      alignments = current.editor.getAlignments();
     editing = null;
-    current.input.remove();
+    current.editor.remove();
     diagram
       .querySelectorAll(".rea-editing")
       .forEach((el) => el.classList.remove("rea-editing"));
-    if (!cancel && current.input.value !== current.original) {
+    if (
+      !cancel &&
+      (current.input.value !== current.original ||
+        JSON.stringify(alignments) !== current.originalAlignments)
+    ) {
       const value = current.input.value;
       change((m) => {
         if (current.id) {
           const n = m.nodes.find((n) => n.id === current.id);
-          if (n) n.label = value || "Untitled";
+          if (n) {
+            n.label = value || "Untitled";
+            n.textAlignments = alignments;
+          }
         } else if (m.edges[current.edgeIndex])
           m.edges[current.edgeIndex].label = value;
       });
     }
     placeControls();
   }
+  function fitText(id) {
+    finishText();
+    const n = layout?.nodes.get(id);
+    if (!n || n.shape === "frame") return;
+    const size = layout.fitText(id);
+    change((m) => {
+      m.nodes.find((n) => n.id === id).size = size;
+    });
+  }
+
   function connect(from, to, fromSide) {
     if (from === to) return;
     change((m) => {
@@ -1127,6 +1245,14 @@ export function mount(root, options) {
   on(canvas, "pointerdown", (e) => {
     if (externalEditing) return;
     if (e.button !== 0 && e.button !== 1) return;
+    const textLink = e.target.closest("[data-text-link]");
+    if (textLink && (e.metaKey || e.ctrlKey)) {
+      e.preventDefault();
+      if (textLink.dataset.internal === "true")
+        options.openLink?.(textLink.dataset.textLink);
+      else win.open(textLink.dataset.textLink, "_blank", "noopener,noreferrer");
+      return;
+    }
     finishText();
     hideMenus();
     const node = e.target.closest(".node"),
@@ -1491,13 +1617,46 @@ export function mount(root, options) {
     const edge = e.target.closest("[data-edge]");
     if (edge) selectEdge(Number(edge.dataset.edge));
   });
+  function selectedBorderAt(e) {
+    const n = layout?.nodes.get(selected);
+    if (!n || n.shape === "frame") return null;
+    const p = toWorld(e.clientX, e.clientY),
+      dx = Math.abs(p.x - n.x),
+      dy = Math.abs(p.y - n.y),
+      tolerance = 9 / zoom;
+    return dx <= n.width / 2 + tolerance &&
+      dy <= n.height / 2 + tolerance &&
+      Math.min(Math.abs(dx - n.width / 2), Math.abs(dy - n.height / 2)) <=
+        tolerance
+      ? n.id
+      : null;
+  }
   on(diagram, "dblclick", (e) => {
     e.preventDefault();
     e.stopPropagation();
+    const border = selectedBorderAt(e);
+    if (border) {
+      fitText(border);
+      return;
+    }
     const id = nodeId(e.target.closest(".node")),
       edge = e.target.closest("[data-edge]");
-    if (id) startText(id);
-    else if (edge) startText(null, Number(edge.dataset.edge));
+    if (id) {
+      const n = layout.nodes.get(id),
+        p = toWorld(e.clientX, e.clientY);
+      const atEdge =
+        Math.min(
+          Math.abs(p.x - (n.x - n.width / 2)),
+          Math.abs(p.x - (n.x + n.width / 2)),
+          Math.abs(p.y - (n.y - n.height / 2)),
+          Math.abs(p.y - (n.y + n.height / 2)),
+        ) <
+        8 / zoom;
+      if (n.shape === "frame" && p.y > n.y - n.height / 2 + 55)
+        add("rect", p, id);
+      else if (atEdge && n.shape !== "frame") fitText(id);
+      else startText(id);
+    } else if (edge) startText(null, Number(edge.dataset.edge));
   });
   on(diagram, "keydown", (e) => {
     if (e.key !== "Enter") return;
@@ -1520,6 +1679,12 @@ export function mount(root, options) {
     }
   });
   on(canvas, "dblclick", (e) => {
+    const border = selectedBorderAt(e);
+    if (border) {
+      e.preventDefault();
+      fitText(border);
+      return;
+    }
     if (!e.target.closest(".node,[data-edge]") && model)
       add("rect", toWorld(e.clientX, e.clientY));
   });
@@ -2098,6 +2263,8 @@ export function mount(root, options) {
     });
   }
   const actions = {
+    counter: () =>
+      setTextPreferences({ counterEnabled: !textPreferences.counterEnabled }),
     support: () =>
       win.open(
         "https://ko-fi.com/theprasanjitsahoo",
@@ -2321,7 +2488,9 @@ export function mount(root, options) {
   const resize = new ResizeObserver(() => placeControls());
   resize.observe(canvas);
   setTool("select");
-  render(true);
+  Promise.resolve(render(true)).then(() =>
+    restoreEditorSession(options.editorSession),
+  );
   return {
     destroy() {
       finishText();
@@ -2331,6 +2500,8 @@ export function mount(root, options) {
       abort.abort();
       setMarkup(root, "");
     },
+    getEditorSession,
+    setTextPreferences: (patch) => setTextPreferences(patch, false),
     setAppearance: (patch) => setAppearance(patch, false),
     setSnap: (value) => setSnap(value, false),
     setTheme: (theme) => setTheme(theme, false),
@@ -2342,8 +2513,13 @@ export function mount(root, options) {
     }),
     getSource: () => source,
     async flush() {
+      const session = getEditorSession();
       finishText();
       await saveQueue.flush();
+      if (session && !disposed) {
+        await render(false);
+        restoreEditorSession(session);
+      }
     },
     async withExternalWrite(expected, action) {
       await this.flush();

@@ -200,7 +200,7 @@ export function parse(source) {
       try {
         const saved = JSON.parse(line.slice("%% board-layout: ".length));
         if (
-          ![1, 2, 3, 4].includes(saved.version) ||
+          ![1, 2, 3, 4, 5].includes(saved.version) ||
           !saved.nodes ||
           typeof saved.nodes !== "object" ||
           Array.isArray(saved.nodes)
@@ -242,6 +242,24 @@ export function parse(source) {
               p.height > 4000
             )
               return null;
+        }
+        for (const p of Object.values(saved.nodes)) {
+          if (
+            p.textAlign !== undefined &&
+            !["left", "center", "right", "justify"].includes(p.textAlign)
+          )
+            return null;
+          if (
+            p.textAlignments !== undefined &&
+            (!Array.isArray(p.textAlignments) ||
+              p.textAlignments.length > 10000 ||
+              p.textAlignments.some(
+                (a) =>
+                  a !== null &&
+                  !["left", "center", "right", "justify"].includes(a),
+              ))
+          )
+            return null;
         }
         if (saved.edges !== undefined) {
           if (
@@ -376,6 +394,9 @@ export function parse(source) {
         if (p.width !== undefined)
           node.size = { width: p.width, height: p.height };
         if (p.link !== undefined) node.link = p.link;
+        if (p.textAlign !== undefined) node.textAlign = p.textAlign;
+        if (p.textAlignments !== undefined)
+          node.textAlignments = p.textAlignments;
         if (p.frame) {
           node.shape = "frame";
           node.members = p.members || [];
@@ -415,13 +436,25 @@ export function serialize(model) {
   };
   const nodes = Object.fromEntries(
     model.nodes
-      .filter((n) => n.position || n.size || n.link || n.shape === "frame")
+      .filter(
+        (n) =>
+          n.position ||
+          n.size ||
+          n.link ||
+          n.textAlign ||
+          n.textAlignments ||
+          n.shape === "frame",
+      )
       .map((n) => [
         n.id,
         {
           ...n.position,
           ...n.size,
           ...(n.link ? { link: n.link } : {}),
+          ...(n.textAlign ? { textAlign: n.textAlign } : {}),
+          ...(n.textAlignments?.length
+            ? { textAlignments: n.textAlignments }
+            : {}),
           ...(n.shape === "frame"
             ? { frame: true, members: n.members || [] }
             : {}),
@@ -465,13 +498,17 @@ export function serialize(model) {
           "link",
         ].some((k) => e[k] !== undefined),
     );
-  const version = model.nodes.some((n) => n.shape === "frame")
-    ? 4
-    : newFields
-      ? 3
-      : model.nodes.some((n) => n.size) || Object.keys(edges).length
-        ? 2
-        : 1;
+  const version = model.nodes.some(
+    (n) => n.textAlign || n.textAlignments?.length,
+  )
+    ? 5
+    : model.nodes.some((n) => n.shape === "frame")
+      ? 4
+      : newFields
+        ? 3
+        : model.nodes.some((n) => n.size) || Object.keys(edges).length
+          ? 2
+          : 1;
   const metadata =
     Object.keys(nodes).length || Object.keys(edges).length
       ? [
