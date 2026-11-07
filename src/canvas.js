@@ -261,9 +261,13 @@ export function mount(root, options) {
   function view() {
     transform.style.transform = `translate(${pan.x}px,${pan.y}px) scale(${zoom})`;
     $(".rea-percent").textContent = `${Math.round(zoom * 100)}%`;
-    canvas.style.setProperty("--grid-radius", `${0.8 * zoom}px`);
-    canvas.style.backgroundSize = `${GRID * zoom}px ${GRID * zoom}px`;
-    canvas.style.backgroundPosition = `${pan.x - (GRID * zoom) / 2}px ${pan.y - (GRID * zoom) / 2}px`;
+    // Show major grid points at overview zooms; subpixel repeated gradients
+    // otherwise become a solid wash in Chromium/Electron on Retina displays.
+    const stride = 2 ** Math.max(0, Math.ceil(Math.log2(12 / (GRID * zoom)))),
+      gridSize = GRID * zoom * stride;
+    canvas.style.setProperty("--grid-radius", "0.7px");
+    canvas.style.backgroundSize = `${gridSize}px ${gridSize}px`;
+    canvas.style.backgroundPosition = `${pan.x - gridSize / 2}px ${pan.y - gridSize / 2}px`;
     placeControls();
     const b = layout?.bounds();
     $(".rea-recover").hidden =
@@ -540,11 +544,6 @@ export function mount(root, options) {
       svg.setAttribute("width", box.width);
       svg.setAttribute("height", box.height);
       layout = model ? createLayout(svg, model, nodeId) : null;
-      if (layout) {
-        svg.setAttribute("viewBox", "0 0 1 1");
-        svg.setAttribute("width", "1");
-        svg.setAttribute("height", "1");
-      }
       $(".rea-empty").hidden = !!model?.nodes.length || !model;
       if (autoFit) fit();
       selectionControls();

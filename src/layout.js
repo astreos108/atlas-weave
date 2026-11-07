@@ -578,6 +578,15 @@ export function createLayout(svg, model, identify) {
           labelBox.setAttribute(key, value);
       }
     }
+    // Give Electron a real SVG viewport. A 1px viewport with visible overflow
+    // can leave stale raster tiles when panning or changing the background.
+    const b = bounds();
+    svg.setAttribute("viewBox", `${b.x} ${b.y} ${b.width} ${b.height}`);
+    svg.setAttribute("width", b.width);
+    svg.setAttribute("height", b.height);
+    svg.classList.add("rea-world-svg");
+    svg.style.left = `${b.x}px`;
+    svg.style.top = `${b.y}px`;
   }
   function bounds() {
     if (!nodes.size) return { x: 0, y: 0, width: 100, height: 100 };

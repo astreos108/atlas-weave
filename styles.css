@@ -93,7 +93,6 @@
   left: 0;
   top: 0;
   transform-origin: 0 0;
-  will-change: transform;
 }
 .rea-diagram svg {
   overflow: visible;
@@ -1013,4 +1012,8 @@
   width: 30px;
   padding: 5px;
   justify-content: center;
+}
+
+.rea .rea-world-svg {
+  position: absolute;
 }

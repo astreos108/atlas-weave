@@ -215,6 +215,15 @@ try {
     ];
   });
   assert.ok(phase.slice(0, 2).every((x) => Math.min(x, phase[2] - x) < 0.02));
+  for (let i = 0; i < 12; i++)
+    await page.getByRole("button", { name: "Zoom out", exact: true }).click();
+  assert.ok(
+    await page
+      .locator(".rea-canvas")
+      .evaluate((el) => parseFloat(getComputedStyle(el).backgroundSize) >= 12),
+    "Overview grid must not collapse into dense subpixel tiles",
+  );
+  await page.getByRole("button", { name: "Fit diagram", exact: true }).click();
   const guidePage = await context.newPage();
   await guidePage.addInitScript(() =>
     localStorage.setItem(
