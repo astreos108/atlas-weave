@@ -21,6 +21,9 @@ export function createTextEditor({
   onDraft,
   label = "Shape text",
 }) {
+  const localAbort = new doc.defaultView.AbortController();
+  const abortEditor = () => localAbort.abort();
+  signal.addEventListener("abort", abortEditor, { once: true });
   const wrapper = doc.createElement("div");
   wrapper.className = "rea-text-edit";
   const input = doc.createElement("textarea");
@@ -58,7 +61,8 @@ export function createTextEditor({
     ],
     historyIndex = 0,
     restoring = false;
-  const on = (el, name, fn) => el.addEventListener(name, fn, { signal });
+  const on = (el, name, fn, options = {}) =>
+    el.addEventListener(name, fn, { ...options, signal: localAbort.signal });
   const remember = () => {
     selected = { start: input.selectionStart, end: input.selectionEnd };
     syncAlignment();
@@ -240,7 +244,7 @@ export function createTextEditor({
     remember();
     update();
   });
-  on(input, "keydown", (e) => {
+  const handleKeyDown = (e) => {
     e.stopPropagation();
     remember();
     const mod = e.metaKey || e.ctrlKey;
@@ -297,7 +301,25 @@ export function createTextEditor({
         onCommit();
       }
     }
-  });
+  };
+  on(input, "keydown", handleKeyDown);
+  on(
+    doc.defaultView,
+    "keydown",
+    (e) => {
+      const mod = e.metaKey || e.ctrlKey,
+        key = e.key.toLowerCase();
+      if (
+        e.target === input &&
+        mod &&
+        (["b", "i", "z"].includes(key) ||
+          (e.shiftKey && key === "h") ||
+          key === "enter")
+      )
+        handleKeyDown(e);
+    },
+    { capture: true },
+  );
   on(wrapper, "pointerdown", (e) => e.stopPropagation());
   on(wrapper, "dblclick", (e) => e.stopPropagation());
   on(input, "wheel", (e) => e.stopPropagation());
@@ -314,6 +336,10 @@ export function createTextEditor({
     wrapper,
     update,
     getAlignments: () => lineAlignments,
-    remove: () => wrapper.remove(),
+    remove: () => {
+      localAbort.abort();
+      signal.removeEventListener("abort", abortEditor);
+      wrapper.remove();
+    },
   };
 }

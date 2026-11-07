@@ -134,7 +134,7 @@ MIT © 2026 Prasanjit Sahoo. Mermaid, DOMPurify and the MCP SDK retain their ups
 
 ### Writing details
 
-The counter is a **soft target**, off by default, configured in More or REA Board settings. It counts Unicode grapheme characters, including spaces and line breaks; it is not Twitter's weighted URL counting algorithm. No truncation or payment gate is applied.
+The counter is a **soft target**, off by default, configured in More or REA Board settings. It counts Unicode grapheme characters in the source, including formatting markers, spaces and line breaks; it is not Twitter's weighted URL counting algorithm. No truncation or payment gate is applied.
 
 The editor uses Markdown source with a small formatting toolbar, rather than Obsidian's full Markdown editor. Supported inline formatting renders in the shape. Embedded images, callouts, tables and plugin-provided Markdown extensions are not promised. Use Shift+Enter for an ordinary new line; Enter continues a list, an empty list item ends it, and Command/Ctrl+Enter or the checkmark commits. Escape cancels the current edit. Alignment applies to selected source paragraphs and may differ between paragraphs; ordinary justify leaves the final wrapped line ragged.
 

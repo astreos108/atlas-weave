@@ -1121,7 +1121,12 @@
 }
 
 .rea .rea-text-marks rect {
-  fill: var(--text-highlight-bg, #ffe68a);
+  fill: var(--text-highlight-bg, #ffe68a) !important;
+  stroke: none !important;
+  stroke-width: 0 !important;
+  filter: none !important;
+  rx: 2px;
+  ry: 2px;
 }
 
 .rea-text-footer {
