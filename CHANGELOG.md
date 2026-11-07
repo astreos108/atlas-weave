@@ -2,6 +2,7 @@
 
 ## 0.7.0 — first public release
 
+- Gave More actions distinct icons and added a quiet optional Ko-fi support action.
 - Introduced durable frames, membership-aware movement, side resizing and align/distribute controls.
 - Added editable import of basic non-nested subgraphs, automatic connector port/lane separation, endpoint gaps and crossing hops.
 - Flattened SVG projection coordinates to keep left quick-add and existing geometry stable.

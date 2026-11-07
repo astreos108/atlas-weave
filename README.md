@@ -120,6 +120,10 @@ Live MCP tests require your own test vault and explicit `REA_BOARD_BRIDGE_FILE`.
 
 Read [ARCHITECTURE.md](ARCHITECTURE.md), [CONTRIBUTING.md](CONTRIBUTING.md) and [release readiness](docs/RELEASE_READINESS.md). A preview scan/approval from Obsidian remains an external review, not something local tests can certify.
 
+## Sustainable support
+
+Core editing, recovery, export and local MCP remain free. A small heart in More and the native preferences page link to optional Ko-fi support. No payment unlocks features. [Funding research and future options](docs/SUSTAINABILITY.md).
+
 ## Credits and license
 
 MIT © 2026 Prasanjit Sahoo. Mermaid, DOMPurify and the MCP SDK retain their upstream licenses; bundled notices are generated in `THIRD_PARTY_NOTICES.txt` and release assets. REA was used earlier for public-page interface research; its code is not bundled or copied into this original plugin. Whimsical's public releases informed feature prioritization, not implementation recovery.

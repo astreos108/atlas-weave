@@ -45,6 +45,23 @@ try {
       .innerText(),
     "Smooth foundation",
   );
+  await page
+    .getByRole("button", { name: "More board options", exact: true })
+    .click();
+  const menuIcons = await page
+    .locator(".rea-menu-actions button svg")
+    .evaluateAll((icons) => icons.map((icon) => icon.innerHTML));
+  assert.equal(
+    new Set(menuIcons).size,
+    menuIcons.length,
+    "More actions must use distinct icons",
+  );
+  await page
+    .getByRole("button", { name: "Support development on Ko-fi", exact: true })
+    .waitFor();
+  await page
+    .getByRole("button", { name: "More board options", exact: true })
+    .click();
   const count = (await model()).nodes.length;
   await paste('flowchart LR\n x["Clipboard 😀"] --> y["Editable"]');
   await page.waitForTimeout(500);
