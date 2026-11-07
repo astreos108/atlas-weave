@@ -1,0 +1,54 @@
+{
+  "name": "rea-board",
+  "version": "0.7.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "node build.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "test:browser": "node tests/browser.mjs",
+    "test:advanced": "node tests/advanced.mjs",
+    "mcp": "node mcp/server.mjs",
+    "test:connectors": "node tests/connector-editing.mjs",
+    "test:mcp": "node tests/mcp-live.mjs",
+    "test:foundation": "node tests/foundation.mjs",
+    "lint": "eslint .",
+    "format": "prettier --write src mcp scripts tests *.mjs *.json styles.css",
+    "format:check": "prettier --check src mcp scripts tests *.mjs *.json styles.css",
+    "check": "npm run lint && npm run format:check && npm test && node scripts/check-architecture.mjs && npm run build",
+    "test:ui": "node tests/run-browser.mjs",
+    "verify:reproducible": "node scripts/verify-reproducible.mjs"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.32.2",
+    "dompurify": "3.4.17",
+    "mermaid": "12.3.0",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.56.0",
+    "esbuild": "0.25.0",
+    "eslint": "9.39.5",
+    "eslint-plugin-obsidianmd": "0.5.1",
+    "globals": "17.14.0",
+    "obsidian": "1.14.4",
+    "prettier": "3.9.10",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.72.1",
+    "vite": "6.4.5"
+  },
+  "overrides": {
+    "minimatch": "11.0.5"
+  },
+  "license": "MIT",
+  "description": "Local Mermaid boards for Obsidian",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/astreos108/rea-board.git"
+  },
+  "engines": {
+    "node": ">=22.13 <23"
+  },
+  "packageManager": "npm@10.9.8"
+}

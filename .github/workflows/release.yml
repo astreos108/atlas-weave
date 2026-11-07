@@ -1,0 +1,31 @@
+name: Release
+on:
+  push:
+    tags: ['*.*.*']
+permissions:
+  contents: read
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22.23.1'
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: node -e 'if(process.env.GITHUB_REF_NAME !== require("./manifest.json").version) process.exit(1)'
+      - run: npm run check
+      - run: npm audit --audit-level=low
+      - run: npm run verify:reproducible
+      - run: cd dist && sha256sum main.js manifest.json styles.css THIRD_PARTY_NOTICES.txt > SHA256SUMS
+      - uses: actions/attest-build-provenance@e8998f949152b193b063cb0ec769d69d929409be # v2
+        with:
+          subject-path: 'dist/*'
+      - run: gh release create "$GITHUB_REF_NAME" dist/main.js dist/manifest.json dist/styles.css dist/THIRD_PARTY_NOTICES.txt dist/SHA256SUMS --verify-tag --title "REA Board $GITHUB_REF_NAME" --notes-file docs/RELEASE.md
+        env:
+          GH_TOKEN: ${{ github.token }}

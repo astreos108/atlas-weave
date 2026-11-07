@@ -1,0 +1,11 @@
+{
+  "id": "rea-whimsical",
+  "name": "REA Board",
+  "version": "0.7.0",
+  "minAppVersion": "1.13.0",
+  "description": "Editable Mermaid boards with frames, arrangement, routed connectors and an optional external MCP bridge.",
+  "author": "Prasanjit Sahoo",
+  "isDesktopOnly": true,
+  "authorUrl": "https://github.com/astreos108",
+  "fundingUrl": "https://ko-fi.com/theprasanjitsahoo"
+}

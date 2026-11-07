@@ -1,0 +1,933 @@
+.rea {
+  --ink: #353344;
+  --muted: #9691a2;
+  --purple: #7956d9;
+  --line: #eae7ef;
+  --paper: #faf9fc;
+  --surface: #ffffff;
+  --hover: #f2eefb;
+  --active: #ede7fa;
+  --wire: #9b96aa;
+  --grid: #ded9e7;
+  font:
+    14px/1.5 Inter,
+    ui-sans-serif,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+  color: var(--ink);
+  height: 100%;
+  width: 100%;
+  min-height: 300px;
+  position: relative;
+  overflow: hidden;
+  background: var(--paper);
+  color-scheme: light;
+}
+.rea * {
+  box-sizing: border-box;
+}
+.rea [hidden] {
+  display: none !important;
+}
+.rea button,
+.rea input,
+.rea textarea,
+.rea select {
+  font: inherit;
+  color: var(--ink);
+}
+.rea button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px;
+  cursor: pointer;
+  box-shadow: none;
+  height: 36px;
+  line-height: 1.3;
+}
+.rea button:hover {
+  background: var(--hover);
+  border-color: #d7ccef;
+}
+.rea button:focus-visible,
+.rea input:focus-visible,
+.rea textarea:focus-visible,
+.rea select:focus-visible {
+  outline: 2px solid #a78bfa;
+  outline-offset: 2px;
+}
+.rea button svg {
+  display: block;
+  pointer-events: none;
+}
+.rea-workspace {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+.rea-canvas {
+  position: absolute;
+  inset: 0;
+  background-color: var(--paper);
+  background-image: radial-gradient(var(--grid) 0.7px, transparent 0.7px);
+  background-size: 22px 22px;
+  outline: none;
+  touch-action: none;
+  cursor: grab;
+}
+.rea-canvas.panning {
+  cursor: grabbing;
+}
+.rea-transform {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-origin: 0 0;
+  will-change: transform;
+}
+.rea-diagram svg {
+  overflow: visible;
+  display: block;
+}
+.rea-diagram .node {
+  cursor: grab;
+  outline: none;
+  touch-action: none;
+}
+.rea-diagram .node rect {
+  rx: 10px;
+  ry: 10px;
+}
+.rea-diagram .node.rea-selected > rect,
+.rea-diagram .node.rea-selected > polygon,
+.rea-diagram .node.rea-selected > path,
+.rea-diagram .node:focus-visible > rect {
+  stroke: #7956d9 !important;
+  stroke-width: 2px !important;
+  filter: drop-shadow(0 3px 8px #7956d915);
+}
+.rea-diagram .node.rea-target > rect,
+.rea-diagram .node.rea-target > polygon,
+.rea-diagram .node.rea-target > path {
+  stroke: #7956d9 !important;
+  stroke-width: 3px !important;
+  filter: drop-shadow(0 0 8px #7956d950);
+}
+.rea-diagram .rea-editing .label {
+  visibility: hidden;
+}
+.rea-canvas.rea-dragging,
+.rea-canvas.rea-dragging .node {
+  cursor: grabbing;
+}
+.rea-canvas.rea-connect-tool .node {
+  cursor: crosshair;
+}
+.rea-toolbar {
+  position: absolute;
+  left: 18px;
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  box-shadow: 0 5px 20px #33264d09;
+  border-radius: 13px;
+  z-index: 5;
+}
+.rea-toolbar button {
+  border: 0;
+  width: 36px;
+  height: 36px;
+  padding: 7px;
+  color: #80798f;
+}
+.rea-toolbar button.active {
+  background: var(--active);
+  color: #7956d9;
+}
+.rea-toolbar i,
+.rea-context i {
+  background: var(--line);
+}
+.rea-toolbar i {
+  height: 1px;
+  margin: 3px 6px;
+}
+.rea-popover {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: 0 6px 30px #30214d13;
+  color: var(--ink);
+}
+.rea-more {
+  position: absolute;
+  left: 80px;
+  top: 50%;
+  width: 250px;
+  padding: 15px;
+  transform: translateY(-20%);
+  z-index: 10;
+}
+.rea-board-name {
+  font-weight: 600;
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin: 0 0 14px;
+}
+.rea-menu-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.rea-menu-actions button {
+  border: 0;
+  background: var(--paper);
+}
+.rea-more p {
+  font-size: 10px;
+  line-height: 1.9;
+  color: var(--muted);
+  margin: 14px 0 0;
+}
+.rea-context {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  padding: 5px;
+  transform: translateX(-50%);
+  z-index: 6;
+  white-space: nowrap;
+}
+.rea-context button {
+  border: 0;
+  width: 30px;
+  height: 30px;
+  padding: 6px;
+}
+.rea-context button svg {
+  width: 17px;
+  height: 17px;
+}
+.rea-context i {
+  width: 1px;
+  height: 20px;
+  margin: 0 3px;
+}
+.rea-color-dot {
+  display: block;
+  width: 18px;
+  height: 18px;
+  border: 1px solid #c8c0d6;
+  border-radius: 50%;
+}
+.rea select.rea-shape-type {
+  height: 30px;
+  width: 44px;
+  font-size: 19px;
+  border: 0;
+  background: var(--surface);
+  padding: 2px 4px;
+  box-shadow: none;
+}
+.rea-palette {
+  position: absolute;
+  display: flex;
+  padding: 10px;
+  gap: 8px;
+  transform: translateX(-50%);
+  z-index: 7;
+}
+.rea-palette button {
+  width: 25px;
+  height: 25px;
+  border-radius: 50%;
+  border-width: 1px;
+  padding: 0;
+}
+.rea-handles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 4;
+}
+.rea button.rea-port {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border: 2px solid #a78bfa;
+  border-radius: 50%;
+  padding: 0;
+  transform: translate(-50%, -50%);
+  pointer-events: auto;
+  background: var(--surface);
+  cursor: crosshair;
+  touch-action: none;
+  box-shadow: 0 0 0 5px #faf9fc77;
+}
+.rea button.rea-port:hover {
+  background: #7956d9;
+  border-color: #7956d9;
+  box-shadow: 0 0 0 6px #7956d920;
+}
+.rea-preview {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: visible;
+  z-index: 3;
+}
+.rea-preview-line {
+  stroke: #7956d9;
+  stroke-width: 2;
+  fill: none;
+  stroke-dasharray: 5 4;
+}
+.rea-wires {
+  pointer-events: none;
+}
+.rea-wires [data-edge] {
+  pointer-events: stroke;
+  cursor: pointer;
+}
+.rea-wires .rea-edge-hit {
+  stroke: transparent !important;
+  stroke-width: 18px;
+  fill: none;
+  pointer-events: stroke;
+}
+.rea-wires .rea-edge-line {
+  pointer-events: none;
+}
+.rea-wires .rea-wire-label {
+  pointer-events: all;
+  cursor: text;
+  font:
+    12px Inter,
+    ui-sans-serif,
+    system-ui,
+    sans-serif;
+  fill: var(--muted);
+  stroke: var(--paper);
+  stroke-width: 6px;
+  paint-order: stroke;
+  stroke-linejoin: round;
+}
+.rea-wires .rea-selected-edge .rea-edge-line {
+  stroke: #7956d9;
+  stroke-width: 2.5px;
+}
+.rea-inline-text {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  height: auto !important;
+  min-height: 34px;
+  padding: 5px 7px !important;
+  background: var(--surface) !important;
+  border: 1.5px solid #a78bfa !important;
+  border-radius: 6px !important;
+  text-align: center;
+  box-shadow: 0 2px 12px #7956d915 !important;
+  z-index: 9;
+  outline: none !important;
+}
+.rea-zoom {
+  position: absolute;
+  right: 20px;
+  bottom: 18px;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  padding: 4px;
+  border-radius: 11px;
+  box-shadow: 0 4px 15px #33264d06;
+  z-index: 5;
+}
+.rea-zoom button {
+  border: 0;
+  width: 29px;
+  height: 30px;
+  padding: 6px;
+}
+.rea-zoom button svg {
+  width: 17px;
+  height: 17px;
+}
+.rea-zoom .rea-percent {
+  font-size: 10px;
+  width: 45px;
+  padding: 4px;
+}
+.rea-zoom i {
+  height: 18px;
+  width: 1px;
+  background: var(--line);
+  margin: 0 4px;
+}
+.rea-status {
+  position: absolute;
+  left: 22px;
+  bottom: 22px;
+  font-size: 10px;
+  color: #a39bad;
+  max-width: calc(100% - 285px);
+  pointer-events: none;
+}
+.rea-status.rea-error {
+  color: #b45339;
+  pointer-events: auto;
+  background: var(--surface);
+  padding: 6px 10px;
+  border: 1px solid #f5d0c2;
+  border-radius: 6px;
+  z-index: 12;
+}
+.rea-empty {
+  position: absolute;
+  left: 50%;
+  top: 47%;
+  transform: translate(-50%, -50%);
+  font-size: 20px;
+  color: #ada0bd;
+  text-align: center;
+  pointer-events: none;
+}
+.rea-empty small {
+  display: block;
+  font-size: 12px;
+  margin-top: 9px;
+}
+.rea-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #30214d25;
+  z-index: 20;
+  padding: 24px;
+}
+.rea-source-dialog {
+  width: min(620px, 100%);
+  max-height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 18px;
+  gap: 15px;
+}
+.rea-dialog-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+}
+.rea-dialog-heading button {
+  border: 0;
+  padding: 4px;
+  width: 28px;
+  height: 28px;
+}
+.rea textarea.rea-source {
+  font:
+    12px/1.9 ui-monospace,
+    SFMono-Regular,
+    monospace;
+  min-height: 150px;
+  height: 320px;
+  width: 100%;
+  white-space: pre;
+  overflow: auto;
+  resize: vertical;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 14px;
+  box-shadow: none;
+  flex-shrink: 1;
+}
+.rea-source-error {
+  font-size: 11px;
+  color: #b45339;
+}
+.rea-dialog-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 11px;
+}
+.rea-dialog-footer label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+}
+.rea-dialog-footer select {
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 6px;
+  background: var(--surface);
+  box-shadow: none;
+  font-size: 11px;
+}
+.rea button.rea-primary {
+  background: #7956d9;
+  color: #ffffff;
+  border-color: #7956d9;
+  font-size: 12px;
+  padding: 8px 14px;
+}
+.workspace-leaf-content[data-type="rea-whimsical"] .view-content {
+  padding: 0 !important;
+  overflow: hidden;
+}
+@media (max-width: 600px) {
+  .rea-toolbar {
+    left: 10px;
+  }
+  .rea-more {
+    left: 68px;
+    width: min(240px, calc(100% - 80px));
+  }
+  .rea-status {
+    display: none;
+  }
+  .rea-zoom {
+    right: 10px;
+    bottom: 10px;
+  }
+  .rea-modal-backdrop {
+    padding: 12px;
+  }
+  .rea-dialog-footer label {
+    gap: 4px;
+  }
+  .rea-source-dialog {
+    padding: 12px;
+  }
+}
+
+.rea[data-theme="dark"] {
+  --ink: #eeeaf5;
+  --muted: #b1a9c0;
+  --purple: #b397ff;
+  --line: #41404e;
+  --paper: #1e1e26;
+  --surface: #2b2a36;
+  --hover: #383345;
+  --active: #44385e;
+  --wire: #aaa1bb;
+  --grid: #3c394a;
+  color-scheme: dark;
+}
+.rea[data-theme="dark"] .rea-status {
+  color: #a69ab9;
+}
+.rea[data-theme="dark"] .rea-inline-text {
+  color: var(--ink);
+}
+.rea[data-theme="dark"] .rea-edge-line {
+  stroke: var(--wire);
+}
+.rea[data-theme="dark"] .rea-selected-edge .rea-edge-line {
+  stroke: var(--purple);
+}
+.rea-theme-controls {
+  display: flex;
+  gap: 5px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+.rea-theme-controls button {
+  border: 0;
+}
+.rea-theme-controls [aria-pressed="true"] {
+  background: var(--active);
+  color: var(--purple);
+}
+.rea[data-theme="dark"] .rea-source-dialog textarea {
+  background: var(--paper);
+}
+.rea-resizers {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 5;
+}
+.rea button.rea-resize {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  width: 10px;
+  height: 10px;
+  padding: 0;
+  border-radius: 2px;
+  border: 1.5px solid #a78bfa;
+  background: var(--surface);
+  pointer-events: auto;
+  touch-action: none;
+}
+.rea-resize[data-resize="nw"],
+.rea-resize[data-resize="se"] {
+  cursor: nwse-resize;
+}
+.rea-resize[data-resize="ne"],
+.rea-resize[data-resize="sw"] {
+  cursor: nesw-resize;
+}
+.rea-selection-bounds {
+  position: absolute;
+  border: 1px dashed #a78bfa;
+  pointer-events: none;
+  z-index: 2;
+}
+.rea-marquee {
+  position: absolute;
+  background: #8b5cf619;
+  border: 1px solid #a78bfa;
+  pointer-events: none;
+  z-index: 3;
+}
+.rea-selection-count {
+  font-size: 11px;
+  padding: 0 6px;
+  color: var(--muted);
+}
+.rea-canvas {
+  cursor: default;
+}
+.rea-canvas.panning,
+.rea-canvas.rea-hand-tool {
+  cursor: grab;
+}
+.rea-node-text {
+  font:
+    16px system-ui,
+    sans-serif;
+  fill: #353344;
+  pointer-events: none;
+}
+.rea-diagram .rea-editing .rea-node-text {
+  visibility: hidden;
+}
+.rea .rea-inline-text {
+  resize: none;
+  overflow: auto;
+  max-height: 220px;
+  min-height: 36px;
+  line-height: 1.5;
+}
+.rea-edge-label-bg {
+  fill: var(--paper);
+  pointer-events: all;
+  cursor: text;
+}
+.rea-wires .rea-wire-label {
+  font-size: 13px;
+  stroke: none;
+}
+.rea-context select.rea-edge-routing,
+.rea-context select.rea-edge-width {
+  max-width: 110px;
+  height: 30px;
+  font-size: 11px;
+  padding: 3px 5px;
+  border: 0;
+  background: var(--surface);
+  box-shadow: none;
+}
+.rea-diagram .rea-selected-edge .rea-edge-line {
+  filter: drop-shadow(0 0 3px #a78bfa);
+  stroke-width: 3px;
+}
+.rea-toolbar button.active {
+  color: var(--purple);
+}
+.rea-edge-controls {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 7;
+}
+.rea button.rea-edge-control {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  width: 11px;
+  height: 11px;
+  padding: 0;
+  border-radius: 2px;
+  background: var(--surface);
+  border: 1.5px solid #8b5cf6;
+  pointer-events: auto;
+  touch-action: none;
+  cursor: move;
+}
+.rea button.rea-edge-from,
+.rea button.rea-edge-to {
+  border-radius: 50%;
+  width: 15px;
+  height: 15px;
+  border-width: 2px;
+  cursor: crosshair;
+}
+.rea button.rea-edge-bend {
+  border-radius: 50%;
+  width: 9px;
+  height: 9px;
+  background: #b397ff;
+}
+.rea button.rea-edge-width-handle {
+  height: 17px;
+  width: 7px;
+  cursor: ew-resize;
+}
+.rea .rea-wire-label,
+.rea .rea-edge-label-bg {
+  cursor: grab;
+}
+.rea-context {
+  max-width: calc(100% - 90px);
+  overflow-x: auto;
+}
+.rea-context select.rea-edge-font {
+  height: 30px;
+  width: 68px;
+  border: 0;
+  background: var(--surface);
+  font-size: 11px;
+  box-shadow: none;
+}
+.rea-menu-actions [aria-pressed="true"] {
+  background: var(--active);
+  color: var(--purple);
+}
+.rea-presenter {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 7px;
+  z-index: 12;
+}
+.rea-present-title {
+  max-width: 240px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+}
+.rea-presenting .rea-toolbar,
+.rea-presenting .rea-context,
+.rea-presenting .rea-handles,
+.rea-presenting .rea-resizers,
+.rea-presenting .rea-edge-controls,
+.rea-presenting .rea-zoom {
+  display: none !important;
+}
+/* Interaction foundation: one origin for the visible grid and world snapping. */
+.rea-canvas {
+  background-image: radial-gradient(
+    circle at center,
+    var(--grid) 1px,
+    transparent 1.2px
+  );
+}
+.rea-title,
+.rea-title-input {
+  position: absolute !important;
+  left: 20px;
+  top: 16px;
+  z-index: 8;
+  max-width: calc(100% - 120px);
+  font-weight: 600 !important;
+  font-size: 13px !important;
+  padding: 7px 10px !important;
+  border: 1px solid transparent !important;
+  border-radius: 8px;
+  background: var(--paper) !important;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+}
+.rea-title:hover {
+  border-color: var(--line) !important;
+  background: var(--surface) !important;
+}
+.rea-title-input {
+  width: 280px;
+  outline: 2px solid var(--purple);
+}
+.rea-recover {
+  position: absolute;
+  right: 20px;
+  bottom: 77px;
+  z-index: 8;
+  padding: 10px 16px !important;
+  box-shadow: 0 4px 20px #0001 !important;
+}
+.rea-guides {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 3;
+  overflow: visible;
+}
+.rea-guides line {
+  stroke: #ed5e70;
+  stroke-width: 1;
+  stroke-dasharray: 4 3;
+}
+.rea-selection-bounds {
+  border: 1.5px solid var(--purple);
+}
+.rea-diagram .node.rea-selected > .rea-shape-body {
+  filter: none !important;
+  stroke-width: 1.2px !important;
+}
+.rea button.rea-port {
+  width: 9px;
+  height: 9px;
+  border: 0;
+  background: var(--purple);
+  box-shadow: none;
+}
+.rea button.rea-resize {
+  width: 9px;
+  height: 9px;
+  border-color: var(--purple);
+}
+.rea-quick-add {
+  position: absolute;
+  pointer-events: auto;
+  transform: translate(-50%, -50%);
+  width: 19px !important;
+  height: 19px !important;
+  border-radius: 50% !important;
+  padding: 0 !important;
+  font-size: 15px !important;
+  color: var(--purple) !important;
+  opacity: 0;
+  transition:
+    opacity 120ms,
+    background 120ms;
+}
+.rea-handles:hover .rea-quick-add,
+.rea-quick-add:focus-visible {
+  opacity: 1;
+}
+.rea-handles {
+  pointer-events: none;
+}
+.rea-context {
+  z-index: 9;
+  gap: 4px;
+}
+.rea-context button:hover,
+.rea-toolbar button:hover {
+  transition:
+    background 100ms,
+    color 100ms;
+}
+.rea-context,
+.rea-paste-menu,
+.rea-more {
+  animation: rea-appear 130ms ease-out;
+}
+.rea-paste-menu {
+  position: absolute;
+  z-index: 15;
+  padding: 6px;
+  min-width: 200px;
+}
+.rea-paste-menu button {
+  display: flex;
+  width: 100%;
+  justify-content: flex-start;
+  border: 0;
+  font-size: 12px;
+}
+.rea-diagram .node:hover:not(.rea-selected) .rea-shape-body {
+  stroke: var(--purple) !important;
+}
+.rea-presenting .rea-title {
+  display: none;
+}
+@keyframes rea-appear {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rea * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+.rea-frame-node .rea-shape-body {
+  stroke-dasharray: 5 4;
+  rx: 12px;
+  ry: 12px;
+}
+.rea-frame-node .rea-node-text {
+  font-weight: 600;
+  fill: var(--ink) !important;
+}
+.rea-frame-node {
+  cursor: move;
+}
+.rea button.rea-resize[data-resize="n"],
+.rea button.rea-resize[data-resize="s"] {
+  width: 20px;
+  height: 6px;
+  cursor: ns-resize;
+}
+.rea button.rea-resize[data-resize="e"],
+.rea button.rea-resize[data-resize="w"] {
+  width: 6px;
+  height: 20px;
+  cursor: ew-resize;
+}
+.rea-context .rea-arrangement {
+  height: 30px;
+  border: 0;
+  background: var(--surface);
+  font-size: 11px;
+  max-width: 150px;
+}
+.rea-settings-warning {
+  color: var(--text-muted);
+}
+.rea-diagram svg {
+  max-width: none !important;
+}
+.rea-offscreen-measure {
+  position: absolute;
+  left: -100000px;
+  top: 0;
+}

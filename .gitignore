@@ -1,0 +1,15 @@
+node_modules/
+main.js
+dist/
+.DS_Store
+.env*
+bridge.json
+data.json
+*.board
+*.bak*
+*.recovery*
+research/*
+!research/whimsical-release-review.md
+!research/public-release.png
+!research/smooth-foundation.png
+!research/grid-alignment.png
