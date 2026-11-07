@@ -110,7 +110,7 @@ try {
   const resource = await client.readResource({ uri: "board://capabilities" });
   assert.ok(resource.contents[0].text.includes("sourceOnlyDiagrams"));
   console.log(
-    `PASS: live SDK MCP discovery (${listed.tools.length} tools), owner-token auth, Origin rejection, create/read/guarded edit/branch expansion, stale-write protection, vault path protection, note heading targets, resources and native view refresh. Example: ${path}`,
+    `PASS: live SDK MCP discovery (${listed.tools.length} tools), owner-token auth, Origin rejection, create/read/guarded edit/branch expansion, stale-write protection, vault path protection, ${process.env.REA_BOARD_TEST_NOTE ? "note targets tested" : "optional note-target check skipped"}, resources and native view refresh. Example: ${path}`,
   );
 } finally {
   await client.close();

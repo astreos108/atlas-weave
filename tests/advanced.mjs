@@ -216,7 +216,7 @@ try {
     .waitFor();
   // Keyboard select-all and panning leave Mermaid content intact.
   await page.locator(".rea-canvas").focus();
-  await page.keyboard.press("Meta+a");
+  await page.keyboard.press("ControlOrMeta+a");
   assert.equal(await page.locator(".rea-selected").count(), 3);
   const beforePan = await saved();
   await page.keyboard.down("Space");

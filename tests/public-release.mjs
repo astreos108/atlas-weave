@@ -63,7 +63,7 @@ try {
   assert.ok(Math.abs(after.height - old.height) < 1);
   assert.ok(Math.abs(after.x - old.x) < 1);
   await page.locator(".rea-canvas").focus();
-  await page.keyboard.press("Meta+a");
+  await page.keyboard.press("ControlOrMeta+a");
   await page
     .getByRole("combobox", { name: "Arrange selection", exact: true })
     .selectOption("left");

@@ -52,12 +52,12 @@ try {
   assert.equal(await page.locator(".rea-selected").count(), 2);
   // Plain copy/paste is Mermaid and retains a selected subgraph.
   await page.locator(".rea-canvas").focus();
-  await page.keyboard.press("Meta+c");
+  await page.keyboard.press("ControlOrMeta+c");
   const copied = await page.evaluate(() => navigator.clipboard.readText());
   assert.equal(parse(copied).nodes.length, 2);
   await page.locator(".rea-canvas").focus();
   console.log("copy PNG");
-  await page.keyboard.press("Meta+Shift+c");
+  await page.keyboard.press("ControlOrMeta+Shift+c");
   await page.waitForTimeout(1500);
   const png = await page.evaluate(async () => {
     const items = await navigator.clipboard.read();
