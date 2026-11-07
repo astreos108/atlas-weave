@@ -35,6 +35,11 @@ async function apply(text) {
 }
 async function drag(el, dx, dy) {
   const p = await center(el);
+  if ((await el.getAttribute("data-edge-grip")) === "true") {
+    const side = await el.getAttribute("data-resize");
+    if (["e", "w"].includes(side)) p.y += 14;
+    else p.x += 14;
+  }
   await page.mouse.move(p.x, p.y);
   await page.mouse.down();
   await page.mouse.move(p.x + dx, p.y + dy, { steps: 10 });

@@ -295,9 +295,10 @@ export function createLayout(svg, model, identify) {
   }
   svg
     .querySelectorAll(
-      ".edgePaths,.edgeLabels,.rea-wires,.rea-wire-defs,.cluster",
+      ".edgePaths,.edgeLabels,.rea-wires,.rea-wire-labels,.rea-wire-defs,.cluster",
     )
     .forEach((el) => el.remove());
+  const labelLayer = element("g", { class: "rea-wire-labels" });
   const wires = element("g", { class: "rea-wires" }),
     defs = element("defs", { class: "rea-wire-defs" });
   const firstShape = [...svg.children].find(
@@ -305,6 +306,7 @@ export function createLayout(svg, model, identify) {
       el.classList.contains("node") && !el.classList.contains("rea-frame-node"),
   );
   svg.insertBefore(wires, firstShape || null);
+  svg.insertBefore(labelLayer, firstShape || null);
   svg.append(defs);
   const links = model.edges.map((original, index) => {
     const edge = structuredClone(original);
@@ -352,7 +354,9 @@ export function createLayout(svg, model, identify) {
         "text-anchor": "middle",
         class: "rea-wire-label",
       });
-      g.append(labelBox, label);
+      const labelGroup = element("g", { "data-edge": index });
+      labelGroup.append(labelBox, label);
+      labelLayer.append(labelGroup);
     }
     wires.append(g);
     return { edge, path, hit, label, labelBox, geometry: null };
@@ -504,25 +508,43 @@ export function createLayout(svg, model, identify) {
         if (!edge.labelOffset && label) {
           const b = pathMidpoint(geo.points);
           geo.label = { ...b };
-          for (let tries = 0; tries < 10; tries++) {
-            const rect = {
-              x: geo.label.x - textWidth / 2 - 8,
-              y: geo.label.y - lines.length * fontSize * 0.7 - 10,
+          const candidates = [geo.label];
+          for (let i = 1; i < geo.points.length; i++) {
+            const a = geo.points[i - 1],
+              b = geo.points[i];
+            for (const t of [0.5, 0.25, 0.75])
+              candidates.push({
+                x: a.x + (b.x - a.x) * t,
+                y: a.y + (b.y - a.y) * t,
+              });
+          }
+          const occupied = [
+            ...labelRects,
+            ...[...nodes.values()]
+              .filter((n) => n.shape !== "frame")
+              .map((n) => ({
+                x: n.x - n.width / 2,
+                y: n.y - n.height / 2,
+                width: n.width,
+                height: n.height,
+              })),
+          ];
+          const fits = (p) => {
+            const r = {
+              x: p.x - textWidth / 2 - 8,
+              y: p.y - lines.length * fontSize * 0.7 - 10,
               width: textWidth + 16,
               height: lines.length * fontSize * 1.4 + 10,
             };
-            if (
-              !labelRects.some(
-                (r) =>
-                  rect.x < r.x + r.width &&
-                  rect.x + rect.width > r.x &&
-                  rect.y < r.y + r.height &&
-                  rect.y + rect.height > r.y,
-              )
-            )
-              break;
-            geo.label.y += fontSize * 1.5 + 10;
-          }
+            return !occupied.some(
+              (b) =>
+                r.x < b.x + b.width + 8 &&
+                r.x + r.width > b.x - 8 &&
+                r.y < b.y + b.height + 8 &&
+                r.y + r.height > b.y - 8,
+            );
+          };
+          geo.label = candidates.find(fits) || geo.label;
           labelRects.push({
             x: geo.label.x - textWidth / 2 - 8,
             y: geo.label.y - lines.length * fontSize * 0.7 - 10,
@@ -565,11 +587,12 @@ export function createLayout(svg, model, identify) {
       xs.push(n.x - n.width / 2, n.x + n.width / 2);
       ys.push(n.y - n.height / 2, n.y + n.height / 2);
     }
-    if (wires.childElementCount) {
-      const b = wires.getBBox();
-      xs.push(b.x, b.x + b.width);
-      ys.push(b.y, b.y + b.height);
-    }
+    for (const layer of [wires, labelLayer])
+      if (layer.childElementCount) {
+        const b = layer.getBBox();
+        xs.push(b.x, b.x + b.width);
+        ys.push(b.y, b.y + b.height);
+      }
     const x = Math.min(...xs) - 40,
       y = Math.min(...ys) - 40;
     return {

@@ -199,7 +199,7 @@ try {
     await page
       .locator(".rea-canvas")
       .evaluate((el) => getComputedStyle(el).backgroundColor),
-    "rgb(30, 30, 38)",
+    "rgb(29, 28, 28)",
   );
   await page.screenshot({ path: "research/intuitive-dark.png" });
   await page.reload();
@@ -211,7 +211,7 @@ try {
     await page
       .locator(".rea-canvas")
       .evaluate((el) => getComputedStyle(el).backgroundColor),
-    "rgb(250, 249, 252)",
+    "rgb(255, 253, 245)",
   );
   await page
     .getByRole("button", { name: "More board options", exact: true })

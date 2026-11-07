@@ -24,15 +24,20 @@ export function avoidObstacles(points, obstacles) {
       0,
     );
   if (points.length < 3 || !obstacles.length || !hits(points)) return points;
+  // Only actual blockers choose detour extents. A distant new thought must not
+  // stretch existing routes to the bounds of the entire board.
+  const blockers = obstacles.filter((n) =>
+    points.slice(1).some((p, i) => crossesBox(points[i], p, n)),
+  );
   const a = points[0],
     p = points[1],
     q = points.at(-2),
     b = points.at(-1),
-    xs = obstacles.flatMap((n) => [
+    xs = blockers.flatMap((n) => [
       n.x - n.width / 2 - 24,
       n.x + n.width / 2 + 24,
     ]),
-    ys = obstacles.flatMap((n) => [
+    ys = blockers.flatMap((n) => [
       n.y - n.height / 2 - 24,
       n.y + n.height / 2 + 24,
     ]);

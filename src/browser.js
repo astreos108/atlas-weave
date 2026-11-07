@@ -10,6 +10,12 @@ try {
   /* Ignore corrupt demo storage and start with a new board. */
 }
 mount(document.querySelector("#app"), {
+  background: localStorage.getItem("rea-board-background") || "ivory",
+  showGrid: localStorage.getItem("rea-board-grid") !== "false",
+  setAppearance: ({ background, showGrid }) => {
+    localStorage.setItem("rea-board-background", background);
+    localStorage.setItem("rea-board-grid", String(showGrid));
+  },
   snap: localStorage.getItem("rea-whimsical-snap") !== "false",
   setSnap: (value) => localStorage.setItem("rea-whimsical-snap", String(value)),
   theme: localStorage.getItem("rea-whimsical-theme") || "light",

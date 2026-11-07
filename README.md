@@ -16,7 +16,7 @@ REA Board is an independent community project. It is not affiliated with Obsidia
 - Box/Shift selection, group move, duplicate, undo/redo, alignment guides and grid snapping. Alt bypasses snapping/guides. Alignment to another object takes priority over grid alignment.
 - Genuine frames with saved membership. Drag a frame's title area to move it and its contents. Removing a frame keeps its contents. Frames do not nest.
 - Align left/center/right/top/middle/bottom and distribute horizontal/vertical gaps from the selection toolbar.
-- Four-direction quick add, Tab-to-add-child, light/dark modes, keyboard presentation, floating filename rename and offscreen recovery.
+- Four-direction quick add, Tab-to-add-child, hex backgrounds with Ivory/Ice/Sage shortcuts, optional dots, light/dark modes, keyboard presentation, floating filename rename and offscreen recovery.
 - Paste Mermaid directly or through right-click → Paste. Import files. Copy selected shapes as Mermaid, PNG or SVG.
 - Link to vault notes, headings and blocks. Optional external MCP bridge and reusable assistant skill.
 

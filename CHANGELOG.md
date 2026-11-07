@@ -2,6 +2,7 @@
 
 ## 0.7.0 — first public release
 
+- Added hex paper colors with Ivory/Ice/Sage shortcuts, zoom-scaled dots and task-appropriate skill color guidance. Simplified border resizing, stabilized detours against unrelated shapes and kept connector labels above crossing lines.
 - Gave More actions distinct icons and added a quiet optional Ko-fi support action.
 - Introduced durable frames, membership-aware movement, side resizing and align/distribute controls.
 - Added editable import of basic non-nested subgraphs, automatic connector port/lane separation, endpoint gaps and crossing hops.

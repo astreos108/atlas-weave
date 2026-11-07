@@ -1,4 +1,5 @@
 const paths = {
+  dots: "M5 5h.01M12 5h.01M19 5h.01M5 12h.01M12 12h.01M19 12h.01M5 19h.01M12 19h.01M19 19h.01",
   image: "M3 4h18v16H3zM3 16l5-6 5 5 3-3 5 6M16 8h.01",
   vector: "M4 6h4v4H4zM16 14h4v4h-4zM6 10c0 7 12-7 12 4M3 20l3-3m12-10l3-3",
   grid: "M5 3v18M12 3v18M19 3v18M3 5h18M3 12h18M3 19h18",

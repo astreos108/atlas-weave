@@ -48,6 +48,63 @@ try {
   await page
     .getByRole("button", { name: "More board options", exact: true })
     .click();
+  await page
+    .getByRole("button", { name: "Sage background", exact: true })
+    .click();
+  assert.equal(
+    await page.locator(".rea").getAttribute("data-background"),
+    "#f5faf3",
+  );
+  await page
+    .getByRole("button", { name: "Show grid dots", exact: true })
+    .click();
+  assert.equal(
+    await page
+      .locator(".rea-canvas")
+      .evaluate((el) => getComputedStyle(el).backgroundImage),
+    "none",
+  );
+  await page.reload();
+  await page.locator(".node").first().waitFor();
+  assert.equal(
+    await page.locator(".rea").getAttribute("data-background"),
+    "#f5faf3",
+  );
+  assert.equal(await page.locator(".rea").getAttribute("data-grid"), "false");
+  await page
+    .getByRole("button", { name: "More board options", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Ivory background", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Show grid dots", exact: true })
+    .click();
+  assert.notEqual(
+    await page
+      .locator(".rea-canvas")
+      .evaluate((el) => getComputedStyle(el).backgroundImage),
+    "none",
+  );
+  const hexInput = page.getByRole("textbox", {
+    name: "Background hex color",
+    exact: true,
+  });
+  await hexInput.fill("#eaf8ef");
+  await hexInput.press("Enter");
+  assert.equal(
+    await page.locator(".rea").getAttribute("data-background"),
+    "#eaf8ef",
+  );
+  await hexInput.fill("invalid");
+  await hexInput.press("Enter");
+  assert.equal(
+    await page.locator(".rea").getAttribute("data-background"),
+    "#eaf8ef",
+  );
+  await page
+    .getByRole("button", { name: "Ivory background", exact: true })
+    .click();
   const menuIcons = await page
     .locator(".rea-menu-actions button svg")
     .evaluateAll((icons) => icons.map((icon) => icon.innerHTML));

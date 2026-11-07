@@ -1,3 +1,4 @@
+import { backgroundHex, paperColors } from "../src/appearance.js";
 import test from "node:test";
 import assert from "node:assert/strict";
 import { alignMove } from "../src/alignment.js";
@@ -52,4 +53,30 @@ test("automatic elbows detour around an intervening shape", () => {
   assert.ok(route.slice(1).every((p, i) => !crossesBox(route[i], p, obstacle)));
   assert.deepEqual(route[0], points[0]);
   assert.deepEqual(route.at(-1), points.at(-1));
+});
+
+test("distant new shapes do not stretch an already obstructed route", () => {
+  const points = [
+    { x: 0, y: 0 },
+    { x: 40, y: 0 },
+    { x: 40, y: 200 },
+    { x: 400, y: 200 },
+    { x: 400, y: 0 },
+    { x: 440, y: 0 },
+  ];
+  const blocker = { x: 220, y: 200, width: 160, height: 80 };
+  const distant = { x: -5000, y: -5000, width: 280, height: 120 };
+  assert.deepEqual(
+    avoidObstacles(points, [blocker, distant]),
+    avoidObstacles(points, [blocker]),
+  );
+});
+
+test("background hex accepts shorthand and rejects CSS or malformed values", () => {
+  assert.equal(backgroundHex("cFe"), "#ccffee");
+  assert.equal(backgroundHex("#FaF7Ee"), "#faf7ee");
+  assert.equal(backgroundHex("ivory"), "#fffdf5");
+  assert.equal(backgroundHex("red; background:url(x)"), null);
+  assert.equal(backgroundHex("#12345"), null);
+  assert.equal(paperColors("#eaf8ef").paper, "#eaf8ef");
 });

@@ -7,6 +7,20 @@ export class BoardSettings extends PluginSettingTab {
   getSettingDefinitions() {
     return [
       {
+        name: "Board background",
+        desc: "Enter a hex color, for example #fffdf5, #f5fbff or #f5faf3.",
+        control: {
+          type: "text",
+          key: "background",
+          defaultValue: "#fffdf5",
+        },
+      },
+      {
+        name: "Show grid dots",
+        desc: "Hide visual dots without disabling snapping or alignment guides.",
+        control: { type: "toggle", key: "showGrid", defaultValue: true },
+      },
+      {
         name: "External MCP bridge",
         desc: "Off by default. A local authenticated listener lets configured assistants read and edit Board files. No embedded AI or provider keys.",
         control: {
@@ -50,6 +64,14 @@ export class BoardSettings extends PluginSettingTab {
     ];
   }
   async setControlValue(key, value) {
+    if (key === "background") {
+      await this.plugin.setAppearance({ background: value });
+      return;
+    }
+    if (key === "showGrid") {
+      await this.plugin.setAppearance({ showGrid: value });
+      return;
+    }
     if (typeof value !== "boolean") throw new Error("Expected a toggle value");
     if (key === "bridgeEnabled") {
       await this.plugin.setBridgeEnabled(value);

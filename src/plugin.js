@@ -1,3 +1,4 @@
+import { backgroundHex } from "./appearance.js";
 import {
   Plugin,
   FileView,
@@ -47,6 +48,9 @@ class BoardView extends FileView {
       source,
       theme: this.plugin.settings.theme,
       snap: this.plugin.settings.snap,
+      background: this.plugin.settings.background,
+      showGrid: this.plugin.settings.showGrid,
+      setAppearance: (patch) => this.plugin.setAppearance(patch),
       setSnap: (value) => this.plugin.setSnap(value),
       pickLink: () => pickNoteLink(this.app),
       setTheme: (theme) => this.plugin.setTheme(theme),
@@ -103,6 +107,16 @@ class BoardView extends FileView {
   }
 }
 export default class ReaWhimsical extends Plugin {
+  async setAppearance(patch) {
+    if (patch.background !== undefined && !backgroundHex(patch.background))
+      throw new Error("Unknown background");
+    if (patch.background !== undefined)
+      this.settings.background = backgroundHex(patch.background);
+    if (patch.showGrid !== undefined) this.settings.showGrid = !!patch.showGrid;
+    for (const leaf of this.app.workspace.getLeavesOfType(VIEW))
+      leaf.view.board?.setAppearance(patch);
+    await this.saveSettings();
+  }
   async setSnap(value) {
     this.settings.snap = value;
     for (const leaf of this.app.workspace.getLeavesOfType(VIEW))
@@ -119,6 +133,8 @@ export default class ReaWhimsical extends Plugin {
     const stored = (await this.loadData()) || {};
     this.settings = {
       theme: "light",
+      background: "#fffdf5",
+      showGrid: true,
       snap: true,
       bridgeEnabled: false,
       bridgeReadNotes: false,
@@ -127,6 +143,8 @@ export default class ReaWhimsical extends Plugin {
         ? { theme: stored.theme, snap: stored.snap !== false }
         : {}),
     };
+    this.settings.background =
+      backgroundHex(this.settings.background) || "#fffdf5";
     this.recovery = stored.recovery || {};
     this.disposed = false;
     this.addSettingTab(new BoardSettings(this.app, this));

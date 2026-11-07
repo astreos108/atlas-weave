@@ -1,3 +1,4 @@
+import { backgroundHex, paperColors } from "./appearance.js";
 import { setMarkup, appendMarkup } from "./markup.js";
 import {
   membersFor,
@@ -71,7 +72,7 @@ export function mount(root, options) {
     root,
     `<main class="rea-workspace"><div class="rea-canvas" tabindex="0" aria-label="Board. Drag shapes to move. Double-click to edit text."><div class="rea-transform"><div class="rea-diagram"></div></div><div class="rea-empty" hidden>A little room to think.<small>Add a shape to get started.</small></div></div>
     <button class="rea-title" aria-label="Rename board" title="Rename board"></button><button class="rea-recover" data-action="fit" hidden>Zoom to content</button><svg class="rea-guides"></svg><div class="rea-paste-menu rea-popover" hidden role="menu"></div><nav class="rea-toolbar" aria-label="Board tools">${button("select", "Select (V)", 'data-tool="select"')}${button("hand", "Pan (H or Space)", 'data-tool="hand"')}<i></i>${button("rect", "Add rectangle (R)", 'data-tool="rect"')}${button("round", "Add pill (O)", 'data-tool="round"')}${button("diamond", "Add decision (D)", 'data-tool="diamond"')}${button("connect", "Connect shapes (C)", 'data-tool="connect"')}<i></i>${button("more", "More board options", 'data-action="more" aria-expanded="false"')}</nav>
-    <div class="rea-more rea-popover" hidden role="menu" aria-label="Board options"><div class="rea-board-name"></div><div class="rea-menu-actions">${button("board", "New board", 'data-action="new"')}${button("import", "Import file", 'data-action="import"')}${button("source", "Mermaid source", 'data-action="source"')}${button("arrange", "Auto layout", 'data-action="arrange"')}${button("frame", "Frame selection", 'data-action="frame"')}${button("export", "Export Markdown", 'data-action="export"')}${button("image", "Copy as PNG (⌘⇧C)", 'data-action="copy-png"')}${button("vector", "Copy as SVG", 'data-action="copy-svg"')}${button("grid", "Snap to grid", 'data-action="snap"')}${button("present", "Present board", 'data-action="present"')}${button("support", "Support development on Ko-fi", 'data-action="support"')}</div><div class="rea-theme-controls">${button("sun", "Light mode", 'data-action="light"')}${button("moon", "Dark mode", 'data-action="dark"')}</div><p>Drag to move · Double-click to write<br>Drag a shape’s handle to connect</p></div>
+    <div class="rea-more rea-popover" hidden role="menu" aria-label="Board options"><div class="rea-board-name"></div><div class="rea-menu-actions">${button("board", "New board", 'data-action="new"')}${button("import", "Import file", 'data-action="import"')}${button("source", "Mermaid source", 'data-action="source"')}${button("arrange", "Auto layout", 'data-action="arrange"')}${button("frame", "Frame selection", 'data-action="frame"')}${button("export", "Export Markdown", 'data-action="export"')}${button("image", "Copy as PNG (⌘⇧C)", 'data-action="copy-png"')}${button("vector", "Copy as SVG", 'data-action="copy-svg"')}${button("grid", "Snap to grid", 'data-action="snap"')}${button("dots", "Show grid dots", 'data-action="grid"')}${button("present", "Present board", 'data-action="present"')}${button("support", "Support development on Ko-fi", 'data-action="support"')}</div><div class="rea-background-controls" role="group" aria-label="Board background"><button data-background="ivory" aria-label="Ivory background" title="Ivory background"><span class="rea-background-swatch rea-bg-ivory"></span></button><button data-background="ice" aria-label="Ice background" title="Ice background"><span class="rea-background-swatch rea-bg-ice"></span></button><button data-background="sage" aria-label="Sage background" title="Sage background"><span class="rea-background-swatch rea-bg-sage"></span></button><input class="rea-background-hex" aria-label="Background hex color" title="Background hex color" placeholder="#fffdf5" maxlength="7" spellcheck="false"></div><div class="rea-theme-controls">${button("sun", "Light mode", 'data-action="light"')}${button("moon", "Dark mode", 'data-action="dark"')}</div></div>
     <div class="rea-context rea-popover" hidden role="toolbar" aria-label="Selection options"></div><div class="rea-palette rea-popover" hidden aria-label="Shape colors"></div><div class="rea-handles" hidden></div><div class="rea-resizers" hidden></div><div class="rea-edge-controls" hidden></div><div class="rea-selection-bounds" hidden></div><div class="rea-marquee" hidden></div>
     <svg class="rea-preview" hidden><defs><marker id="rea-preview-${uid}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10" fill="#7956d9"/></marker></defs><path class="rea-preview-line" marker-end="url(#rea-preview-${uid})"/></svg>
     <div class="rea-zoom">${button("undo", "Undo", 'data-action="undo"')}${button("redo", "Redo", 'data-action="redo"')}<i></i>${button("minus", "Zoom out", 'data-action="out"')}<button class="rea-percent" data-action="fit" title="Fit diagram" aria-label="Fit diagram">100%</button>${button("plus", "Zoom in", 'data-action="in"')}</div>
@@ -95,12 +96,68 @@ export function mount(root, options) {
       root
         .querySelector(`[data-action=${mode}]`)
         .setAttribute("aria-pressed", String(mode === theme));
+    if (root.dataset.background) {
+      const colors = paperColors(root.dataset.background, theme);
+      root.style.setProperty("--paper", colors.paper);
+      root.style.setProperty("--grid", colors.grid);
+    }
     if (save)
       Promise.resolve(options.setTheme?.(theme)).catch(() =>
         status("Could not save theme preference.", true),
       );
   }
   setTheme(options.theme || "light", false);
+  function setAppearance(patch, save = true) {
+    const background =
+        backgroundHex(patch.background) || root.dataset.background || "#fffdf5",
+      showGrid = patch.showGrid ?? root.dataset.grid !== "false";
+    root.dataset.background = background;
+    root.dataset.grid = String(showGrid);
+    const colors = paperColors(background, root.dataset.theme);
+    root.style.setProperty("--paper", colors.paper);
+    root.style.setProperty("--grid", colors.grid);
+    $(".rea-background-hex").value = background;
+    for (const button of root.querySelectorAll("button[data-background]"))
+      button.setAttribute(
+        "aria-pressed",
+        String(backgroundHex(button.dataset.background) === background),
+      );
+    $("[data-action=grid]").setAttribute("aria-pressed", String(showGrid));
+    if (save)
+      Promise.resolve(options.setAppearance?.({ background, showGrid })).catch(
+        () => status("Could not save background preference.", true),
+      );
+  }
+  setAppearance(
+    {
+      background: options.background || "ivory",
+      showGrid: options.showGrid !== false,
+    },
+    false,
+  );
+  onBackgroundInput();
+  function onBackgroundInput() {
+    const input = $(".rea-background-hex");
+    input.addEventListener(
+      "change",
+      () => {
+        const color = backgroundHex(input.value);
+        input.setAttribute("aria-invalid", String(!color));
+        if (color) setAppearance({ background: color });
+      },
+      { signal: abort.signal },
+    );
+    input.addEventListener(
+      "keydown",
+      (e) => {
+        if (e.key === "Enter") {
+          e.stopPropagation();
+          input.blur();
+        }
+      },
+      { signal: abort.signal },
+    );
+  }
   function setSnap(value, save = true) {
     snapping = value;
     root.dataset.snap = String(value);
@@ -204,6 +261,7 @@ export function mount(root, options) {
   function view() {
     transform.style.transform = `translate(${pan.x}px,${pan.y}px) scale(${zoom})`;
     $(".rea-percent").textContent = `${Math.round(zoom * 100)}%`;
+    canvas.style.setProperty("--grid-radius", `${0.8 * zoom}px`);
     canvas.style.backgroundSize = `${GRID * zoom}px ${GRID * zoom}px`;
     canvas.style.backgroundPosition = `${pan.x - (GRID * zoom) / 2}px ${pan.y - (GRID * zoom) / 2}px`;
     placeControls();
@@ -281,10 +339,10 @@ export function mount(root, options) {
         q.style.top = `${p.y + ({ top: -28, bottom: 28 }[side] || 0)}px`;
       }
       for (const [corner, p] of Object.entries({
-        n: { x: top.x, y: top.y - 7 },
-        e: { x: right.x + 7, y: right.y },
-        s: { x: bottom.x, y: bottom.y + 7 },
-        w: { x: left.x - 7, y: left.y },
+        n: { x: top.x, y: top.y },
+        e: { x: right.x, y: right.y },
+        s: { x: bottom.x, y: bottom.y },
+        w: { x: left.x, y: left.y },
         nw: toLocal({ x: n.x - n.width / 2, y: n.y - n.height / 2 }),
         ne: toLocal({ x: n.x + n.width / 2, y: n.y - n.height / 2 }),
         se: toLocal({ x: n.x + n.width / 2, y: n.y + n.height / 2 }),
@@ -293,6 +351,11 @@ export function mount(root, options) {
         const b = resizers.querySelector(`[data-resize=${corner}]`);
         b.style.left = `${p.x}px`;
         b.style.top = `${p.y}px`;
+        if (corner.length === 1) {
+          if (["n", "s"].includes(corner))
+            b.style.width = `${Math.max(38, n.width * zoom - 20)}px`;
+          else b.style.height = `${Math.max(38, n.height * zoom - 20)}px`;
+        }
       }
     } else if (selectedEdge !== null) {
       const link = layout.links[selectedEdge];
@@ -404,7 +467,7 @@ export function mount(root, options) {
     b.className = "rea-port";
     b.dataset.port = side;
     b.setAttribute("aria-label", `Drag ${side} connection handle`);
-    b.title = "Drag to connect · Drop in empty space to add a connected shape";
+
     handles.append(b);
     const q = doc.createElement("button");
     q.className = "rea-quick-add";
@@ -418,7 +481,8 @@ export function mount(root, options) {
     b.className = "rea-resize";
     b.dataset.resize = corner;
     b.setAttribute("aria-label", `Resize ${corner} corner`);
-    b.title = "Drag to resize · Shift to keep proportions";
+    b.dataset.edgeGrip = String(corner.length === 1);
+
     $(".rea-resizers").append(b);
   }
   on($(".rea-resizers"), "pointerdown", (e) => {
@@ -2056,6 +2120,7 @@ export function mount(root, options) {
     previous: () => present(-1),
     "exit-present": exitPresent,
     snap: () => setSnap(!snapping),
+    grid: () => setAppearance({ showGrid: root.dataset.grid !== "true" }),
     light: () => setTheme("light"),
     dark: () => setTheme("dark"),
     more: () => {
@@ -2102,6 +2167,9 @@ export function mount(root, options) {
     redo: () => travel(1),
   };
   on(root, "click", (e) => {
+    const background =
+      e.target.closest("[data-background]")?.dataset.background;
+    if (background) setAppearance({ background });
     const action = e.target.closest("[data-action]")?.dataset.action;
     if (action) actions[action]?.();
     const t = e.target.closest("[data-tool]")?.dataset.tool;
@@ -2264,6 +2332,7 @@ export function mount(root, options) {
       abort.abort();
       setMarkup(root, "");
     },
+    setAppearance: (patch) => setAppearance(patch, false),
     setSnap: (value) => setSnap(value, false),
     setTheme: (theme) => setTheme(theme, false),
     focusNode: focusIdea,
