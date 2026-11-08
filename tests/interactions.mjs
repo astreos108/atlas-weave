@@ -58,7 +58,8 @@ try {
   await page.getByRole("button", { name: "Fit diagram", exact: true }).click();
   let a = page.getByRole("button", { name: "Edit First", exact: true }),
     b = page.getByRole("button", { name: "Edit Second", exact: true });
-  await a.dblclick();
+  // Click the shape body: rich SVG labels can extend the group bounds toward resize grips.
+  await a.locator(".rea-shape-body").dblclick();
   const edit = page.getByRole("textbox", { name: "Shape text", exact: true });
   await edit.fill('[[Note]] "A" & [B] | ;');
   await edit.press("Enter");
@@ -69,7 +70,7 @@ try {
   });
   await a.waitFor();
   assert.ok((await stored()).includes("#quot;"));
-  await a.dblclick();
+  await a.locator(".rea-shape-body").dblclick();
   await edit.fill("Do not save this");
   await edit.press("Escape");
   assert.equal(
