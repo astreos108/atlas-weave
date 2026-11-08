@@ -1,0 +1,4 @@
+interface:
+  display_name: "AtlasWeaver"
+  short_description: "Build source-grounded learning maps in Atlas Weave"
+  default_prompt: "Use $atlasweaver to create a source-grounded learning map in Atlas Weave."
