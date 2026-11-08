@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.9.2 — clearer pan icon
+
+- Redrew the hand icon with balanced open-palm proportions and consistent toolbar styling.
+
 ## 0.9.1 — Atlas Weave
 
 - Renamed the product to Atlas Weave and introduced its visual learning and thinking positioning.
