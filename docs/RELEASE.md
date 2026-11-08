@@ -1,15 +1,14 @@
-REA Board 0.8.0 improves writing and editing while keeping Mermaid as the document source.
+REA Board 0.9.0 adds live in-place writing and precise connector guides.
 
-- Optional character counter with an adjustable soft target, never a typing limit.
-- Full-shape editing, overflow indicators/expansion and edge double-click to fit text.
-- Bold, italic, native-theme highlights, inline code, note aliases and safe web links; list tools, pair wrapping and text undo/redo.
-- Per-paragraph left, center, right and justify alignment in version 5 metadata.
-- Editing stays open on blur; draft and cursor restore when navigating away and back in the same Obsidian session.
-- Frame interior double-click creates a member; the header edits its title.
-- Fixed 20/100/500-unit grid levels share one world origin at every zoom.
+- Edit formatted text directly on the shape, with no white field or visible Markdown syntax. Bold, italic, highlights, links and per-paragraph alignment update live.
+- Edit frame titles in their title area; keep drafts, selection and undo behavior during navigation.
+- Change link targets in a small popover. Pasted content is inserted as text, never executable HTML.
+- Auto-fit adjusts both width and height while keeping neighboring shapes stationary.
+- Teal guides align connector routes and labels; small midpoint/quarter-point magnets snap endpoints without grid rounding. Alt allows free adjustment.
+- The optional soft character counter counts visible text.
 
-Desktop Obsidian 1.13+. Basic Markdown source editing is supported, not every Obsidian Markdown extension. Existing user geometry is preserved. Older Board versions render version 5 files as source-only. This GitHub release is not an Obsidian directory approval.
+Everything remains Mermaid with existing version 5 formatting metadata. Supported rich formatting is a focused subset; Obsidian Markdown extensions, embeds and arbitrary HTML are not supported. Desktop Obsidian 1.13+. This release does not represent directory approval.
 
-Release checks include official lint, unit/browser tests, dependency auditing and independent clean rebuilds. Assets include checksums, bundled license notices and GitHub build provenance.
+Release checks cover lint, unit/browser interactions, dependency auditing, independent clean rebuilds, checksums and build provenance.
 
 Optional support: https://ko-fi.com/theprasanjitsahoo

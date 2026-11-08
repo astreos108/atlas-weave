@@ -48,6 +48,7 @@ try {
     "foundation",
     "public-release",
     "text-editing",
+    "live-writing",
   ])
     await run(file);
 } finally {

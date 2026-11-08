@@ -1,3 +1,8 @@
+import {
+  magneticAttachment,
+  connectorAlignment,
+  attachmentGuides,
+} from "./connector-guides.js";
 import { createTextEditor } from "./text-editor.js";
 import { gridLayers } from "./grid.js";
 import { backgroundHex, paperColors } from "./appearance.js";
@@ -16,11 +21,9 @@ import { INITIAL, parse, serialize, nextId, readBoard } from "./model.js";
 import {
   snapValue,
   snapPoint,
-  nearestAttachment,
   dragSegment,
   dragBend,
   edgeLink,
-  GRID,
 } from "./connector-routing.js";
 import { alignMove } from "./alignment.js";
 import {
@@ -902,12 +905,80 @@ export function mount(root, options) {
       );
       width = (edge.labelWidth || 180) * zoom;
     }
+    const foreign = doc.createElementNS(
+      "http://www.w3.org/2000/svg",
+      "foreignObject",
+    );
+    foreign.classList.add("rea-live-foreign");
+    const host = doc.createElement("div");
+    host.className = "rea-live-host";
+    if (n?.shape === "frame") host.classList.add("rea-live-frame-title");
+    foreign.append(host);
+    const worldWidth = n
+      ? n.shape === "frame"
+        ? Math.min(n.width - 36, Math.max(180, n.label.length * 9))
+        : n.width - (n.shape === "diamond" ? n.width * 0.55 : 32)
+      : edge.labelWidth || 180;
+    const worldHeight = n
+      ? n.shape === "frame"
+        ? Math.min(80, n.height - 20)
+        : n.height - 28
+      : Math.max(60, (edge.labelFontSize || 13) * 4);
+    foreign.setAttribute(
+      "x",
+      n
+        ? -n.width / 2 +
+            (n.shape === "frame"
+              ? 18
+              : n.shape === "diamond"
+                ? n.width * 0.275
+                : 16)
+        : layout.links[edgeIndex].geometry.label.x - worldWidth / 2,
+    );
+    foreign.setAttribute(
+      "y",
+      n
+        ? n.shape === "frame"
+          ? -n.height / 2 + 10
+          : -n.height / 2 + 14
+        : layout.links[edgeIndex].geometry.label.y - worldHeight / 2,
+    );
+    foreign.setAttribute("width", worldWidth);
+    foreign.setAttribute("height", worldHeight);
+    (n ? n.el : diagram.querySelector("svg")).append(foreign);
+    if (!n) layout.links[edgeIndex].label?.setAttribute("visibility", "hidden");
+    const originalSize = n ? { width: n.width, height: n.height } : null;
     const editor = createTextEditor({
       doc,
       root,
       signal: abort.signal,
       value: n ? n.label : edge.label,
       label: n ? "Shape text" : "Connection text",
+      surfaceHost: host,
+      resolveTitle: options.resolveLinkTitle,
+      onOpenLink: (link, internal) =>
+        internal
+          ? options.openLink?.(link)
+          : win.open(link, "_blank", "noopener,noreferrer"),
+      onExpand: () => {
+        if (!n || n.shape === "frame") return;
+        const size = layout.fitText(n.id);
+        layout.resize(n.id, size);
+        layout.redraw();
+        const inset = n.shape === "diamond" ? n.width * 0.55 : 32;
+        foreign.setAttribute("x", -n.width / 2 + inset / 2);
+        foreign.setAttribute("y", -n.height / 2 + 14);
+        foreign.setAttribute("width", n.width - inset);
+        foreign.setAttribute("height", n.height - 28);
+        wrapper.style.width = `${n.width * zoom}px`;
+        wrapper.style.height = `${n.height * zoom}px`;
+      },
+      onDraft: (value) => {
+        if (n) {
+          n.label = value;
+          layout.resize(n.id, { width: n.width, height: n.height });
+        }
+      },
       alignment: n?.textAlign || "center",
       alignments: n?.textAlignments || [],
       getPreferences: () => textPreferences,
@@ -931,12 +1002,25 @@ export function mount(root, options) {
     wrapper.style.height = `${Math.min(canvas.clientHeight - 130, Math.max(40, height))}px`;
     wrapper.style.left = `${Math.max(16 + editorWidth / 2, Math.min(canvas.clientWidth - 16 - editorWidth / 2, p.x))}px`;
     wrapper.style.top = `${Math.max(80 + height / 2, Math.min(canvas.clientHeight - 40 - height / 2, n?.shape === "frame" ? toLocal({ x: n.x, y: n.y - n.height / 2 }).y + 30 : p.y))}px`;
-    input.style.fontSize = `${Math.max(10, (edge ? edge.labelFontSize || 13 : 16) * zoom)}px`;
+    input.style.fontSize = `${edge ? edge.labelFontSize || 13 : 16}px`;
+    if (n) input.style.color = n.textEl.style.fill;
+    if (n?.shape === "frame") {
+      const at = toLocal({
+        x: n.x - n.width / 2 + 18 + worldWidth / 2,
+        y: n.y - n.height / 2 + 10 + worldHeight / 2,
+      });
+      wrapper.style.width = `${worldWidth * zoom}px`;
+      wrapper.style.height = `${worldHeight * zoom}px`;
+      wrapper.style.left = `${at.x}px`;
+      wrapper.style.top = `${at.y}px`;
+    }
     editing = {
       input,
       editor,
       id,
       edgeIndex,
+      foreign,
+      originalSize,
       original: input.value,
       originalAlignments: JSON.stringify(n?.textAlignments || []),
     };
@@ -983,6 +1067,19 @@ export function mount(root, options) {
       alignments = current.editor.getAlignments();
     editing = null;
     current.editor.remove();
+    current.foreign.remove();
+    if (current.id) {
+      const n = layout.nodes.get(current.id),
+        saved = model.nodes.find((n) => n.id === current.id);
+      if (n && saved) {
+        n.label = saved.label;
+        layout.resize(
+          n.id,
+          cancel ? current.originalSize : { width: n.width, height: n.height },
+        );
+      }
+    } else
+      layout.links[current.edgeIndex]?.label?.removeAttribute("visibility");
     diagram
       .querySelectorAll(".rea-editing")
       .forEach((el) => el.classList.remove("rea-editing"));
@@ -1015,7 +1112,7 @@ export function mount(root, options) {
     });
   }
 
-  function connect(from, to, fromSide) {
+  function connect(from, to, fromSide, targetAttachment) {
     if (from === to) return;
     change((m) => {
       if (!m.edges.some((e) => e.from === from && e.to === to))
@@ -1024,7 +1121,10 @@ export function mount(root, options) {
           to,
           label: "",
           routing: "auto",
-          ...(fromSide ? { fromSide } : {}),
+          ...(fromSide ? { fromSide, fromRatio: 0 } : {}),
+          ...(targetAttachment
+            ? { toSide: targetAttachment.side, toRatio: targetAttachment.ratio }
+            : {}),
         });
     });
     setTool("select");
@@ -1032,7 +1132,7 @@ export function mount(root, options) {
   function hitNode(x, y, exclude) {
     const p = toWorld(x, y);
     for (const n of [...layout.nodes.values()].reverse()) {
-      if (n.id === exclude) continue;
+      if (n.id === exclude || n.shape === "frame") continue;
       const dx = Math.abs(p.x - n.x) / (n.width / 2 + 8 / zoom),
         dy = Math.abs(p.y - n.y) / (n.height / 2 + 8 / zoom);
       if (n.shape === "diamond" ? dx + dy <= 1.12 : dx <= 1 && dy <= 1)
@@ -1076,11 +1176,24 @@ export function mount(root, options) {
             height: 0,
             shape: "rect",
           },
+      hit = drag.target
+        ? magneticAttachment(
+            target,
+            toWorld(e.clientX, e.clientY),
+            zoom,
+            !e.altKey,
+            a,
+          )
+        : null,
       geo = wireGeometry(a, target, false, {
         routing: "auto",
         fromSide: drag.fromSide,
+        fromRatio: 0,
+        ...(hit ? { toSide: hit.side, toRatio: hit.ratio } : {}),
       }),
       points = geo.points.map(toLocal);
+    drag.targetAttachment = hit;
+    drawGuides(hit ? attachmentGuides(target, hit) : []);
     $(".rea-preview").hidden = false;
     $(".rea-preview-line").setAttribute(
       "d",
@@ -1167,6 +1280,22 @@ export function mount(root, options) {
     if (b)
       startEdgeDrag(e, b.dataset.edgeControl, Number(b.dataset.index) || 0);
   });
+  function connectorAnchors(exclude) {
+    return [...layout.nodes.values()]
+      .filter((n) => n.shape !== "frame")
+      .flatMap((n) => [
+        { x: n.x, y: n.y },
+        { x: n.x - n.width / 2, y: n.y },
+        { x: n.x + n.width / 2, y: n.y },
+        { x: n.x, y: n.y - n.height / 2 },
+        { x: n.x, y: n.y + n.height / 2 },
+      ])
+      .concat(
+        layout.links.flatMap((l, i) =>
+          i === exclude ? [] : l.geometry?.points || [],
+        ),
+      );
+  }
   function moveEdge(e) {
     const d = drag,
       link = layout.links[d.edgeIndex],
@@ -1183,22 +1312,32 @@ export function mount(root, options) {
       const n = d.target
           ? layout.nodes.get(d.target)
           : { ...p, width: 0, height: 0, shape: "rect" },
-        attachment = nearestAttachment(
+        attachment = magneticAttachment(
           n,
-          d.target &&
-            Math.abs(p.x - n.x) < n.width * 0.18 &&
-            Math.abs(p.y - n.y) < n.height * 0.18
-            ? d.action === "from"
-              ? d.points[1] || d.points.at(-1)
-              : d.points.at(-2) || d.points[0]
-            : p,
+          toWorld(e.clientX, e.clientY),
+          zoom,
+          !e.altKey,
+          layout.nodes.get(
+            d.action === "from" ? d.original.to : d.original.from,
+          ),
         ),
         prefix = d.action === "from" ? "from" : "to";
+      drawGuides(d.target ? attachmentGuides(n, attachment) : []);
       link.edge[`${prefix}Side`] = attachment.side;
       link.edge[`${prefix}Ratio`] = attachment.ratio;
       if (prefix === "from") link.previewFrom = n;
       else link.previewTo = n;
     } else if (d.action === "label") {
+      const aligned = connectorAlignment(
+        toWorld(e.clientX, e.clientY),
+        connectorAnchors(d.edgeIndex),
+        zoom,
+        !e.altKey,
+      );
+      for (const axis of ["x", "y"])
+        if (aligned.guides.some((g) => g.axis === axis))
+          p[axis] = aligned.point[axis];
+      drawGuides(aligned.guides);
       const before = d.original.labelOffset || { x: 0, y: 0 };
       link.edge.labelOffset = {
         x: before.x + p.x - d.start.x,
@@ -1210,6 +1349,16 @@ export function mount(root, options) {
         Math.min(800, (d.original.labelWidth || 180) + 2 * (p.x - d.start.x)),
       );
     } else {
+      const aligned = connectorAlignment(
+        toWorld(e.clientX, e.clientY),
+        connectorAnchors(d.edgeIndex),
+        zoom,
+        !e.altKey,
+      );
+      for (const axis of ["x", "y"])
+        if (aligned.guides.some((g) => g.axis === axis))
+          p[axis] = aligned.point[axis];
+      drawGuides(aligned.guides);
       const points =
         d.action === "bend"
           ? dragBend(d.points, d.index, p)
@@ -1544,7 +1693,7 @@ export function mount(root, options) {
       if (!cancel && done.moved) {
         const r = canvas.getBoundingClientRect();
         if (done.target) {
-          connect(done.from, done.target, done.fromSide);
+          connect(done.from, done.target, done.fromSide, done.targetAttachment);
           selection = new Set([done.target]);
           selected = done.target;
         } else if (
@@ -1945,7 +2094,17 @@ export function mount(root, options) {
         y2: b.y,
       }))
         line.setAttribute(k, v);
+      if (g.kind) line.classList.add("rea-connector-guide");
       svg.append(line);
+      if (g.point) {
+        const at = toLocal(g.point),
+          dot = doc.createElementNS("http://www.w3.org/2000/svg", "circle");
+        dot.setAttribute("cx", at.x);
+        dot.setAttribute("cy", at.y);
+        dot.setAttribute("r", 4);
+        dot.classList.add("rea-connector-snap");
+        svg.append(dot);
+      }
     }
   }
   on($(".rea-title"), "click", () => {
@@ -2149,7 +2308,13 @@ export function mount(root, options) {
     }
   }
   on(root, "paste", (e) => {
-    if (/INPUT|TEXTAREA|SELECT/.test(e.target.tagName) || !modal.hidden) return;
+    if (
+      e.target.isContentEditable ||
+      e.target.closest?.('[contenteditable="true"]') ||
+      /INPUT|TEXTAREA|SELECT/.test(e.target.tagName) ||
+      !modal.hidden
+    )
+      return;
     e.preventDefault();
     e.stopPropagation();
     const data = e.clipboardData,
@@ -2166,7 +2331,13 @@ export function mount(root, options) {
     pasteText(text, html);
   });
   on(root, "copy", (e) => {
-    if (/INPUT|TEXTAREA|SELECT/.test(e.target.tagName) || !model) return;
+    if (
+      e.target.isContentEditable ||
+      e.target.closest?.('[contenteditable="true"]') ||
+      /INPUT|TEXTAREA|SELECT/.test(e.target.tagName) ||
+      !model
+    )
+      return;
     e.preventDefault();
     e.stopPropagation();
     const ids = selection.size

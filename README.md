@@ -19,9 +19,9 @@ REA Board is an independent community project. It is not affiliated with Obsidia
 - Four-direction quick add, Tab-to-add-child, hex backgrounds with Ivory/Ice/Sage shortcuts, optional dots, light/dark modes, keyboard presentation, floating filename rename and offscreen recovery.
 - Paste Mermaid directly or through right-click → Paste. Import files. Copy selected shapes as Mermaid, PNG or SVG.
 - Link to vault notes, headings and blocks. Optional external MCP bridge and reusable assistant skill.
-- Optional character counter with a personal soft target; typing is never blocked. Full-shape text editing stays open across app/tab switches.
+- Optional character counter with a personal soft target; typing is never blocked. Live in-place text editing stays open across app/tab switches.
 - Basic Markdown text: `**bold**`, `*italic*`, `==highlight==`, inline code, `[[Note|alias]]` and `[label](https://example.com)`. Command/Ctrl-click links to follow them; note titles/aliases appear instead of raw wiki syntax.
-- Numbered/bullet list tools, selection wrapping with brackets/parentheses, text undo/redo and per-paragraph left/center/right/justify alignment. Select text or place the caret in a paragraph, then use the floating text toolbar.
+- Numbered/bullet list tools, selection wrapping with brackets/parentheses, text undo/redo and per-paragraph left/center/right/justify alignment. Select text or place the caret in a paragraph, then use the floating text toolbar; changes display immediately.
 - Double-click a selected shape border/handle to fit text. Overflow keeps the full source and shows an ellipsis; the editing chevron expands the field. Frame titles edit from the header; double-click empty interior space to add a member.
 
 ## Install
@@ -134,10 +134,12 @@ MIT © 2026 Prasanjit Sahoo. Mermaid, DOMPurify and the MCP SDK retain their ups
 
 ### Writing details
 
-The counter is a **soft target**, off by default, configured in More or REA Board settings. It counts Unicode grapheme characters in the source, including formatting markers, spaces and line breaks; it is not Twitter's weighted URL counting algorithm. No truncation or payment gate is applied.
+The counter is a **soft target**, off by default, configured in More or REA Board settings. It counts visible Unicode grapheme characters, including spaces and line breaks, while excluding Markdown markers and hidden link destinations; it is not Twitter's weighted URL counting algorithm. No truncation or payment gate is applied.
 
-The editor uses Markdown source with a small formatting toolbar, rather than Obsidian's full Markdown editor. Supported inline formatting renders in the shape. Embedded images, callouts, tables and plugin-provided Markdown extensions are not promised. Use Shift+Enter for an ordinary new line; Enter continues a list, an empty list item ends it, and Command/Ctrl+Enter or the checkmark commits. Escape cancels the current edit. Alignment applies to selected source paragraphs and may differ between paragraphs; ordinary justify leaves the final wrapped line ragged.
+The editor displays supported formatting live on the shape, with no separate white text field. Frame titles edit at their header text. Markdown is retained in the Mermaid label source. A small link-target popover changes destinations without exposing Markdown syntax. This is a focused rich editor, rather than Obsidian's full Markdown editor. Embedded images, callouts, tables and plugin-provided Markdown extensions are not promised. Use Shift+Enter for an ordinary new line; Enter continues a list, an empty list item ends it, and Command/Ctrl+Enter or the checkmark commits. Escape cancels the current edit. Alignment applies to selected source paragraphs and may differ between paragraphs; ordinary justify leaves the final wrapped line ragged.
 
 App/window blur leaves the current field open. Navigating away from a Board saves and caches its active draft/cursor for restoration within that running Obsidian session. This session cache is not a cross-device or crash-recovery history. Version 5 layout comments persist paragraph alignment; older Board versions safely treat those files as source-only rather than silently deleting alignment metadata.
 
 Grid dots use fixed world-space levels at 20, 100 and 500 units. Their origin stays attached to the board during pan and zoom. Fine marks fade from use when too dense; snapping remains at 20 units. Existing off-grid positions and manually chosen dimensions are preserved rather than silently changing your layout.
+
+Connector edits show **teal** alignment guides, distinct from red shape guides. Midpoints and quarter-points use magnets no larger than four screen pixels (and smaller on short edges). A small teal marker shows an exact snap. Other attachment positions stay adjustable; hold Alt to bypass guides, magnets and grid snapping. Empty frame backgrounds are not connector targets.

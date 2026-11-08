@@ -7,7 +7,7 @@ The Board source is the durable truth. UI selections, viewport, computed connect
 | Domain | `src/domain/`, `model.js`, `text-format.js` | Frame membership, move/arrange/resize invariants, Mermaid codec and validated persisted fields |
 | Workflows | `src/workflows/`, `bridge-operations.js` | Serialized persistence, failed-save state, semantic operations and bounded mutations |
 | Projections | `layout.js`, `connector-projection.js`, `grid.js`, routing/alignment | SVG geometry, port/lane separation, gaps/hops, obstacle detours and guides |
-| UI | `canvas.js`, `text-editor.js`, `icons.js`, `markup.js` | Intent collection, selection, source dialog and sanitized rendering |
+| UI | `canvas.js`, `text-editor.js`, `rich-text-surface.js`, `icons.js`, `markup.js` | Intent collection, selection, source dialog and sanitized rendering |
 | Adapters | `plugin.js`, `plugin-settings.js`, `note-links.js`, `desktop-clipboard.js`, `bridge-server.js`, `mcp/` | Obsidian lifecycle, file/link/clipboard, optional loopback and stdio transport |
 
 ## Invariants
@@ -35,3 +35,5 @@ Initial public support is desktop-only. Mobile, optimal dense-graph routing, nes
 ## Text ownership
 
 Markdown label source and paragraph alignments are durable. Rich SVG runs, wrapping and overflow are projections. The editor owns a transient draft, cursor and local undo stack; blur does not imply commit. Obsidian's adapter caches active editor sessions by Board path while navigation saves the draft. Character targets are preferences, never content validation constraints. Version 5 metadata distinguishes alignment from earlier codecs so older releases cannot silently strip it. Inline links use explicit user navigation; rendered labels never load external images or execute HTML.
+
+The rich surface is an allowlisted DOM/Markdown seam: marks, text and link destinations are serialized back to the label; pasted HTML is never mounted. Source-offset mappings restore DOM selection across live normalization and navigation. The editable surface shares the shape's SVG world coordinates; transient tools remain screen-space overlays. Connector magnets use raw pointer coordinates and a bounded screen-pixel tolerance before any grid fallback; only committed attachment ratios/routes enter document truth.

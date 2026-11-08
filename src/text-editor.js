@@ -1,3 +1,4 @@
+import { createRichSurface } from "./rich-text-surface.js";
 import {
   ALIGNMENTS,
   characterCount,
@@ -20,21 +21,32 @@ export function createTextEditor({
   onCancel,
   onDraft,
   label = "Shape text",
+  surfaceHost,
+  resolveTitle,
+  onExpand,
+  onOpenLink,
 }) {
   const localAbort = new doc.defaultView.AbortController();
   const abortEditor = () => localAbort.abort();
   signal.addEventListener("abort", abortEditor, { once: true });
   const wrapper = doc.createElement("div");
   wrapper.className = "rea-text-edit";
-  const input = doc.createElement("textarea");
-  input.className = "rea-inline-text";
-  input.value = value;
-  input.spellcheck = true;
+  let lineAlignments = [...alignments];
+  const surface = createRichSurface(doc, {
+    value,
+    resolveTitle,
+    onExpand,
+    onOpenLink,
+    alignment,
+    getAlignments: () => lineAlignments,
+  });
+  const input = surface.input;
   input.id = `rea-text-editor-${++editorSequence}`;
-  const inputLabel = doc.createElement("label");
-  inputLabel.htmlFor = input.id;
+  const inputLabel = doc.createElement("span");
+  inputLabel.id = input.id + "-label";
   inputLabel.className = "rea-sr-only";
   inputLabel.textContent = label;
+  input.setAttribute("aria-labelledby", inputLabel.id);
   const tools = doc.createElement("div");
   tools.className = "rea-text-tools rea-popover";
   tools.setAttribute("role", "toolbar");
@@ -50,10 +62,10 @@ export function createTextEditor({
   overflow.textContent = "›";
   overflow.setAttribute("aria-label", "Expand text editor");
   footer.append(counter, overflow);
-  wrapper.append(inputLabel, input, tools, footer);
+  wrapper.append(inputLabel, tools, footer);
+  (surfaceHost || wrapper).append(input);
   root.append(wrapper);
   let selected = { start: 0, end: value.length },
-    lineAlignments = [...alignments],
     expanded = false;
   let previousValue = value,
     history = [
@@ -100,7 +112,7 @@ export function createTextEditor({
       previousValue = input.value;
     }
     const prefs = getPreferences(),
-      count = characterCount(input.value);
+      count = characterCount(input.innerText.replaceAll("\u200b", ""));
     counter.hidden = !prefs.counterEnabled;
     counter.textContent = `${count} / ${prefs.characterTarget}`;
     counter.classList.toggle("rea-over-target", count > prefs.characterTarget);
@@ -153,10 +165,40 @@ export function createTextEditor({
     remember();
     update();
   };
-  const wrap = (left, right = left) =>
-    replace(
-      wrapSelection(input.value, selected.start, selected.end, left, right),
-    );
+  const wrap = (left, right = left) => {
+    const { start, end } = selected,
+      s = input.value;
+    const mark = {
+      "**": ["strong", "strong,b"],
+      "*": ["em", "em,i"],
+      "==": ["mark", "mark"],
+    }[left];
+    if (start === end && mark) {
+      input.pendingMark(...mark);
+      input.focus();
+      remember();
+      update();
+      return;
+    }
+
+    if (
+      input.activeMark(
+        { "**": "strong,b", "*": "em,i", "==": "mark" }[left] ||
+          "nonexistent-mark",
+      ) &&
+      s.slice(start - left.length, start) === left &&
+      s.slice(end, end + right.length) === right
+    )
+      replace({
+        value:
+          s.slice(0, start - left.length) +
+          s.slice(start, end) +
+          s.slice(end + right.length),
+        start: start - left.length,
+        end: end - left.length,
+      });
+    else replace(wrapSelection(s, start, end, left, right));
+  };
   const action = (label, text, fn) => {
     const b = doc.createElement("button");
     b.type = "button";
@@ -187,22 +229,66 @@ export function createTextEditor({
     input.focus();
     update();
   });
-  action("Internal note link", "[[ ]]", () => wrap("[[", "]]"));
-  action("Web link", "↗", () => {
-    const { start, end } = selected,
-      label = input.value.slice(start, end) || "Link",
-      prefix = "[" + label + "](";
-    input.value =
-      input.value.slice(0, start) +
-      prefix +
-      "https://" +
-      ")" +
-      input.value.slice(end);
-    input.focus();
-    input.setSelectionRange(start + prefix.length, start + prefix.length + 8);
+  let linkPanel = null;
+  function editLink(internal) {
+    linkPanel?.remove();
     remember();
-    update();
-  });
+    const existing = input.linkAtSelection(),
+      range = existing
+        ? { start: existing.start, end: existing.end }
+        : selected;
+    const text =
+      existing?.label || input.value.slice(range.start, range.end) || "Link";
+    const panel = doc.createElement("div");
+    panel.className = "rea-live-link-panel rea-popover";
+    linkPanel = panel;
+    const target = doc.createElement("input");
+    target.setAttribute("aria-label", "Link target");
+    target.placeholder = internal
+      ? "Note or note#Heading"
+      : "https://example.com";
+    target.value = existing?.target || (internal ? text : "https://");
+    const apply = doc.createElement("button");
+    apply.textContent = "✓";
+    apply.setAttribute("aria-label", "Apply link");
+    const save = () => {
+      const url = target.value.trim();
+      const valid = internal
+        ? url && !/[\n\r|\]]/.test(url)
+        : /^(https?:\/\/[^\s)]+|mailto:[^\s)]+)$/.test(url);
+      target.setAttribute("aria-invalid", String(!valid));
+      if (!valid) return;
+      const markup = internal ? `[[${url}|${text}]]` : `[${text}](${url})`;
+      const old = input.value;
+      panel.remove();
+      linkPanel = null;
+      replace({
+        value: old.slice(0, range.start) + markup + old.slice(range.end),
+        start: range.start,
+        end: range.start + markup.length,
+      });
+    };
+    on(panel, "pointerdown", (e) => e.stopPropagation());
+    on(apply, "click", save);
+    on(target, "keydown", (e) => {
+      e.stopPropagation();
+      if (e.key === "Enter") {
+        e.preventDefault();
+        save();
+      }
+      if (e.key === "Escape") {
+        panel.remove();
+        linkPanel = null;
+        input.focus();
+      }
+    });
+    panel.append(target, apply);
+    wrapper.append(panel);
+    target.focus();
+    target.select();
+  }
+  action("Internal note link", "[[ ]]", () => editLink(true));
+  action("Web link", "↗", () => editLink(false));
   const align = doc.createElement("select");
   align.setAttribute("aria-label", "Text alignment");
   for (const a of ALIGNMENTS) {
@@ -220,7 +306,7 @@ export function createTextEditor({
       input.selectionEnd,
     );
     align.value = lineAlignments[first] || alignment;
-    input.style.textAlign = align.value;
+    surface.refreshAlignment();
   }
   on(align, "pointerdown", remember);
   on(align, "change", () => {
@@ -237,10 +323,21 @@ export function createTextEditor({
     update();
   });
   action("Save text", "✓", onCommit);
-  on(input, "select", remember);
+  on(doc, "selectionchange", () => {
+    if (doc.activeElement === input) remember();
+  });
   on(input, "keyup", remember);
   on(input, "click", remember);
-  on(input, "input", () => {
+  on(input, "input", (e) => {
+    if (!e.isComposing && e.data?.length > 1 && e.data === input.textContent) {
+      input.value = e.data;
+      input.setSelectionRange(input.value.length, input.value.length);
+    } else if (!e.isComposing) surface.normalize();
+    remember();
+    update();
+  });
+  on(input, "compositionend", () => {
+    surface.normalize();
     remember();
     update();
   });
@@ -248,6 +345,20 @@ export function createTextEditor({
     e.stopPropagation();
     remember();
     const mod = e.metaKey || e.ctrlKey;
+    if (mod && e.key.toLowerCase() === "a") {
+      e.preventDefault();
+      input.select();
+      remember();
+      return;
+    }
+    if (mod && ["Home", "End"].includes(e.key)) {
+      e.preventDefault();
+      const at = e.key === "Home" ? 0 : input.value.length;
+      input.setSelectionRange(at, at);
+      remember();
+      return;
+    }
+
     if (mod && e.key.toLowerCase() === "z") {
       e.preventDefault();
       const next = historyIndex + (e.shiftKey ? 1 : -1);
@@ -312,7 +423,7 @@ export function createTextEditor({
       if (
         e.target === input &&
         mod &&
-        (["b", "i", "z"].includes(key) ||
+        (["a", "b", "i", "z", "home", "end"].includes(key) ||
           (e.shiftKey && key === "h") ||
           key === "enter")
       )
@@ -322,14 +433,46 @@ export function createTextEditor({
   );
   on(wrapper, "pointerdown", (e) => e.stopPropagation());
   on(wrapper, "dblclick", (e) => e.stopPropagation());
+  on(input, "pointerdown", (e) => {
+    e.stopPropagation();
+    const link = e.target.closest("[data-text-link]");
+    if (link && (e.metaKey || e.ctrlKey)) {
+      e.preventDefault();
+      onOpenLink?.(link.dataset.textLink, link.dataset.internal === "true");
+    }
+  });
+  on(input, "copy", (e) => e.stopPropagation());
+  on(input, "cut", (e) => e.stopPropagation());
+  on(input, "dblclick", (e) => e.stopPropagation());
+  on(input, "paste", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    remember();
+    const text = e.clipboardData.getData("text/plain");
+    replace({
+      value:
+        input.value.slice(0, selected.start) +
+        text +
+        input.value.slice(selected.end),
+      start: selected.start + text.length,
+      end: selected.start + text.length,
+    });
+  });
   on(input, "wheel", (e) => e.stopPropagation());
   on(overflow, "pointerdown", (e) => e.preventDefault());
   on(overflow, "click", () => {
+    if (onExpand) {
+      onExpand();
+      input.focus();
+      update();
+      return;
+    }
     expanded = !expanded;
     wrapper.classList.toggle("rea-editor-expanded", expanded);
     input.focus();
     update();
   });
+  wrapper.classList.add("rea-inplace-tools");
   syncAlignment();
   return {
     input,
@@ -339,6 +482,7 @@ export function createTextEditor({
     remove: () => {
       localAbort.abort();
       signal.removeEventListener("abort", abortEditor);
+      input.remove();
       wrapper.remove();
     },
   };

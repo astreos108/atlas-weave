@@ -235,7 +235,7 @@ try {
   assert.equal(
     await page
       .getByRole("textbox", { name: "Mermaid source", exact: true })
-      .inputValue(),
+      .evaluate((el) => el.value ?? el.textContent),
     "sequenceDiagram\nAlice->>Bob: Hello",
   );
   await page.getByRole("button", { name: "Close source", exact: true }).click();

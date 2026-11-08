@@ -19,7 +19,7 @@ if (!bridgeFile) {
   process.exit(1);
 }
 const server = new Server(
-  { name: "rea-board", version: "0.8.0" },
+  { name: "rea-board", version: "0.9.0" },
   { capabilities: { tools: {}, resources: {} } },
 );
 server.setRequestHandler(ListToolsRequestSchema, async () => ({

@@ -65,22 +65,35 @@ try {
   await node().dblclick();
   const nb = await node().boundingBox(),
     ib = await input.boundingBox();
-  assert.ok(ib.height > nb.height * 0.8, "editor fills shape height");
+  assert.ok(ib.width > nb.width * 0.8, "live editor uses the shape text width");
+  assert.equal(await input.getAttribute("contenteditable"), "true");
   assert.equal(await page.locator(".rea-character-count").isVisible(), false);
   await input.fill("Draft across applications");
   const other = await context.newPage();
   await other.goto("about:blank");
   await page.bringToFront();
-  assert.equal(await input.inputValue(), "Draft across applications");
+  assert.equal(
+    await input.evaluate((el) => el.value ?? el.textContent),
+    "Draft across applications",
+  );
   await other.close();
   await input.fill("selected");
   await input.press("ControlOrMeta+a");
   await input.press("(");
-  assert.equal(await input.inputValue(), "(selected)");
+  assert.equal(
+    await input.evaluate((el) => el.value ?? el.textContent),
+    "(selected)",
+  );
   await input.press("ControlOrMeta+z");
-  assert.equal(await input.inputValue(), "selected");
+  assert.equal(
+    await input.evaluate((el) => el.value ?? el.textContent),
+    "selected",
+  );
   await input.press("ControlOrMeta+Shift+z");
-  assert.equal(await input.inputValue(), "(selected)");
+  assert.equal(
+    await input.evaluate((el) => el.value ?? el.textContent),
+    "(selected)",
+  );
   await input.press("Escape");
   await page
     .getByRole("button", { name: "More board options", exact: true })
@@ -108,10 +121,15 @@ try {
   await page
     .getByRole("button", { name: "Numbered list", exact: true })
     .click();
-  assert.equal(await input.inputValue(), "1. one\n2. two\n3. three");
+  assert.equal(
+    await input.evaluate((el) => el.value ?? el.textContent),
+    "1. one\n2. two\n3. three",
+  );
   await input.press("ControlOrMeta+End");
   await input.press("Enter");
-  assert.ok((await input.inputValue()).endsWith("4. "));
+  assert.ok(
+    (await input.evaluate((el) => el.value ?? el.textContent)).endsWith("4. "),
+  );
   const text =
     "**Bold** and *italic* ==marked== [[Folder/My Note|Visible title]] [Site](https://example.com)\nSecond paragraph\nJustified words that wrap across more than one display line and remain readable, with enough additional material to exercise the overflow indicator and still retain every character when the shape is fitted to its content";
   await input.fill(text);
@@ -206,7 +224,10 @@ try {
     });
   });
   await input.waitFor();
-  assert.equal(await input.inputValue(), "Persistent page draft");
+  assert.equal(
+    await input.evaluate((el) => el.value ?? el.textContent),
+    "Persistent page draft",
+  );
   assert.deepEqual(
     await input.evaluate((el) => [el.selectionStart, el.selectionEnd]),
     [5, 10],

@@ -241,7 +241,6 @@ export function createLayout(svg, model, identify, options = {}) {
   const nodes = new Map(),
     measureContext = doc.createElement("canvas").getContext("2d");
   measureContext.font = "16px system-ui";
-  const measure = (s) => measureContext.measureText(s).width;
   for (const n of model.nodes.filter((n) => n.shape === "frame"))
     if (
       ![...svg.querySelectorAll(".node")].some((el) => identify(el) === n.id)

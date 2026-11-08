@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.9.0 — live writing and connector guides
+
+- Replaced the white Markdown field with a transparent, live rich editor inside the shape. Formatting and links render while editing; Mermaid retains Markdown source.
+- Made frame-title editing local to the title area and kept per-paragraph alignment live.
+- Added a small link-target editor, sanitized plain-text paste, selection restoration, IME handling and editor-local undo.
+- Verified auto-fit changes both width and height without moving neighboring shapes.
+- Added teal connector route/label guides and small midpoint/quarter-point attachment magnets, independent from grid rounding. Alt bypasses guides and magnets.
+- Count visible characters in the optional writing counter.
+
 ## 0.8.0 — writing and stable grid levels
 
 - Added an optional grapheme character counter with an adjustable soft target; it never blocks typing.

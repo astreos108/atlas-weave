@@ -35,7 +35,7 @@ export function nearestAttachment(node, p) {
     ratio:
       node.shape === "diamond"
         ? 0
-        : Math.max(-0.85, Math.min(0.85, SIDES[side].x ? dy : dx)),
+        : Math.max(-1, Math.min(1, SIDES[side].x ? dy : dx)),
   };
 }
 export function simplify(points) {

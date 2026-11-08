@@ -53,3 +53,5 @@ Reserve dedicated connector gutters between groups; measure wrapped label bounds
 ## Concise, formatted labels
 
 When requested, use short labels and a personal character target as a writing aid, never an automatic truncation rule. The optional counter is a soft UI preference. Preserve Markdown `**bold**`, `*italic*`, `==highlight==`, `[[Note|alias]]` and `[label](https://...)` in label source. Use consistent numbering for lists. `textAlign` is a node default; `textAlignments` is an array of left/center/right/justify values per source paragraph. Keep important text visible by fitting or resizing the shape before reducing text size. An overflow ellipsis indicates retained source, not removed content.
+
+The UI now renders supported label formatting live in place. MCP still edits Markdown label source and paragraph alignment fields. Connector guides/magnets are transient projections; preserve committed attachment ratios and routes. Tiny midpoint snaps should not be substituted for deliberate lane separation in dense maps.

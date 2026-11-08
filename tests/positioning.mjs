@@ -74,7 +74,12 @@ try {
   await page.reload();
   await node.waitFor();
   await showSource();
-  assert.equal(await page.locator(".rea-source").inputValue(), moved);
+  assert.equal(
+    await page
+      .locator(".rea-source")
+      .evaluate((el) => el.value ?? el.textContent),
+    moved,
+  );
   await page.getByRole("button", { name: "Apply changes" }).click();
   assert.equal(await page.locator(".rea-source-error").innerText(), "");
   // A second drag after zooming must use world coordinates; undo returns the exact source.
