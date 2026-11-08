@@ -29,7 +29,7 @@
   "devDependencies": {
     "@playwright/test": "1.56.0",
     "esbuild": "0.25.0",
-    "eslint": "9.39.5",
+    "eslint": "10.14.0",
     "eslint-plugin-obsidianmd": "0.5.1",
     "globals": "17.14.0",
     "obsidian": "1.14.4",
