@@ -26,6 +26,6 @@ jobs:
       - uses: actions/attest-build-provenance@e8998f949152b193b063cb0ec769d69d929409be # v2
         with:
           subject-path: 'dist/*'
-      - run: gh release create "$GITHUB_REF_NAME" dist/main.js dist/manifest.json dist/styles.css dist/THIRD_PARTY_NOTICES.txt dist/SHA256SUMS --verify-tag --title "REA Board $GITHUB_REF_NAME" --notes-file docs/RELEASE.md
+      - run: gh release create "$GITHUB_REF_NAME" dist/main.js dist/manifest.json dist/styles.css dist/THIRD_PARTY_NOTICES.txt dist/SHA256SUMS --verify-tag --title "Atlas Weave $GITHUB_REF_NAME" --notes-file docs/RELEASE.md
         env:
           GH_TOKEN: ${{ github.token }}

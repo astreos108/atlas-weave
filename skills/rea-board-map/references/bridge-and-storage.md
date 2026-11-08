@@ -2,15 +2,15 @@
 
 Use the user's actual checkout and vault paths. Do not infer a particular vault layout.
 
-1. Install REA Board in Obsidian. Enable **External MCP bridge** in its settings. Enable **Allow MCP note reading** only if the mapping task needs note excerpts.
+1. Install Atlas Weave in Obsidian. Enable **External MCP bridge** in its settings. Enable **Allow MCP note reading** only if the mapping task needs note excerpts.
 2. Install the checkout's Node dependencies with `npm ci`.
-3. Configure the assistant to run `node /path/to/rea-board/mcp/server.mjs --bridge-file /path/to/vault/CONFIG_DIR/plugins/rea-whimsical/bridge.json`. `CONFIG_DIR` is the vault's configured directory; `.obsidian` is only its default. The legacy plugin ID stays stable for existing boards/installations.
+3. Configure the assistant to run `node /path/to/atlas-weave/mcp/server.mjs --bridge-file /path/to/vault/CONFIG_DIR/plugins/rea-whimsical/bridge.json`. `CONFIG_DIR` is the vault's configured directory; `.obsidian` is only its default. The legacy plugin ID stays stable for existing boards/installations.
 4. The credential is generated only when enabled, rotates on startup, and is deleted on shutdown. Never print, commit or put it into a prompt.
 
 Fallback if this chat has not discovered the MCP tools:
 
 ```sh
-REA_BOARD_BRIDGE_FILE='/path/to/vault/CONFIG_DIR/plugins/rea-whimsical/bridge.json' node /path/to/rea-board/mcp/call.mjs board_get_capabilities '{}'
+REA_BOARD_BRIDGE_FILE='/path/to/vault/CONFIG_DIR/plugins/rea-whimsical/bridge.json' node /path/to/atlas-weave/mcp/call.mjs board_get_capabilities '{}'
 ```
 
 Read `board_get_capabilities` and tool schemas rather than assuming feature availability. Every `board_apply.operations` entry needs a **`type` discriminator**. Example:

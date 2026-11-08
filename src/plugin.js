@@ -126,7 +126,7 @@ class BoardView extends FileView {
     await this.onUnloadFile();
   }
 }
-export default class ReaWhimsical extends Plugin {
+export default class AtlasWeave extends Plugin {
   async setTextPreferences(patch) {
     if (patch.counterEnabled !== undefined)
       this.settings.counterEnabled = !!patch.counterEnabled;

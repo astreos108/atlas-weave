@@ -1,12 +1,14 @@
-# REA Board
+# Atlas Weave
 
-A small, local Mermaid board for Obsidian. Move your ideas freely while keeping the diagram as readable text.
+A visual thinking and learning board for Obsidian. Connect concepts, explain mechanisms, and organize ideas through editable Mermaid diagrams.
 
-[Support development on Ko-fi](https://ko-fi.com/theprasanjitsahoo) · [Releases](https://github.com/astreos108/rea-board/releases) · [Report a problem](https://github.com/astreos108/rea-board/issues)
+[Support development on Ko-fi](https://ko-fi.com/theprasanjitsahoo) · [Releases](https://github.com/astreos108/atlas-weave/releases) · [Report a problem](https://github.com/astreos108/atlas-weave/issues)
 
 ![An editable Board with a native frame](research/public-release.png)
 
-REA Board is an independent community project. It is not affiliated with Obsidian, Whimsical, Miro, FigJam or Excalidraw. It is original software, not a fork or recovered implementation of those products.
+Inspired by visual tools, including Whimsical, Miro, and others. Atlas Weave is an independent project, unaffiliated with those products or with Obsidian.
+
+Built primarily for learning—connecting concepts, tracing mechanisms, and explaining ideas—with room for planning, brainstorming, and other visual thinking.
 
 ## What it does
 
@@ -28,11 +30,11 @@ REA Board is an independent community project. It is not affiliated with Obsidia
 
 This repository is independently downloadable. **Publication on GitHub does not mean the plugin has passed Obsidian Community review or is listed in the in-app directory.**
 
-1. Download `main.js`, `manifest.json`, `styles.css` and `THIRD_PARTY_NOTICES.txt` from a [release](https://github.com/astreos108/rea-board/releases).
+1. Download `main.js`, `manifest.json`, `styles.css` and `THIRD_PARTY_NOTICES.txt` from a [release](https://github.com/astreos108/atlas-weave/releases).
 2. Create `CONFIG_DIR/plugins/rea-whimsical/` inside your vault and put the files there. `CONFIG_DIR` is your vault configuration folder, usually `.obsidian`.
-3. Enable **REA Board** under Community plugins. Use the ribbon's easel icon or the **New board** command.
+3. Enable **Atlas Weave** under Community plugins. Use the ribbon's easel icon or the **New board** command.
 
-The historical plugin ID `rea-whimsical` remains stable for existing installations and MCP configuration. The product name is REA Board. Initial public support is **desktop Obsidian 1.13.0+**. Mobile is not declared supported until tested; desktop-only clipboard and optional transport adapters are guarded separately.
+The historical plugin ID `rea-whimsical` remains stable for existing installations and MCP configuration. The product name is Atlas Weave (formerly REA Board). Initial public support is **desktop Obsidian 1.13.0+**. Mobile is not declared supported until tested; desktop-only clipboard and optional transport adapters are guarded separately.
 
 Existing Markdown notes with a Mermaid block can open through **Open current note as board**. Other Markdown content and later Mermaid blocks are retained. Conflicting saves are rejected rather than overwritten. Unsaved failed saves are retained in plugin data and can be restored **as a separate board** from plugin settings.
 
@@ -73,14 +75,14 @@ Vault links open native notes/headings/blocks. `.board` links do **not** yet par
 
 ## External assistants through MCP
 
-There is **no embedded AI, model client or provider API key**. The bridge is **off by default**. Enable **External MCP bridge** in REA Board settings only if needed. Separately enable **Allow MCP note reading** if your assistant needs vault excerpts. The assistant is responsible for its own model connection and any data it sends to its provider.
+There is **no embedded AI, model client or provider API key**. The bridge is **off by default**. Enable **External MCP bridge** in Atlas Weave settings only if needed. Separately enable **Allow MCP note reading** if your assistant needs vault excerpts. The assistant is responsible for its own model connection and any data it sends to its provider.
 
 Install this checkout's dependencies with `npm ci`, then configure your MCP client:
 
 ```json
 {
   "command": "node",
-  "args": ["/path/to/rea-board/mcp/server.mjs", "--bridge-file", "/path/to/vault/CONFIG_DIR/plugins/rea-whimsical/bridge.json"]
+  "args": ["/path/to/atlas-weave/mcp/server.mjs", "--bridge-file", "/path/to/vault/CONFIG_DIR/plugins/rea-whimsical/bridge.json"]
 }
 ```
 
@@ -134,7 +136,7 @@ MIT © 2026 Prasanjit Sahoo. Mermaid, DOMPurify and the MCP SDK retain their ups
 
 ### Writing details
 
-The counter is a **soft target**, off by default, configured in More or REA Board settings. It counts visible Unicode grapheme characters, including spaces and line breaks, while excluding Markdown markers and hidden link destinations; it is not Twitter's weighted URL counting algorithm. No truncation or payment gate is applied.
+The counter is a **soft target**, off by default, configured in More or Atlas Weave settings. It counts visible Unicode grapheme characters, including spaces and line breaks, while excluding Markdown markers and hidden link destinations; it is not Twitter's weighted URL counting algorithm. No truncation or payment gate is applied.
 
 The editor displays supported formatting live on the shape, with no separate white text field. Frame titles edit at their header text. Markdown is retained in the Mermaid label source. A small link-target popover changes destinations without exposing Markdown syntax. This is a focused rich editor, rather than Obsidian's full Markdown editor. Embedded images, callouts, tables and plugin-provided Markdown extensions are not promised. Use Shift+Enter for an ordinary new line; Enter continues a list, an empty list item ends it, and Command/Ctrl+Enter or the checkmark commits. Escape cancels the current edit. Alignment applies to selected source paragraphs and may differ between paragraphs; ordinary justify leaves the final wrapped line ragged.
 

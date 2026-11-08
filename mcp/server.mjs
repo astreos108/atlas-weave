@@ -19,7 +19,7 @@ if (!bridgeFile) {
   process.exit(1);
 }
 const server = new Server(
-  { name: "rea-board", version: "0.9.0" },
+  { name: "atlas-weave", version: "0.9.1" },
   { capabilities: { tools: {}, resources: {} } },
 );
 server.setRequestHandler(ListToolsRequestSchema, async () => ({
@@ -48,7 +48,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       config = JSON.parse(await readFile(bridgeFile, "utf8"));
     } catch {
       throw new Error(
-        "Board bridge is unavailable. Open Obsidian and enable the external MCP bridge in REA Board settings.",
+        "Board bridge is unavailable. Open Obsidian and enable the external MCP bridge in Atlas Weave settings.",
       );
     }
     if (

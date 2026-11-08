@@ -7,3 +7,5 @@ Use the pinned Node/npm versions, `npm ci`, `npm run check`, `npm run test:ui` a
 Keep changes scoped and preserve source-only diagrams. Do not add telemetry, model-provider clients, automatic dependency installation, advertisements or unrelated task-management features. Discuss storage, privacy, capabilities or cross-module contracts in an ADR. Do not manipulate stars, installs, issues, commits, timestamps or scan results to improve a score.
 
 PRs must include relevant verification and disclose what was not tested. CI is evidence, not Obsidian approval or a security guarantee. Dependency updates must preserve licenses and rebuild artifacts from source. Do not edit generated main.js by hand.
+
+All changes to `main` go through a pull request. The active Protect main ruleset requires the GitHub Actions `verify` check against the current base and resolved review conversations, blocks force pushes and branch deletion, and has no bypass actors. A second-person approval is optional while the repository has one maintainer.

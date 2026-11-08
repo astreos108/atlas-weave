@@ -1,10 +1,10 @@
-# Sustainable funding for REA Board
+# Sustainable funding for Atlas Weave
 
 Research checked 2026-11-07. This is a product recommendation, not a forecast of earnings. Public support links establish a funding mechanism, not how much someone earns.
 
 ## Observed models
 
-| Model | Primary evidence | Fit for REA Board |
+| Model | Primary evidence | Fit for Atlas Weave |
 |---|---|---|
 | Voluntary donations / sponsorship | [Dataview](https://github.com/blacksmithgu/obsidian-dataview) accepts donations for development. [Obsidian Excalidraw](https://github.com/zsviczian/obsidian-excalidraw-plugin) asks for Ko-fi support. | Strong fit now: no accounts, billing service, feature gates or data collection. |
 | Education around a free plugin | The [Excalidraw author's README](https://github.com/zsviczian/obsidian-excalidraw-plugin) links a free essentials course, a book and visual-thinking workshops. | Possible later: practical mapping workshops or workflow onboarding, only if the author wants to deliver them. No template library is required. |
