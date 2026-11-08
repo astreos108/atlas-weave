@@ -8,7 +8,7 @@ const project = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const bridgeFile = process.env.REA_BOARD_BRIDGE_FILE;
 if (!bridgeFile) {
   process.stderr.write(
-    "Set REA_BOARD_BRIDGE_FILE to the credential path shown by your vault configuration. Enable MCP in REA Board first.\n",
+    "Set REA_BOARD_BRIDGE_FILE to the credential path shown by your vault configuration. Enable MCP in Atlas Weave first.\n",
   );
   process.exit(1);
 }
@@ -20,7 +20,7 @@ if (!name) {
 const args = JSON.parse(
     raw.startsWith("@") ? await readFile(raw.slice(1), "utf8") : raw,
   ),
-  client = new Client({ name: "rea-board-local-client", version: "0.9.0" }),
+  client = new Client({ name: "rea-board-local-client", version: "0.9.1" }),
   transport = new StdioClientTransport({
     command: process.execPath,
     args: [resolve(project, "mcp/server.mjs"), "--bridge-file", bridgeFile],

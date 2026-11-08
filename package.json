@@ -1,6 +1,6 @@
 {
-  "name": "rea-board",
-  "version": "0.9.0",
+  "name": "atlas-weave",
+  "version": "0.9.1",
   "private": true,
   "type": "module",
   "scripts": {
@@ -42,10 +42,10 @@
     "minimatch": "11.0.5"
   },
   "license": "MIT",
-  "description": "Local Mermaid boards for Obsidian",
+  "description": "A visual thinking and learning board for Obsidian, built on editable Mermaid diagrams.",
   "repository": {
     "type": "git",
-    "url": "https://github.com/astreos108/rea-board.git"
+    "url": "https://github.com/astreos108/atlas-weave.git"
   },
   "engines": {
     "node": ">=22.13 <23"

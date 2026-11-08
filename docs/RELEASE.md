@@ -1,14 +1,13 @@
-REA Board 0.9.0 adds live in-place writing and precise connector guides.
+Atlas Weave 0.9.1 introduces the new name for REA Board.
 
-- Edit formatted text directly on the shape, with no white field or visible Markdown syntax. Bold, italic, highlights, links and per-paragraph alignment update live.
-- Edit frame titles in their title area; keep drafts, selection and undo behavior during navigation.
-- Change link targets in a small popover. Pasted content is inserted as text, never executable HTML.
-- Auto-fit adjusts both width and height while keeping neighboring shapes stationary.
-- Teal guides align connector routes and labels; small midpoint/quarter-point magnets snap endpoints without grid rounding. Alt allows free adjustment.
-- The optional soft character counter counts visible text.
+A visual thinking and learning board for Obsidian. Connect concepts, explain mechanisms, and organize ideas through editable Mermaid diagrams.
 
-Everything remains Mermaid with existing version 5 formatting metadata. Supported rich formatting is a focused subset; Obsidian Markdown extensions, embeds and arbitrary HTML are not supported. Desktop Obsidian 1.13+. This release does not represent directory approval.
+Inspired by visual tools, including Whimsical, Miro, and others. Atlas Weave is an independent project, unaffiliated with those products or with Obsidian.
 
-Release checks cover lint, unit/browser interactions, dependency auditing, independent clean rebuilds, checksums and build provenance.
+- Existing boards, settings, view types, clipboard data, and external MCP configuration remain compatible. The historical plugin ID `rea-whimsical` stays unchanged.
+- The public repository is now `astreos108/atlas-weave`; existing GitHub repository links redirect.
+- Main requires pull requests, passing GitHub Actions verification, an up-to-date base, and resolved conversations. No force pushes, branch deletion, or bypass actors.
+
+Desktop Obsidian 1.13+. GitHub publication does not mean Obsidian Community directory approval.
 
 Optional support: https://ko-fi.com/theprasanjitsahoo

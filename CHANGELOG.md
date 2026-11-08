@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.9.1 — Atlas Weave
+
+- Renamed the product to Atlas Weave and introduced its visual learning and thinking positioning.
+- Acknowledged inspiration from visual tools including Whimsical, Miro, and others, with an explicit independent-project statement.
+- Preserved existing plugin, view, storage, and MCP configuration identifiers for upgrade compatibility.
+- Renamed the public repository and protected main with required pull requests, CI, and resolved conversations; force pushes/deletion are blocked with no bypass actors.
+
 ## 0.9.0 — live writing and connector guides
 
 - Replaced the white Markdown field with a transparent, live rich editor inside the shape. Formatting and links render while editing; Mermaid retains Markdown source.

@@ -1,6 +1,6 @@
 # Security policy
 
-Supported release: the latest public 0.7.x release. Earlier local prototypes are not public supported releases.
+Supported release: the latest public release of Atlas Weave (formerly REA Board). Earlier local prototypes are not public supported releases.
 
 Report vulnerabilities privately through this repository's Security advisories / Report a vulnerability feature. Do not put tokens, private notes or working exploits in public issues. If private reporting is unavailable, open an issue requesting a private contact without sensitive details. Obsidian policy violations can also be reported to Obsidian through its official support channels.
 
