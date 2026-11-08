@@ -92,7 +92,7 @@ The eleven tools expose capabilities, board listing/read/create/edit/branch expa
 {"type":"create_frame","id":"mechanism","label":"Mechanism","ids":["a","b"]}
 ```
 
-The [rea-board-map skill](skills/rea-board-map/SKILL.md) teaches map selection, source grounding, native frames, visual checks, relationship clarity and conflict handling. Copy its folder to your assistant's skills directory. Setup and fallback CLI usage are in its [reference](skills/rea-board-map/references/bridge-and-storage.md).
+The [AtlasWeaver skill](skills/atlasweaver/SKILL.md) teaches map selection, source grounding, native frames, visual checks, relationship clarity and conflict handling. Copy its folder to your assistant's skills directory. Setup and fallback CLI usage are in its [reference](skills/atlasweaver/references/bridge-and-storage.md).
 
 ## Privacy and access disclosures
 

@@ -1,10 +1,10 @@
 ---
-name: rea-board-map
+name: atlasweaver
 description: Create and edit Mermaid idea maps in the user's Atlas Weave board tool using the rea-board MCP bridge. Use for brainstorming, study/concept/mechanism maps, decision trees, project maps, comparisons, selected-branch expansion, and source-grounded maps linked to vault notes. Not for generic Obsidian note formatting.
 ---
-# Obsidian Board mapping
+# AtlasWeaver
 
-Use `rea-board` MCP tools to create and revise local `.board` files. Atlas Weave (formerly REA Board) keeps its existing `rea-board` bridge and skill identifiers compatible. The assistant performs the thinking; Board is a local visual editor, with no embedded model client or provider API keys.
+Use `rea-board` MCP tools to create and revise local `.board` files. Atlas Weave (formerly REA Board) keeps its existing `rea-board` MCP bridge identifiers compatible. The assistant performs the thinking; Board is a local visual editor, with no embedded model client or provider API keys.
 
 Read `board_get_capabilities` at the start of a mapping task. It defines current model fields, map patterns, and editable versus source-only diagram types. If tools are not available in this chat, use the project's tested `mcp/call.mjs` helper against the same MCP server. Do not treat filesystem writes as proof that a live board was updated.
 
