@@ -1,13 +1,11 @@
-Atlas Weave 0.9.1 introduces the new name for REA Board.
+Atlas Weave 0.9.2 improves the pan-tool hand icon.
 
-A visual thinking and learning board for Obsidian. Connect concepts, explain mechanisms, and organize ideas through editable Mermaid diagrams.
+The new open-palm outline has clearer finger/thumb proportions, stays within the icon bounds, and matches the toolbar in light and dark modes. Pan behavior and shortcuts are unchanged.
 
-Inspired by visual tools, including Whimsical, Miro, and others. Atlas Weave is an independent project, unaffiliated with those products or with Obsidian.
+Also includes the AtlasWeaver skill rename and a browser-test targeting correction from main.
 
-- Existing boards, settings, view types, clipboard data, and external MCP configuration remain compatible. The historical plugin ID `rea-whimsical` stays unchanged.
-- The public repository is now `astreos108/atlas-weave`; existing GitHub repository links redirect.
-- Main requires pull requests, passing GitHub Actions verification, an up-to-date base, and resolved conversations. No force pushes, branch deletion, or bypass actors.
+A visual thinking and learning board for Obsidian. Inspired by visual tools, including Whimsical, Miro, and others. An independent project, unaffiliated with those products or with Obsidian.
 
-Desktop Obsidian 1.13+. GitHub publication does not mean Obsidian Community directory approval.
+Desktop Obsidian 1.13+. Existing boards, settings, and MCP configuration remain compatible. GitHub publication does not mean Obsidian Community directory approval.
 
 Optional support: https://ko-fi.com/theprasanjitsahoo

@@ -1,7 +1,7 @@
 {
   "id": "rea-whimsical",
   "name": "Atlas Weave",
-  "version": "0.9.1",
+  "version": "0.9.2",
   "minAppVersion": "1.13.0",
   "description": "Connect concepts, explain mechanisms, and organize ideas on editable Mermaid boards for visual learning and thinking.",
   "author": "Prasanjit Sahoo",
