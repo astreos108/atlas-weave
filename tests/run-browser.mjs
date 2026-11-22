@@ -5,6 +5,8 @@ const server = spawn(
   process.execPath,
   [
     "node_modules/vite/bin/vite.js",
+    "--config",
+    "tests/vite.config.mjs",
     "--host",
     "127.0.0.1",
     "--port",
