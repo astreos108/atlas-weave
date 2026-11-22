@@ -8,14 +8,16 @@ try {
     viewport: { width: 1400, height: 900 },
   });
   page.setDefaultTimeout(8000);
-  await page.route("**/src/browser.js", (route) =>
-    route.fulfill({
-      contentType: "text/javascript",
-      body: 'import "/styles.css"; import "/src/browser.css";',
-    }),
+  await page.goto(
+    new URL(
+      "/session.html",
+      process.env.REA_BOARD_TEST_URL || "http://127.0.0.1:5199",
+    ).href,
   );
-  await page.goto(process.env.REA_BOARD_TEST_URL || "http://127.0.0.1:5199");
   await page.evaluate(async () => {
+    const host = document.createElement("div");
+    host.id = "app";
+    document.body.append(host);
     const { mount } = await import("/src/canvas.js");
     const { suggestNoteLinks } = await import("/src/inline-note-links.js");
     const file = {
