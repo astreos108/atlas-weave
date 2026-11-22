@@ -52,8 +52,7 @@ try {
   await page.getByRole("button", { name: "Edit LaTeX", exact: true }).waitFor();
   await page
     .getByRole("button", { name: "Edit LaTeX", exact: true })
-    .locator(".rea-content-card")
-    .dblclick();
+    .press("Enter");
   await page.getByRole("textbox", { name: "LaTeX source" }).fill("x^2");
   await canvas.dblclick({ position: { x: 1150, y: 130 } });
   assert.equal(await page.getByRole("dialog").count(), 0);
