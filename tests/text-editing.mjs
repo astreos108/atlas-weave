@@ -202,6 +202,10 @@ try {
   assert.equal(next.nodes.length, count + 1);
   assert.equal(next.nodes.find((n) => n.id === "f").label, "Frame title");
   assert.equal(next.nodes.find((n) => n.id === "f").members.length, 3);
+  // Isolate lifecycle mounts from the demo mount and its pending rendering work.
+  await page.goto(
+    new URL("/session.html", process.env.REA_BOARD_TEST_URL).href,
+  );
   // Reuse a view as Obsidian does when navigating pages, retaining cursor and draft.
   await page.evaluate(async (source) => {
     const { mount } = await import("/src/canvas.js");

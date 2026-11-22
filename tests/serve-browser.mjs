@@ -26,6 +26,10 @@ await writeFile(
   join(directory, "index.html"),
   '<!doctype html><html><head><link rel="stylesheet" href="/src/browser.css"></head><body><div id="app"></div><script type="module" src="/src/browser.js"></script></body></html>',
 );
+await writeFile(
+  join(directory, "session.html"),
+  '<!doctype html><html><head><link rel="stylesheet" href="/src/browser.css"></head><body></body></html>',
+);
 const types = {
   ".js": "text/javascript",
   ".css": "text/css",
