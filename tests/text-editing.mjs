@@ -10,7 +10,8 @@ const browser = await chromium.launch(browserOptions),
   errors = [];
 page.on("pageerror", (e) => errors.push(e.message));
 page.on("framenavigated", (frame) => {
-  if (frame === page.mainFrame()) console.log("Text test navigation", frame.url());
+  if (frame === page.mainFrame())
+    console.log("Text test navigation", frame.url());
 });
 page.setDefaultTimeout(8000);
 const source = serialize({
