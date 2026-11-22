@@ -3,7 +3,7 @@ import { defineConfig } from "vite";
 export default defineConfig({
   optimizeDeps: {
     noDiscovery: true,
-    include: ["mermaid", "dompurify"],
+    include: [],
   },
   server: {
     hmr: false,
