@@ -19,7 +19,7 @@ if (!bridgeFile) {
   process.exit(1);
 }
 const server = new Server(
-  { name: "atlas-weave", version: "0.9.2" },
+  { name: "atlas-weave", version: "0.10.0" },
   { capabilities: { tools: {}, resources: {} } },
 );
 server.setRequestHandler(ListToolsRequestSchema, async () => ({
