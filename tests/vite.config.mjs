@@ -2,8 +2,8 @@ import { defineConfig } from "vite";
 
 export default defineConfig({
   optimizeDeps: {
-    noDiscovery: true,
-    include: [],
+    entries: ["src/**/*.js"],
+    include: ["mermaid", "dompurify"],
   },
   server: {
     hmr: false,
