@@ -49,7 +49,7 @@ try {
         }),
       },
     };
-    mount(document.querySelector("#app"), {
+    window.linkBoard = mount(document.querySelector("#app"), {
       source: 'flowchart LR\na["Read"] --> b["Other thought"]',
       suggestLinks: (query) => suggestNoteLinks(app, "Test.board", query),
       openLink: (target) => {
@@ -119,6 +119,27 @@ try {
     await page.evaluate(() => window.openedTarget),
     /^Drafts\/Scratchpad#\^atlas-/,
   );
+  const target = await page.evaluate(async () => {
+    await window.linkBoard.flush();
+    const source = window.savedSource;
+    window.linkBoard.destroy();
+    const { mount } = await import("/src/canvas.js");
+    const target = window.openedTarget;
+    window.openedTarget = null;
+    window.linkBoard = mount(document.querySelector("#app"), {
+      source,
+      openLink: (link) => {
+        window.openedTarget = link;
+      },
+    });
+    return target;
+  });
+  const reopenedLink = page.locator('.rea-inline-link[data-text-link*="#^"]');
+  await reopenedLink.click();
+  assert.equal(await page.evaluate(() => window.openedTarget), target);
+  await page.evaluate(() => (window.openedTarget = null));
+  await reopenedLink.press("Enter");
+  assert.equal(await page.evaluate(() => window.openedTarget), target);
   await page.locator('.rea-inline-link[data-text-link="@shape:b"]').click();
   await page
     .getByRole("button", { name: "Edit Other thought", exact: true })
