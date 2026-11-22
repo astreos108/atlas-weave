@@ -113,7 +113,7 @@ try {
     .getByRole("button", { name: "Edit Frame", exact: true })
     .click({ position: { x: 50, y: 20 } });
   await page.getByRole("button", { name: "Delete shape", exact: true }).click();
-  assert.equal((await model()).nodes.length, 2);
+  assert.equal((await model()).nodes.length, 0);
   // Basic Mermaid subgraphs retain editable membership, rather than becoming header bands.
   await apply(
     'flowchart LR\n subgraph grp["Mechanism"]\n a["Step one"]\n b["Step two"]\n a --> b\n end',
@@ -144,6 +144,30 @@ try {
     );
   assert.ok(added.x < kept.x);
   assert.ok(Math.abs(previous.x - kept.x) < 1);
+  await page
+    .getByRole("button", { name: "Edit Mechanism", exact: true })
+    .click({ position: { x: 30, y: 15 } });
+  await page.keyboard.press("ControlOrMeta+Shift+g");
+  await page.waitForTimeout(200);
+  const nested = await model();
+  const outer = nested.nodes.find((n) => n.label === "Frame");
+  assert.deepEqual(outer.members, ["grp"]);
+  await page.keyboard.press("ControlOrMeta+d");
+  await page.waitForTimeout(200);
+  const duplicated = await model();
+  const copy = duplicated.nodes.find(
+    (n) => n.label === "Frame" && n.id !== outer.id,
+  );
+  assert.ok(copy);
+  assert.ok(
+    Math.abs(copy.position.x - outer.position.x) >= outer.size.width ||
+      Math.abs(copy.position.y - outer.position.y) >= outer.size.height,
+  );
+  const copiedInner = duplicated.nodes.find((n) => n.id === copy.members[0]);
+  assert.equal(copiedInner.label, "Mechanism");
+  assert.ok(
+    copiedInner.members.every((id) => !nested.nodes.some((n) => n.id === id)),
+  );
   assert.deepEqual(errors, []);
   await page.screenshot({ path: "research/public-release.png" });
   console.log(

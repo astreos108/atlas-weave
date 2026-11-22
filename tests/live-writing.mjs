@@ -81,6 +81,35 @@ try {
   await page.goto(process.env.REA_BOARD_TEST_URL || "http://127.0.0.1:5199");
   await node("a").waitFor();
   await node("a").dblclick();
+  // Ordinary typing and native replacement input must retain the browser's text node.
+  await field.fill("prefix ");
+  await field.press("ControlOrMeta+End");
+  await field.evaluate((el) => {
+    window.nativeTextNode = el.firstChild.firstChild;
+  });
+  await page.keyboard.type("del.");
+  assert.ok(
+    await field.evaluate(
+      (el) => window.nativeTextNode === el.firstChild.firstChild,
+    ),
+  );
+  await field.evaluate((el) => {
+    const text = window.nativeTextNode;
+    text.replaceData(text.length - 4, 4, "Δ");
+    el.dispatchEvent(
+      new InputEvent("input", {
+        bubbles: true,
+        inputType: "insertReplacementText",
+        data: "Δ",
+      }),
+    );
+  });
+  assert.equal(await field.evaluate((el) => el.value), "prefix Δ");
+  assert.ok(
+    await field.evaluate(
+      (el) => window.nativeTextNode === el.firstChild.firstChild,
+    ),
+  );
   await field.fill("Toggle");
   await field.press("ControlOrMeta+a");
   await field.press("ControlOrMeta+b");
@@ -131,7 +160,7 @@ try {
   );
   await field.fill("Linked words");
   await field.press("ControlOrMeta+a");
-  await page.getByRole("button", { name: "Web link", exact: true }).click();
+  await field.press("ControlOrMeta+k");
   await page
     .getByRole("textbox", { name: "Link target", exact: true })
     .fill("https://example.com");

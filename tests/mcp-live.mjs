@@ -39,7 +39,7 @@ try {
   assert.equal(caps.editableDiagram, "flowchart");
   const path =
     process.env.REA_BOARD_TEST_BOARD ||
-    `REA Board tests/MCP verification ${Date.now()}.board`;
+    `AtlasWeave tests/MCP verification ${Date.now()}.board`;
   const created = await call("board_create", {
     path,
     map: {

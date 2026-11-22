@@ -19,7 +19,7 @@ if (!bridgeFile) {
   process.exit(1);
 }
 const server = new Server(
-  { name: "atlas-weave", version: "0.9.2" },
+  { name: "atlas-weave", version: "0.10.0" },
   { capabilities: { tools: {}, resources: {} } },
 );
 server.setRequestHandler(ListToolsRequestSchema, async () => ({
@@ -48,7 +48,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       config = JSON.parse(await readFile(bridgeFile, "utf8"));
     } catch {
       throw new Error(
-        "Board bridge is unavailable. Open Obsidian and enable the external MCP bridge in Atlas Weave settings.",
+        "Board bridge is unavailable. Open Obsidian and enable the external MCP bridge in AtlasWeave settings.",
       );
     }
     if (

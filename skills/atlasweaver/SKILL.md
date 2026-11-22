@@ -1,10 +1,10 @@
 ---
 name: atlasweaver
-description: Create and edit Mermaid idea maps in the user's Atlas Weave board tool using the rea-board MCP bridge. Use for brainstorming, study/concept/mechanism maps, decision trees, project maps, comparisons, selected-branch expansion, and source-grounded maps linked to vault notes. Not for generic Obsidian note formatting.
+description: Create and edit Mermaid idea maps in the user's AtlasWeave board tool using the rea-board MCP bridge. Use for brainstorming, study/concept/mechanism maps, decision trees, project maps, comparisons, selected-branch expansion, and source-grounded maps linked to vault notes. Not for generic Obsidian note formatting.
 ---
 # AtlasWeaver
 
-Use `rea-board` MCP tools to create and revise local `.board` files. Atlas Weave (formerly REA Board) keeps its existing `rea-board` MCP bridge identifiers compatible. The assistant performs the thinking; Board is a local visual editor, with no embedded model client or provider API keys.
+Use `rea-board` MCP tools to create and revise local `.board` files. AtlasWeave keeps its existing `rea-board` MCP bridge identifiers compatible. The assistant performs the thinking; Board is a local visual editor, with no embedded model client or provider API keys.
 
 Read `board_get_capabilities` at the start of a mapping task. It defines current model fields, map patterns, and editable versus source-only diagram types. If tools are not available in this chat, use the project's tested `mcp/call.mjs` helper against the same MCP server. Do not treat filesystem writes as proof that a live board was updated.
 
@@ -44,7 +44,11 @@ Read [bridge-and-storage.md](references/bridge-and-storage.md) only for setup, c
 
 ## Color deliberately
 
-Use a restrained palette when it improves comprehension: for example, violet for the central question, blue for prerequisites/evidence, green for mechanisms or outcomes, amber for decisions/uncertainty, and rose for cautions. Adapt these meanings to the task rather than treating them as a fixed ontology. Keep related nodes consistent, use connector colors to distinguish independent paths when crowded, and keep enough contrast against Ivory/Ice/Sage paper and dark mode. Use labels, grouping and route separation too; color alone must not carry meaning. Preserve user-chosen colors and never recolor unrelated branches merely to match a new palette.
+Use only the saved swatches exposed by `board_get_capabilities.palette`. Choose a shape fill and stroke as a pair and a connector color from the connector swatches. Use colors sparingly to distinguish roles and relationships. Preserve existing user-selected colors. Theme variants are rendered by AtlasWeave.
+
+If the bridge does not expose a palette yet, use these built-in shape fill/stroke pairs: white `#ffffff/#cbd5e1`, violet `#ede9fe/#a78bfa`, mint `#d1fae5/#6ee7b7`, amber `#fef3c7/#fbbf24`, rose `#ffe4e6/#fda4af`, and blue `#dbeafe/#93c5fd`. Built-in connector swatches are `#9b96aa`, `#8b5cf6`, `#3b82f6`, `#10b981`, `#f59e0b`, and `#ef4444`. Use labels, grouping, and route separation alongside color.
+
+Use one-way connectors for directional relationships. For a reciprocal relationship on a bridge that exposes the `bidirectional` edge field, set it to `true`. Mermaid represents a two-way connector with `<-->`.
 
 ## Readable layout clearance
 

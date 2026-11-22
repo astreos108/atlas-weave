@@ -1,12 +1,18 @@
 # Changelog
 
+## Unreleased — native input and equations
+
+- Preserve native editing state for macOS text substitutions and composition.
+- Render inline/display LaTeX in shape, frame-title and connector labels using Obsidian MathJax, retaining editable TeX in Mermaid.
+- Preserve equations in PNG/SVG exports and avoid repeated rendering while moving shapes.
+
 ## 0.9.2 — clearer pan icon
 
 - Redrew the hand icon with balanced open-palm proportions and consistent toolbar styling.
 
-## 0.9.1 — Atlas Weave
+## 0.9.1 — AtlasWeave
 
-- Renamed the product to Atlas Weave and introduced its visual learning and thinking positioning.
+- Renamed the product to AtlasWeave and introduced its visual learning and thinking positioning.
 - Acknowledged inspiration from visual tools including Whimsical, Miro, and others, with an explicit independent-project statement.
 - Preserved existing plugin, view, storage, and MCP configuration identifiers for upgrade compatibility.
 - Renamed the public repository and protected main with required pull requests, CI, and resolved conversations; force pushes/deletion are blocked with no bypass actors.

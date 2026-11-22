@@ -1,4 +1,4 @@
-import { simplify } from "./connector-routing.js";
+import { nearestAttachment, simplify } from "./connector-routing.js";
 /** Ports and lanes are a projection. Explicit saved attachment ratios remain authoritative. */
 export function projectedEdges(edges, nodes) {
   const result = edges.map((e) => ({ ...e })),
@@ -14,6 +14,7 @@ export function projectedEdges(edges, nodes) {
         a,
         b,
         e.fromSide ||
+          (e.fromRatio === 0 ? nearestAttachment(a, b).side : null) ||
           (horizontal
             ? b.x >= a.x
               ? "right"
@@ -27,6 +28,7 @@ export function projectedEdges(edges, nodes) {
         b,
         a,
         e.toSide ||
+          (e.toRatio === 0 ? nearestAttachment(b, a).side : null) ||
           (horizontal
             ? b.x >= a.x
               ? "left"
@@ -126,9 +128,25 @@ export function separateLane(points, previous) {
         b.y += distance;
       }
     }
-    const n = overlap(candidate);
+    const path = simplify(candidate);
+    if (
+      path.some(
+        (point, i) =>
+          i && point.x !== path[i - 1].x && point.y !== path[i - 1].y,
+      )
+    )
+      continue;
+    const direction = (a, b) =>
+      [Math.sign(b.x - a.x), Math.sign(b.y - a.y)].join(",");
+    if (
+      direction(path[0], path[1]) !== direction(points[0], points[1]) ||
+      direction(path.at(-2), path.at(-1)) !==
+        direction(points.at(-2), points.at(-1))
+    )
+      continue;
+    const n = overlap(path);
     if (n < score) {
-      best = candidate;
+      best = path;
       score = n;
     }
     if (!n) break;

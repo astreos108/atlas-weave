@@ -1,0 +1,219 @@
+{
+  "project": {
+    "name": "AtlasWeave",
+    "summary": "A visual thinking and learning board inside Obsidian. Ideas, frames, tables, code and equations save together as Mermaid.",
+    "entrypoints": ["src/plugin.js", "src/browser.js", "mcp/server.mjs"]
+  },
+  "nodes": [
+    {
+      "id": "board",
+      "label": "Board workspace",
+      "summary": "Lets people arrange ideas, edit text and work with tables, code and equations.",
+      "paths": ["src/**", "styles.css", "index.html"],
+      "kind": "ui"
+    },
+    {
+      "id": "board.edit",
+      "label": "Editing ideas",
+      "summary": "Turns pointer and keyboard gestures into board changes and formatted text.",
+      "paths": [
+        "src/canvas.js",
+        "src/text-editor.js",
+        "src/rich-text-surface.js",
+        "src/inline-link-picker.js",
+        "src/content-card.js",
+        "src/icons.js",
+        "src/markup.js",
+        "styles.css"
+      ],
+      "kind": "feature",
+      "parent": "board"
+    },
+    {
+      "id": "board.draw",
+      "label": "Drawing connections",
+      "summary": "Places shapes, routes connectors and keeps labels and attachment points readable.",
+      "paths": [
+        "src/layout.js",
+        "src/connector*.js",
+        "src/import-routing.js",
+        "src/smart-routing.js",
+        "src/thought-placement.js",
+        "src/alignment.js",
+        "src/grid.js",
+        "src/appearance.js",
+        "src/math-text.js",
+        "src/math-source.js",
+        "src/mermaid-renderer.js"
+      ],
+      "kind": "feature",
+      "parent": "board"
+    },
+    {
+      "id": "board.rules",
+      "label": "Saved board rules",
+      "summary": "Preserves Mermaid content, frame ownership, arrangement and text formatting.",
+      "paths": [
+        "src/domain/**",
+        "src/model.js",
+        "src/text-format.js",
+        "src/map-patterns.js"
+      ],
+      "kind": "library",
+      "parent": "board"
+    },
+    {
+      "id": "board.paste",
+      "label": "Copying and pasting",
+      "summary": "Imports editable content and exports selections as Mermaid or images.",
+      "paths": ["src/clipboard.js", "src/desktop-clipboard.js"],
+      "kind": "feature",
+      "parent": "board"
+    },
+    {
+      "id": "obsidian",
+      "label": "Obsidian connection",
+      "summary": "Opens board files, saves changes, resolves vault links and exposes preferences.",
+      "paths": [
+        "src/plugin.js",
+        "src/plugin-settings.js",
+        "src/note-links.js",
+        "src/inline-note-links.js",
+        "src/workflows/**"
+      ],
+      "kind": "feature"
+    },
+    {
+      "id": "agent",
+      "label": "Agent connection",
+      "summary": "Lets an external assistant read or change a board through the optional local bridge.",
+      "paths": ["mcp/**", "src/bridge*.js"],
+      "kind": "service"
+    },
+    {
+      "id": "tests",
+      "label": "Verification",
+      "summary": "Checks board behavior, document round trips, routing and browser interactions.",
+      "paths": ["tests/**"],
+      "kind": "test"
+    },
+    {
+      "id": "tools",
+      "label": "Development tools",
+      "summary": "Builds and checks the plugin and prepares its local architecture map.",
+      "paths": ["scripts/**", "*.mjs", "src/browser.js", "src/browser.css"],
+      "kind": "script"
+    },
+    {
+      "id": "vault",
+      "kind": "external",
+      "label": "Obsidian vault",
+      "summary": "Stores board files and the notes that ideas link to.",
+      "packages": ["obsidian"]
+    },
+    {
+      "id": "mermaid",
+      "kind": "external",
+      "label": "Mermaid diagrams",
+      "summary": "Reads diagram source and supplies the initial arrangement of imported diagrams.",
+      "packages": ["mermaid"]
+    }
+  ],
+  "ignore": ["floorplan/**", "main.js", "dist/**", "node_modules/**"],
+  "flows": [
+    {
+      "id": "edit-save",
+      "title": "Edit an idea and save it",
+      "steps": [
+        {
+          "node": "src/plugin.js",
+          "note": "Obsidian opens the board file."
+        },
+        {
+          "node": "src/canvas.js",
+          "note": "The board collects an edit and creates the next document."
+        },
+        {
+          "node": "src/model.js",
+          "note": "The document becomes validated Mermaid source."
+        },
+        {
+          "node": "src/plugin.js",
+          "note": "Obsidian writes the updated source back to the vault."
+        }
+      ]
+    },
+    {
+      "id": "paste",
+      "title": "Paste an organized diagram",
+      "steps": [
+        {
+          "node": "src/canvas.js",
+          "note": "A paste reaches the board."
+        },
+        {
+          "node": "src/clipboard.js",
+          "note": "The clipboard content is recognized and decoded."
+        },
+        {
+          "node": "src/model.js",
+          "note": "The board validates the incoming shapes and connections."
+        },
+        {
+          "node": "src/layout.js",
+          "note": "The board measures and displays the editable result."
+        }
+      ]
+    },
+    {
+      "id": "agent-change",
+      "title": "Change a board through an assistant",
+      "steps": [
+        {
+          "node": "mcp/server.mjs",
+          "note": "The assistant calls a board tool."
+        },
+        {
+          "node": "src/bridge-server.js",
+          "note": "The local bridge checks access and handles the request."
+        },
+        {
+          "node": "src/bridge-operations.js",
+          "note": "Validated operations produce the new board document."
+        }
+      ]
+    }
+  ],
+  "tour": [
+    {
+      "node": "board",
+      "title": "Work on the board",
+      "note": "Start with the board people see and edit."
+    },
+    {
+      "node": "board.rules",
+      "title": "Follow the saved document",
+      "note": "Mermaid holds the durable content and board metadata."
+    },
+    {
+      "node": "board.draw",
+      "title": "See how lines move",
+      "note": "Geometry and routing turn the document into a visual map."
+    },
+    {
+      "node": "obsidian",
+      "title": "Connect it to notes",
+      "note": "Obsidian owns file persistence and vault links."
+    },
+    {
+      "node": "agent",
+      "title": "Work through an assistant",
+      "note": "The optional bridge exposes bounded operations to external tools."
+    },
+    {
+      "node": "tests",
+      "title": "Check behavior",
+      "note": "Automated checks exercise the document and board interactions."
+    }
+  ]
+}

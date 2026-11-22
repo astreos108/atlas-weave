@@ -1,11 +1,3 @@
-Atlas Weave 0.9.2 improves the pan-tool hand icon.
+AtlasWeave 0.10.0 adds inline vault links with heading and block targets, editable tables, code and equation cards, richer text formatting, and improved connector interactions. Rendered inline links open with a plain click or Enter. Saved link targets survive reopening. The board implementation now uses focused UI modules.
 
-The new open-palm outline has clearer finger/thumb proportions, stays within the icon bounds, and matches the toolbar in light and dark modes. Pan behavior and shortcuts are unchanged.
-
-Also includes the AtlasWeaver skill rename and a browser-test targeting correction from main.
-
-A visual thinking and learning board for Obsidian. Inspired by visual tools, including Whimsical, Miro, and others. An independent project, unaffiliated with those products or with Obsidian.
-
-Desktop Obsidian 1.13+. Existing boards, settings, and MCP configuration remain compatible. GitHub publication does not mean Obsidian Community directory approval.
-
-Optional support: https://ko-fi.com/theprasanjitsahoo
+Desktop Obsidian 1.13.0 or later is required. Download main.js, manifest.json, styles.css, and THIRD_PARTY_NOTICES.txt into the rea-whimsical plugin folder in your vault configuration directory.

@@ -1,18 +1,9 @@
 import { spawn } from "node:child_process";
 const port = process.env.REA_BOARD_TEST_PORT || "5199",
   url = `http://127.0.0.1:${port}`;
-const server = spawn(
-  process.execPath,
-  [
-    "node_modules/vite/bin/vite.js",
-    "--host",
-    "127.0.0.1",
-    "--port",
-    port,
-    "--strictPort",
-  ],
-  { stdio: "pipe" },
-);
+const server = spawn(process.execPath, ["tests/serve-browser.mjs", port], {
+  stdio: "pipe",
+});
 let errors = "";
 server.stderr.on("data", (chunk) => (errors += chunk));
 const run = (file) =>
@@ -45,10 +36,14 @@ try {
     "positioning",
     "advanced",
     "connector-editing",
+    "direct-connectors",
     "foundation",
     "public-release",
     "text-editing",
     "live-writing",
+    "inline-links",
+    "math-rendering",
+    "content-cards",
   ])
     await run(file);
 } finally {

@@ -1,3 +1,4 @@
+import { validCard } from "./content-card.js";
 import { validateFrames } from "./domain/board-actions.js";
 export const INITIAL = `flowchart LR
   idea["A little idea"]
@@ -96,12 +97,12 @@ export function expandSimpleFlowchart(source) {
     let node = read(line);
     if (!node) return source;
     while (node.rest) {
-      const arrow = /^-->\s*(?:\|([^|]*)\|\s*)?/.exec(node.rest);
+      const arrow = /^(<-->|-->)\s*(?:\|([^|]*)\|\s*)?/.exec(node.rest);
       if (!arrow) return source;
       const next = read(node.rest.slice(arrow[0].length));
       if (!next) return source;
       edges.push(
-        `  ${node.id} -->${arrow[1] ? `|${arrow[1]}|` : ""} ${next.id}`,
+        `  ${node.id} ${arrow[1]}${arrow[2] ? `|${arrow[2]}|` : ""} ${next.id}`,
       );
       node = next;
     }
@@ -121,49 +122,51 @@ export function expandSimpleFlowchart(source) {
     ...extras,
   ].join("\n");
 }
-// Basic non-nested Mermaid subgraphs become real editable frames. Unsupported syntax stays source-only.
+// Basic Mermaid subgraphs become real editable frames. Unsupported syntax stays source-only.
 function flattenSubgraphs(source) {
   if (!/^\s*subgraph\s/m.test(source)) return source;
   const lines = source.split("\n"),
     flat = [],
     frames = [];
-  let current = null;
+  const stack = [];
   for (const line of lines) {
+    const current = stack.at(-1);
     const text = line.trim();
     if (text.startsWith("subgraph ")) {
-      if (current) return source;
       const match = /^subgraph\s+(\w+)(?:\s*\["?([^"\]]+)"?\]|\s+(.+))?$/.exec(
         text,
       );
       if (!match) return source;
-      current = {
+      const frame = {
         id: match[1],
         label: match[2] || match[3] || match[1],
         members: [],
       };
-      frames.push(current);
+      current?.members.push(frame.id);
+      frames.push(frame);
+      stack.push(frame);
       continue;
     }
     if (text === "end") {
       if (!current) return source;
-      current = null;
+      stack.pop();
       continue;
     }
     if (current) {
-      if (/^direction\s/.test(text)) return source;
+      if (/^direction\s+(?:TB|TD|BT|LR|RL)$/.test(text)) continue;
       const id = /^(\w+)(?:\s*[[({]|$)/.exec(text)?.[1];
       if (id && !current.members.includes(id)) current.members.push(id);
     }
     flat.push(line);
   }
   if (
-    current ||
+    stack.length ||
     flat.some((line) => line.trim().startsWith("%% board-layout:"))
   )
     return source;
-  const ids = new Set(frames.map((f) => f.id));
   if (
-    frames.some((f) => !f.members.length || f.members.some((id) => ids.has(id)))
+    frames.some((f) => !f.members.length) ||
+    new Set(frames.map((f) => f.id)).size !== frames.length
   )
     return source;
   const metadata = {
@@ -216,6 +219,19 @@ export function parse(source) {
               Math.abs(p.y) > 1e7
             )
               return null;
+          if (p.card !== undefined && !validCard(p.card)) return null;
+          if (
+            p.annotation !== undefined &&
+            !["text", "line"].includes(p.annotation)
+          )
+            return null;
+          if (
+            p.lineDirection !== undefined &&
+            !["horizontal", "vertical", "rising", "falling"].includes(
+              p.lineDirection,
+            )
+          )
+            return null;
           if (p.frame !== undefined && p.frame !== true) return null;
           if (
             p.members !== undefined &&
@@ -244,6 +260,18 @@ export function parse(source) {
               return null;
         }
         for (const p of Object.values(saved.nodes)) {
+          if (
+            p.textSize !== undefined &&
+            (!Number.isInteger(p.textSize) ||
+              p.textSize < 10 ||
+              p.textSize > 48)
+          )
+            return null;
+          if (
+            p.outlineStyle !== undefined &&
+            !["traditional", "mixed", "decimal"].includes(p.outlineStyle)
+          )
+            return null;
           if (
             p.textAlign !== undefined &&
             !["left", "center", "right", "justify"].includes(p.textAlign)
@@ -353,8 +381,15 @@ export function parse(source) {
         fill: "#ffffff",
         stroke: "#cbd5e1",
       });
-    } else if ((m = line.match(/^(\w+)\s+-->\s*(?:\|([^|]*)\|\s*)?(\w+)$/)))
-      model.edges.push({ from: m[1], to: m[3], label: decode(m[2] || "") });
+    } else if (
+      (m = line.match(/^(\w+)\s+(<-->|-->)\s*(?:\|([^|]*)\|\s*)?(\w+)$/))
+    )
+      model.edges.push({
+        from: m[1],
+        to: m[4],
+        label: decode(m[3] || ""),
+        ...(m[2] === "<-->" ? { bidirectional: true } : {}),
+      });
     else if (
       (m = line.match(
         /^style\s+(\w+)\s+fill:(#[a-fA-F0-9]{6}),stroke:(#[a-fA-F0-9]{6})$/,
@@ -394,9 +429,14 @@ export function parse(source) {
         if (p.width !== undefined)
           node.size = { width: p.width, height: p.height };
         if (p.link !== undefined) node.link = p.link;
+        if (p.outlineStyle) node.outlineStyle = p.outlineStyle;
+        if (p.textSize !== undefined) node.textSize = p.textSize;
         if (p.textAlign !== undefined) node.textAlign = p.textAlign;
         if (p.textAlignments !== undefined)
           node.textAlignments = p.textAlignments;
+        if (p.card) node.card = p.card;
+        if (p.annotation) node.shape = p.annotation;
+        if (p.lineDirection) node.lineDirection = p.lineDirection;
         if (p.frame) {
           node.shape = "frame";
           node.members = p.members || [];
@@ -433,6 +473,8 @@ export function serialize(model) {
     diamond: ['{"', '"}'],
     round: ['(["', '"])'],
     frame: ['["', '"]'],
+    text: ['["', '"]'],
+    line: ['["', '"]'],
   };
   const nodes = Object.fromEntries(
     model.nodes
@@ -441,9 +483,12 @@ export function serialize(model) {
           n.position ||
           n.size ||
           n.link ||
+          n.card ||
+          n.outlineStyle ||
+          n.textSize ||
           n.textAlign ||
           n.textAlignments ||
-          n.shape === "frame",
+          ["frame", "text", "line"].includes(n.shape),
       )
       .map((n) => [
         n.id,
@@ -451,10 +496,17 @@ export function serialize(model) {
           ...n.position,
           ...n.size,
           ...(n.link ? { link: n.link } : {}),
+          ...(n.card ? { card: n.card } : {}),
+          ...(n.outlineStyle ? { outlineStyle: n.outlineStyle } : {}),
+          ...(n.textSize ? { textSize: n.textSize } : {}),
           ...(n.textAlign ? { textAlign: n.textAlign } : {}),
           ...(n.textAlignments?.length
             ? { textAlignments: n.textAlignments }
             : {}),
+          ...(["text", "line"].includes(n.shape)
+            ? { annotation: n.shape }
+            : {}),
+          ...(n.lineDirection ? { lineDirection: n.lineDirection } : {}),
           ...(n.shape === "frame"
             ? { frame: true, members: n.members || [] }
             : {}),
@@ -499,7 +551,12 @@ export function serialize(model) {
         ].some((k) => e[k] !== undefined),
     );
   const version = model.nodes.some(
-    (n) => n.textAlign || n.textAlignments?.length,
+    (n) =>
+      n.card ||
+      n.outlineStyle ||
+      n.textSize ||
+      n.textAlign ||
+      n.textAlignments?.length,
   )
     ? 5
     : model.nodes.some((n) => n.shape === "frame")
@@ -522,7 +579,8 @@ export function serialize(model) {
         `  ${n.id}${shapes[n.shape][0]}${encode(n.label)}${shapes[n.shape][1]}`,
     ),
     ...model.edges.map(
-      (e) => `  ${e.from} -->${e.label ? `|${encode(e.label)}|` : ""} ${e.to}`,
+      (e) =>
+        `  ${e.from} ${e.bidirectional ? "<-->" : "-->"}${e.label ? `|${encode(e.label)}|` : ""} ${e.to}`,
     ),
     ...model.nodes.map(
       (n) => `  style ${n.id} fill:${n.fill},stroke:${n.stroke}`,

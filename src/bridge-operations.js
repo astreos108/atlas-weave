@@ -59,7 +59,9 @@ export function validateModel(model) {
       ids.has(node.id) ||
       typeof node.label !== "string" ||
       node.label.length > 10000 ||
-      !["rect", "round", "diamond", "frame"].includes(node.shape) ||
+      !["rect", "round", "diamond", "frame", "text", "line"].includes(
+        node.shape,
+      ) ||
       !/^#[a-fA-F0-9]{6}$/.test(node.fill) ||
       !/^#[a-fA-F0-9]{6}$/.test(node.stroke)
     )
@@ -68,6 +70,7 @@ export function validateModel(model) {
   }
   for (const e of model.edges) {
     if (
+      (e.bidirectional !== undefined && typeof e.bidirectional !== "boolean") ||
       !ids.has(e.from) ||
       !ids.has(e.to) ||
       typeof e.label !== "string" ||

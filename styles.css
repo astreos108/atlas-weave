@@ -1,14 +1,28 @@
 .rea {
   --ink: #353344;
+  --on-light-shape: #353344;
+  --on-dark-shape: #f8f6ff;
+  --focus: #a78bfa;
+  --on-accent: #ffffff;
+  --error: #9c3926;
+  --error-border: #c44f62;
+  --text-highlight-bg: #ffe68a;
+  --shape-guide: #ed5e70;
+  --connector-guide: #16a6a0;
+  --hover-border: #d7ccef;
+  --shadow: #30214d;
+  --swatch-border: #c9c9bf;
+  --alert-border: #f5d0c2;
   --muted: #9691a2;
   --purple: #7956d9;
   --line: #eae7ef;
-  --paper: #faf9fc;
+  --paper: #fffdf5;
   --surface: #ffffff;
   --hover: #f2eefb;
   --active: #ede7fa;
-  --wire: #9b96aa;
-  --grid: #ded9e7;
+  --connector-label-ink: #353344;
+  --connector-label-paper: #faf9fc;
+  --grid: #e3ddce;
   font:
     14px/1.5 Inter,
     ui-sans-serif,
@@ -24,6 +38,30 @@
   overflow: hidden;
   background: var(--paper);
   color-scheme: light;
+}
+.rea[data-theme="dark"] {
+  --ink: #eeeaf5;
+  --focus: #c39bff;
+  --on-accent: #211733;
+  --error: #ffab9a;
+  --error-border: #ff888f;
+  --shape-guide: #ff888f;
+  --connector-guide: #68d9d2;
+  --hover-border: #71618e;
+  --shadow: #000000;
+  --swatch-border: #71618e;
+  --alert-border: #ad665d;
+  --muted: #b1a9c0;
+  --purple: #b397ff;
+  --line: #41404e;
+  --paper: #1e1e26;
+  --surface: #2b2a36;
+  --hover: #383345;
+  --active: #44385e;
+  --connector-label-ink: #f4efff;
+  --connector-label-paper: #21212b;
+  --grid: #3c394a;
+  color-scheme: dark;
 }
 .rea * {
   box-sizing: border-box;
@@ -54,13 +92,13 @@
 }
 .rea button:hover {
   background: var(--hover);
-  border-color: #d7ccef;
+  border-color: var(--hover-border);
 }
 .rea button:focus-visible,
 .rea input:focus-visible,
 .rea textarea:focus-visible,
 .rea select:focus-visible {
-  outline: 2px solid #a78bfa;
+  outline: 2px solid var(--focus);
   outline-offset: 2px;
 }
 .rea button svg {
@@ -111,16 +149,20 @@
 .rea-diagram .node.rea-selected > polygon,
 .rea-diagram .node.rea-selected > path,
 .rea-diagram .node:focus-visible > rect {
-  stroke: #7956d9 !important;
+  stroke: var(--purple) !important;
   stroke-width: 2px !important;
-  filter: drop-shadow(0 3px 8px #7956d915);
+  filter: drop-shadow(
+    0 3px 8px color-mix(in srgb, var(--purple) 8%, transparent)
+  );
 }
 .rea-diagram .node.rea-target > rect,
 .rea-diagram .node.rea-target > polygon,
 .rea-diagram .node.rea-target > path {
-  stroke: #7956d9 !important;
+  stroke: var(--purple) !important;
   stroke-width: 3px !important;
-  filter: drop-shadow(0 0 8px #7956d950);
+  filter: drop-shadow(
+    0 0 8px color-mix(in srgb, var(--purple) 31%, transparent)
+  );
 }
 .rea-diagram .rea-editing .label {
   visibility: hidden;
@@ -143,7 +185,7 @@
   gap: 5px;
   border: 1px solid var(--line);
   background: var(--surface);
-  box-shadow: 0 5px 20px #33264d09;
+  box-shadow: 0 5px 20px color-mix(in srgb, var(--shadow) 4%, transparent);
   border-radius: 13px;
   z-index: 5;
 }
@@ -152,11 +194,11 @@
   width: 36px;
   height: 36px;
   padding: 7px;
-  color: #80798f;
+  color: var(--muted);
 }
 .rea-toolbar button.active {
   background: var(--active);
-  color: #7956d9;
+  color: var(--purple);
 }
 .rea-toolbar i,
 .rea-context i {
@@ -170,7 +212,7 @@
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: 12px;
-  box-shadow: 0 6px 30px #30214d13;
+  box-shadow: 0 6px 30px color-mix(in srgb, var(--shadow) 7%, transparent);
   color: var(--ink);
 }
 .rea-more {
@@ -234,7 +276,7 @@
   display: block;
   width: 18px;
   height: 18px;
-  border: 1px solid #c8c0d6;
+  border: 1px solid var(--line);
   border-radius: 50%;
 }
 .rea select.rea-shape-type {
@@ -271,7 +313,7 @@
   position: absolute;
   width: 14px;
   height: 14px;
-  border: 2px solid #a78bfa;
+  border: 2px solid var(--focus);
   border-radius: 50%;
   padding: 0;
   transform: translate(-50%, -50%);
@@ -279,12 +321,12 @@
   background: var(--surface);
   cursor: crosshair;
   touch-action: none;
-  box-shadow: 0 0 0 5px #faf9fc77;
+  box-shadow: 0 0 0 5px color-mix(in srgb, var(--paper) 47%, transparent);
 }
 .rea button.rea-port:hover {
-  background: #7956d9;
-  border-color: #7956d9;
-  box-shadow: 0 0 0 6px #7956d920;
+  background: var(--purple);
+  border-color: var(--purple);
+  box-shadow: 0 0 0 6px color-mix(in srgb, var(--purple) 13%, transparent);
 }
 .rea-preview {
   position: absolute;
@@ -295,8 +337,17 @@
   overflow: visible;
   z-index: 3;
 }
+.rea-preview-arrow {
+  fill: var(--purple);
+}
+.rea-thought-ghost {
+  fill: var(--active);
+  fill-opacity: 0.65;
+  stroke: var(--purple);
+  stroke-dasharray: 5 4;
+}
 .rea-preview-line {
-  stroke: #7956d9;
+  stroke: var(--purple);
   stroke-width: 2;
   fill: none;
   stroke-dasharray: 5 4;
@@ -317,7 +368,7 @@
 .rea-wires .rea-edge-line {
   pointer-events: none;
 }
-.rea-wires .rea-wire-label {
+.rea .rea-wire-label {
   pointer-events: all;
   cursor: text;
   font:
@@ -325,14 +376,9 @@
     ui-sans-serif,
     system-ui,
     sans-serif;
-  fill: var(--muted);
-  stroke: var(--paper);
-  stroke-width: 6px;
-  paint-order: stroke;
-  stroke-linejoin: round;
+  fill: var(--connector-label-ink);
 }
 .rea-wires .rea-selected-edge .rea-edge-line {
-  stroke: #7956d9;
   stroke-width: 2.5px;
 }
 .rea-inline-text {
@@ -342,10 +388,10 @@
   min-height: 34px;
   padding: 5px 7px !important;
   background: var(--surface) !important;
-  border: 1.5px solid #a78bfa !important;
+  border: 1.5px solid var(--focus) !important;
   border-radius: 6px !important;
   text-align: center;
-  box-shadow: 0 2px 12px #7956d915 !important;
+  box-shadow: 0 2px 12px color-mix(in srgb, var(--purple) 8%, transparent) !important;
   z-index: 9;
   outline: none !important;
 }
@@ -360,7 +406,7 @@
   border: 1px solid var(--line);
   padding: 4px;
   border-radius: 11px;
-  box-shadow: 0 4px 15px #33264d06;
+  box-shadow: 0 4px 15px color-mix(in srgb, var(--shadow) 3%, transparent);
   z-index: 5;
 }
 .rea-zoom button {
@@ -389,16 +435,16 @@
   left: 22px;
   bottom: 22px;
   font-size: 10px;
-  color: #a39bad;
+  color: var(--muted);
   max-width: calc(100% - 285px);
   pointer-events: none;
 }
 .rea-status.rea-error {
-  color: #b45339;
+  color: var(--error);
   pointer-events: auto;
   background: var(--surface);
   padding: 6px 10px;
-  border: 1px solid #f5d0c2;
+  border: 1px solid var(--alert-border);
   border-radius: 6px;
   z-index: 12;
 }
@@ -408,7 +454,7 @@
   top: 47%;
   transform: translate(-50%, -50%);
   font-size: 20px;
-  color: #ada0bd;
+  color: var(--muted);
   text-align: center;
   pointer-events: none;
 }
@@ -423,7 +469,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #30214d25;
+  background: color-mix(in srgb, var(--shadow) 15%, transparent);
   z-index: 20;
   padding: 24px;
 }
@@ -467,7 +513,7 @@
 }
 .rea-source-error {
   font-size: 11px;
-  color: #b45339;
+  color: var(--error);
 }
 .rea-dialog-footer {
   display: flex;
@@ -491,9 +537,9 @@
   font-size: 11px;
 }
 .rea button.rea-primary {
-  background: #7956d9;
-  color: #ffffff;
-  border-color: #7956d9;
+  background: var(--purple);
+  color: var(--on-accent);
+  border-color: var(--purple);
   font-size: 12px;
   padding: 8px 14px;
 }
@@ -527,30 +573,11 @@
   }
 }
 
-.rea[data-theme="dark"] {
-  --ink: #eeeaf5;
-  --muted: #b1a9c0;
-  --purple: #b397ff;
-  --line: #41404e;
-  --paper: #1e1e26;
-  --surface: #2b2a36;
-  --hover: #383345;
-  --active: #44385e;
-  --wire: #aaa1bb;
-  --grid: #3c394a;
-  color-scheme: dark;
-}
 .rea[data-theme="dark"] .rea-status {
-  color: #a69ab9;
+  color: var(--muted);
 }
 .rea[data-theme="dark"] .rea-inline-text {
   color: var(--ink);
-}
-.rea[data-theme="dark"] .rea-edge-line {
-  stroke: var(--wire);
-}
-.rea[data-theme="dark"] .rea-selected-edge .rea-edge-line {
-  stroke: var(--purple);
 }
 .rea-theme-controls {
   display: flex;
@@ -582,7 +609,7 @@
   height: 10px;
   padding: 0;
   border-radius: 2px;
-  border: 1.5px solid #a78bfa;
+  border: 1.5px solid var(--focus);
   background: var(--surface);
   pointer-events: auto;
   touch-action: none;
@@ -597,14 +624,14 @@
 }
 .rea-selection-bounds {
   position: absolute;
-  border: 1px dashed #a78bfa;
+  border: 1px dashed var(--focus);
   pointer-events: none;
   z-index: 2;
 }
 .rea-marquee {
   position: absolute;
-  background: #8b5cf619;
-  border: 1px solid #a78bfa;
+  background: color-mix(in srgb, var(--purple) 10%, transparent);
+  border: 1px solid var(--focus);
   pointer-events: none;
   z-index: 3;
 }
@@ -624,7 +651,8 @@
   font:
     16px system-ui,
     sans-serif;
-  fill: #353344;
+  fill: var(--shape-ink, var(--on-light-shape));
+  white-space: pre;
   pointer-events: none;
 }
 .rea-diagram .rea-editing .rea-node-text {
@@ -638,14 +666,30 @@
   line-height: 1.5;
 }
 .rea-edge-label-bg {
-  fill: var(--paper);
+  fill: var(--connector-label-paper);
   pointer-events: all;
   cursor: text;
 }
-.rea-wires .rea-wire-label {
-  font-size: 13px;
-  stroke: none;
+.rea .rea-connector-color {
+  --connector-color: var(--connector-light);
 }
+.rea[data-theme="dark"] .rea-connector-color {
+  --connector-color: var(--connector-dark);
+}
+.rea .rea-edge-line {
+  stroke: var(--connector-color);
+}
+.rea .rea-connector-arrow {
+  fill: var(--connector-color);
+}
+.rea button.rea-connector-color,
+.rea .rea-color-dot.rea-connector-color {
+  background: var(--connector-color);
+}
+.rea .rea-wire-labels .rea-math-label {
+  color: var(--connector-label-ink);
+}
+.rea-context select.rea-edge-direction,
 .rea-context select.rea-edge-routing,
 .rea-context select.rea-edge-width {
   max-width: 110px;
@@ -657,7 +701,7 @@
   box-shadow: none;
 }
 .rea-diagram .rea-selected-edge .rea-edge-line {
-  filter: drop-shadow(0 0 3px #a78bfa);
+  filter: drop-shadow(0 0 3px var(--focus));
   stroke-width: 3px;
 }
 .rea-toolbar button.active {
@@ -677,7 +721,7 @@
   padding: 0;
   border-radius: 2px;
   background: var(--surface);
-  border: 1.5px solid #8b5cf6;
+  border: 1.5px solid var(--purple);
   pointer-events: auto;
   touch-action: none;
   cursor: move;
@@ -694,7 +738,7 @@
   border-radius: 50%;
   width: 9px;
   height: 9px;
-  background: #b397ff;
+  background: var(--purple);
 }
 .rea button.rea-edge-width-handle {
   height: 17px;
@@ -786,7 +830,7 @@
   bottom: 77px;
   z-index: 8;
   padding: 10px 16px !important;
-  box-shadow: 0 4px 20px #0001 !important;
+  box-shadow: 0 4px 20px color-mix(in srgb, var(--shadow) 7%, transparent) !important;
 }
 .rea-guides {
   position: absolute;
@@ -798,7 +842,7 @@
   overflow: visible;
 }
 .rea-guides line {
-  stroke: #ed5e70;
+  stroke: var(--shape-guide);
   stroke-width: 1;
   stroke-dasharray: 4 3;
 }
@@ -896,9 +940,18 @@
   rx: 12px;
   ry: 12px;
 }
+.rea-frame-node {
+  --shape-ink: var(--ink);
+}
 .rea-frame-node .rea-node-text {
   font-weight: 600;
-  fill: var(--ink) !important;
+}
+.rea .rea-node-editor,
+.rea .rea-node-math {
+  color: var(--shape-ink, var(--on-light-shape));
+}
+.rea .rea-connector-editor {
+  color: var(--connector-label-ink);
 }
 .rea-frame-node {
   cursor: move;
@@ -933,11 +986,6 @@
   left: -100000px;
   top: 0;
 }
-/* Paper is a preference, independent from document colors. */
-.rea {
-  --paper: #fffdf5;
-  --grid: #e3ddce;
-}
 .rea[data-grid="false"] .rea-canvas {
   background-image: none;
 }
@@ -960,19 +1008,10 @@
 .rea-background-swatch {
   width: 12px;
   height: 12px;
-  border: 1px solid #c9c9bf;
+  border: 1px solid var(--swatch-border);
   border-radius: 50%;
+  background: var(--swatch);
 }
-.rea-bg-ivory {
-  background: #fffdf5;
-}
-.rea-bg-ice {
-  background: #f5fbff;
-}
-.rea-bg-sage {
-  background: #f5faf3;
-}
-
 /* Resize at the border; connector ports stay in its center. */
 .rea button.rea-resize[data-edge-grip="true"] {
   border: 0;
@@ -1006,7 +1045,7 @@
     monospace;
 }
 .rea .rea-background-hex[aria-invalid="true"] {
-  border-color: #c44f62;
+  border-color: var(--error-border);
 }
 .rea-background-controls button {
   width: 30px;
@@ -1041,28 +1080,56 @@
 .rea-text-tools {
   position: absolute;
   left: 50%;
-  bottom: calc(100% + 10px);
+  bottom: calc(100% + 6px);
   transform: translateX(-50%);
   display: flex;
-  gap: 3px;
-  padding: 5px;
+  gap: 1px;
+  padding: 3px;
   white-space: nowrap;
   max-width: calc(100vw - 40px);
   overflow: auto;
+  border-radius: 8px;
 }
 .rea .rea-text-tools button {
-  width: 30px;
-  height: 28px;
-  padding: 3px;
+  flex: 0 0 24px;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  box-shadow: none;
+  background: transparent;
   font-size: 12px;
 }
-.rea .rea-text-tools select {
-  width: 82px;
-  height: 28px;
-  font-size: 11px;
-  padding: 2px;
+.rea .rea-text-alignment {
+  display: flex;
+  gap: 0;
+  padding-inline: 2px;
+  border-inline: 1px solid var(--line);
+}
+.rea .rea-text-tools button:hover {
+  background: var(--hover);
+}
+.rea .rea-text-tools .rea-outline-style,
+.rea .rea-text-tools .rea-text-size {
+  height: 24px;
+  min-width: 48px;
+  color: var(--ink);
+  background-color: var(--surface);
   border: 0;
-  background: var(--surface);
+  font-size: 11px;
+  padding-block: 0;
+}
+.rea .rea-text-tools .rea-outline-style {
+  width: 77px;
+}
+.rea .rea-text-alignment button[aria-pressed="true"] {
+  background: var(--active);
+  color: var(--purple);
+}
+.rea .rea-text-alignment svg {
+  width: 15px;
+  height: 15px;
 }
 .rea-text-footer {
   position: absolute;
@@ -1082,7 +1149,7 @@
   font-variant-numeric: tabular-nums;
 }
 .rea-character-count.rea-over-target {
-  color: #b34e4e;
+  color: var(--error);
 }
 .rea .rea-text-overflow {
   pointer-events: auto;
@@ -1121,7 +1188,7 @@
 }
 
 .rea .rea-text-marks rect {
-  fill: var(--text-highlight-bg, #ffe68a) !important;
+  fill: var(--text-highlight-bg) !important;
   stroke: none !important;
   stroke-width: 0 !important;
   filter: none !important;
@@ -1180,12 +1247,12 @@
   font-family: system-ui, sans-serif;
 }
 .rea .rea-live-surface > div {
-  min-height: 23px;
+  min-height: 1lh;
   margin: 0;
   padding: 0;
 }
 .rea .rea-live-surface mark {
-  background: var(--text-highlight-bg, #ffe68a);
+  background: var(--text-highlight-bg);
   color: inherit;
 }
 .rea .rea-live-surface a {
@@ -1212,12 +1279,12 @@
   overflow: visible;
 }
 .rea-guides line.rea-connector-guide {
-  stroke: #16a6a0;
+  stroke: var(--connector-guide);
   stroke-dasharray: 3 3;
 }
 .rea-guides .rea-connector-snap {
   fill: var(--surface);
-  stroke: #16a6a0;
+  stroke: var(--connector-guide);
   stroke-width: 2;
 }
 .rea .rea-live-link-panel {
@@ -1236,10 +1303,421 @@
   font-size: 12px;
 }
 .rea .rea-live-link-panel input[aria-invalid="true"] {
-  border-color: #c44f62;
+  border-color: var(--error-border);
 }
 .rea .rea-live-link-panel button {
   width: 30px;
   height: 30px;
   padding: 0;
+}
+
+.rea .rea-math-label {
+  font-size: 16px;
+  overflow: hidden;
+}
+.rea .rea-math-content {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  color: inherit;
+  font: inherit;
+}
+.rea .rea-math-content.rea-math-frame {
+  justify-content: flex-start;
+}
+.rea .rea-editing > .rea-math-label {
+  visibility: hidden;
+}
+.rea .rea-math-content mjx-container[display="true"] {
+  width: 100%;
+  margin: 0.25em 0;
+}
+
+.rea .rea-inline-link-picker {
+  position: absolute;
+  top: calc(50% + 20px);
+  left: 50%;
+  width: min(340px, 85vw);
+  z-index: 12;
+  pointer-events: auto;
+  padding: 6px;
+}
+.rea .rea-link-actions {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 6px;
+}
+.rea .rea-link-results {
+  position: relative;
+  max-height: 230px;
+  overflow: auto;
+}
+.rea .rea-link-results button {
+  width: 100%;
+  height: auto;
+  display: block;
+  text-align: left;
+  white-space: normal;
+  border: 0;
+}
+.rea .rea-link-results button[aria-selected="true"] {
+  background: var(--active);
+}
+.rea .rea-link-results small {
+  display: block;
+  color: var(--muted);
+}
+.rea .rea-link-indicator {
+  pointer-events: none;
+  filter: none;
+}
+.rea .rea-diagram .node .rea-link-indicator path {
+  fill: none !important;
+  stroke: var(--shape-ink, var(--ink)) !important;
+  filter: none !important;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.rea .rea-live-surface [data-raw-link] {
+  overflow-wrap: anywhere;
+}
+
+.rea .rea-text-node .rea-shape-body,
+.rea .rea-line-node .rea-shape-body {
+  fill: transparent !important;
+  stroke: transparent !important;
+}
+.rea .rea-text-node {
+  --shape-ink: var(--ink) !important;
+}
+.rea .rea-standalone-line {
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+.rea .rea-shape-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  padding: 4px;
+  display: flex;
+  gap: 4px;
+}
+.rea .rea-shape-menu[hidden] {
+  display: none;
+}
+
+.rea .rea-text-node > .rea-shape-body {
+  filter: none !important;
+  pointer-events: none;
+}
+.rea .rea-text-node > .rea-node-text {
+  pointer-events: bounding-box;
+}
+.rea .rea-card-content {
+  height: 100%;
+  overflow: auto;
+  color: var(--shape-ink, var(--ink));
+  user-select: none;
+}
+.rea .rea-card-content table,
+.rea .rea-card-editor table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.rea .rea-card-content :is(td, th) {
+  border: 1px solid color-mix(in srgb, currentColor 18%, transparent);
+  padding: 6px 10px;
+  text-align: left;
+  white-space: pre-wrap;
+}
+.rea .rea-card-content th {
+  background: color-mix(in srgb, currentColor 9%, transparent);
+}
+.rea .rea-card-content pre {
+  margin: 0;
+  background: transparent;
+  color: inherit;
+  font: 14px/1.5 var(--font-monospace, monospace);
+}
+.rea .rea-card-is-editing > .rea-content-card {
+  visibility: hidden;
+}
+.rea .rea-card-editor {
+  position: absolute;
+  z-index: 30;
+  display: grid;
+  gap: 6px;
+  color: var(--ink);
+}
+.rea .rea-card-editor > header {
+  justify-self: center;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 34px;
+  padding: 3px 5px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--shadow) 14%, transparent);
+}
+.rea .rea-card-editor > header strong {
+  margin-inline: 6px;
+  font-size: 12px;
+}
+.rea .rea-card-editor button {
+  min-width: 24px;
+  min-height: 24px;
+  padding: 1px 5px;
+  border: 0;
+  border-radius: 4px;
+  box-shadow: none;
+  background: var(--surface);
+  color: var(--purple);
+}
+.rea .rea-card-editor button:hover,
+.rea .rea-card-editor > header button[type="submit"] {
+  background: var(--active);
+}
+.rea .rea-table-edit-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 24px;
+  gap: 5px;
+}
+.rea .rea-table-edit-viewport {
+  max-height: min(52vh, 440px);
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--surface);
+}
+.rea .rea-table-add-row {
+  grid-column: 1;
+}
+.rea .rea-table-editor :is(th, td) {
+  padding: 0;
+  border: 1px solid var(--line);
+}
+.rea .rea-table-editor th {
+  background: var(--hover);
+}
+.rea .rea-table-editor textarea {
+  display: block;
+  width: 100%;
+  min-width: 78px;
+  min-height: 34px;
+  margin: 0;
+  padding: 7px 9px;
+  resize: none;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+}
+.rea .rea-table-editor th textarea {
+  font-weight: 600;
+}
+.rea .rea-table-editor textarea:focus {
+  outline: 2px solid var(--purple);
+  outline-offset: -2px;
+  background: var(--active);
+}
+.rea .rea-code-language {
+  width: 95px;
+  height: 24px;
+  font-size: 11px;
+}
+.rea .rea-source-card-editor .rea-card-edit-body {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+}
+.rea .rea-source-card-editor textarea {
+  display: block;
+  width: 100%;
+  min-height: min(126px, 30vh);
+  max-height: 35vh;
+  padding: 10px 12px;
+  resize: vertical;
+  border: 0;
+  color: inherit;
+  background: var(--hover);
+  font: 13px/1.55 var(--font-monospace, monospace);
+  tab-size: 2;
+}
+.rea .rea-card-equation-preview {
+  display: grid;
+  place-items: center;
+  min-height: 56px;
+  max-height: 22vh;
+  overflow: auto;
+  padding: 6px 12px;
+}
+.rea .rea-card-content mjx-container {
+  margin: 0.5em 0;
+}
+
+.rea .rea-card-content .rea-cell-center {
+  text-align: center;
+}
+.rea .rea-card-content .rea-cell-right {
+  text-align: right;
+}
+.rea .rea-card-content a[data-text-link] {
+  color: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.rea .rea-card-content {
+  width: max-content;
+  min-width: min(80px, 100%);
+  max-width: 100%;
+  height: auto;
+  min-height: 48px;
+  max-height: 100%;
+  color: var(--ink);
+}
+.rea .rea-card-table :is(th, td) {
+  min-width: 92px;
+  max-width: 340px;
+  overflow-wrap: anywhere;
+  background-color: var(--surface);
+}
+.rea .rea-card-table th {
+  background-color: var(--hover);
+}
+.rea .rea-card-code {
+  padding: 12px 15px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--surface);
+}
+.rea .rea-card-latex {
+  display: grid;
+  place-items: center;
+  padding: 6px 10px;
+}
+
+.rea .rea-table-editor :is(th, td) {
+  position: relative;
+  min-width: 88px;
+  overflow-wrap: anywhere;
+}
+.rea .rea-table-editor .rea-cell-preview {
+  display: block;
+  min-height: 34px;
+  padding: 7px 9px;
+  white-space: pre-wrap;
+}
+.rea .rea-table-editor textarea {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  field-sizing: content;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.rea .rea-table-editor textarea:focus {
+  position: relative;
+  opacity: 1;
+  background: transparent;
+  outline-width: 1px;
+}
+.rea .rea-table-editor :focus-within > .rea-cell-preview {
+  display: none;
+}
+.rea .rea-table-editor .rea-cell-center {
+  text-align: center;
+}
+.rea .rea-table-editor .rea-cell-right {
+  text-align: right;
+}
+
+.rea .rea-table-editor table {
+  table-layout: fixed;
+}
+.rea .rea-table-editor :is(th, td) {
+  vertical-align: top;
+}
+.rea .rea-table-editor textarea:focus {
+  box-shadow: none;
+}
+.rea .rea-table-editor :is(.rea-table-add-row, .rea-table-add-column) {
+  min-height: 24px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+}
+.rea:has(.rea-table-editor) .rea-handles {
+  visibility: hidden;
+}
+
+.rea .rea-table-editor .rea-card-edit-body {
+  position: relative;
+}
+.rea .rea-table-actions {
+  position: absolute;
+  z-index: 2;
+  z-index: 1;
+  padding: 2px 6px;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  background: var(--surface);
+  font-size: 11px;
+}
+.rea .rea-table-actions button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  color: var(--ink);
+}
+
+.rea .rea-table-edit-grid {
+  position: relative;
+}
+.rea .rea-table-handle-rails {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.rea .rea-table-handle-rails button {
+  position: absolute;
+  min-width: 18px;
+  min-height: 18px;
+  height: 18px;
+  padding: 0 4px;
+  line-height: 16px;
+  border: 1px solid var(--line);
+  cursor: grab;
+  pointer-events: auto;
+  touch-action: none;
+}
+.rea .rea-table-handle-rails button:active {
+  cursor: grabbing;
+}
+.rea .rea-table-drag-column {
+  bottom: calc(100% + 3px);
+  transform: translateX(-50%);
+}
+.rea .rea-table-drag-row {
+  right: calc(100% + 3px);
+  transform: translateY(-50%);
+}
+.rea .rea-table-editor .rea-table-drop-before {
+  box-shadow: inset 0 2px var(--purple);
+}
+.rea .rea-table-editor .rea-table-drop-after {
+  box-shadow: inset 0 -2px var(--purple);
+}
+.rea .rea-table-editor :is(td, th).rea-table-drop-before {
+  box-shadow: inset 2px 0 var(--purple);
+}
+.rea .rea-table-editor :is(td, th).rea-table-drop-after {
+  box-shadow: inset -2px 0 var(--purple);
 }

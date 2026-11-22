@@ -1,3 +1,4 @@
+import { CONNECTOR_COLORS, SHAPE_COLORS } from "./appearance.js";
 import { MAP_PATTERNS } from "./map-patterns.js";
 const str = { type: "string" },
   path = {
@@ -16,11 +17,13 @@ const schema = (properties, required = []) => ({
   additionalProperties: false,
 });
 export const BRIDGE_CAPABILITIES = {
-  version: "0.9.2",
+  version: "0.10.0",
   storage:
     "Plain Mermaid .board files, geometry/link metadata in Mermaid comments. No embedded AI or provider API keys.",
   patterns: MAP_PATTERNS,
   editableDiagram: "flowchart",
+  mathLabels:
+    "In Obsidian, node/frame and connector labels render $inline$ and $$display$$ TeX using native MathJax. Store TeX in label strings; escape backslashes in JSON. Editing exposes TeX source. The web demo falls back to source.",
   sourceOnlyDiagrams: [
     "mindmap",
     "sequenceDiagram",
@@ -42,10 +45,16 @@ export const BRIDGE_CAPABILITIES = {
     "size",
     "link",
     "members",
+    "lineDirection",
     "textAlign",
     "textAlignments",
   ],
+  palette: {
+    shapes: SHAPE_COLORS.map(([fill, stroke]) => ({ fill, stroke })),
+    connectors: Object.keys(CONNECTOR_COLORS),
+  },
   edgeFields: [
+    "bidirectional",
     "from",
     "to",
     "label",

@@ -9,6 +9,10 @@ const browser = await chromium.launch(browserOptions),
   page = await context.newPage(),
   errors = [];
 page.on("pageerror", (e) => errors.push(e.message));
+page.on("framenavigated", (frame) => {
+  if (frame === page.mainFrame())
+    console.log("Text test navigation", frame.url());
+});
 page.setDefaultTimeout(8000);
 const source = serialize({
   direction: "LR",
@@ -130,13 +134,20 @@ try {
   assert.ok(
     (await input.evaluate((el) => el.value ?? el.textContent)).endsWith("4. "),
   );
+  await input.press("Tab");
+  assert.match(await input.evaluate((el) => el.value), /\n {2}1\. $/);
+  await input.press("Shift+Tab");
+  assert.match(await input.evaluate((el) => el.value), /\n4\. $/);
   const text =
     "**Bold** and *italic* ==marked== [[Folder/My Note|Visible title]] [Site](https://example.com)\nSecond paragraph\nJustified words that wrap across more than one display line and remain readable, with enough additional material to exercise the overflow indicator and still retain every character when the shape is fitted to its content";
+  const beforeGrowth = await node().locator(".rea-live-foreign").boundingBox();
   await input.fill(text);
+  const afterGrowth = await node().locator(".rea-live-foreign").boundingBox();
+  assert.ok(afterGrowth.height > beforeGrowth.height);
+  assert.ok(Math.abs(afterGrowth.y - beforeGrowth.y) < 1);
+  assert.equal(afterGrowth.width, beforeGrowth.width);
   await input.evaluate((el) => el.setSelectionRange(0, 4));
-  await page
-    .getByRole("combobox", { name: "Text alignment", exact: true })
-    .selectOption("left");
+  await page.getByRole("button", { name: "Align left", exact: true }).click();
   const second = text.indexOf("Second"),
     third = text.indexOf("Justified");
   await input.evaluate(
@@ -144,17 +155,15 @@ try {
     second,
   );
   await input.press("ArrowRight");
-  await page
-    .getByRole("combobox", { name: "Text alignment", exact: true })
-    .selectOption("right");
+  await page.getByRole("button", { name: "Align right", exact: true }).click();
   await input.evaluate(
     (el, start) => el.setSelectionRange(start, start + 6),
     third,
   );
   await input.press("ArrowRight");
   await page
-    .getByRole("combobox", { name: "Text alignment", exact: true })
-    .selectOption("justify");
+    .getByRole("button", { name: "Align justify", exact: true })
+    .click();
   await input.press("ControlOrMeta+Enter");
   await page.waitForTimeout(300);
   assert.deepEqual(
@@ -169,7 +178,7 @@ try {
     await node().locator('a[data-text-link="https://example.com"]').count(),
     1,
   );
-  assert.equal(await node().locator(".rea-text-truncated").count(), 1);
+  assert.ok((await model()).nodes.find((n) => n.id === "a").size.height > 96);
   await node().click();
   const grip = page.getByRole("button", {
       name: "Resize e corner",
@@ -193,6 +202,10 @@ try {
   assert.equal(next.nodes.length, count + 1);
   assert.equal(next.nodes.find((n) => n.id === "f").label, "Frame title");
   assert.equal(next.nodes.find((n) => n.id === "f").members.length, 3);
+  // Isolate lifecycle mounts from the demo mount and its pending rendering work.
+  await page.goto(
+    new URL("/session.html", process.env.REA_BOARD_TEST_URL).href,
+  );
   // Reuse a view as Obsidian does when navigating pages, retaining cursor and draft.
   await page.evaluate(async (source) => {
     const { mount } = await import("/src/canvas.js");
@@ -231,6 +244,25 @@ try {
   assert.deepEqual(
     await input.evaluate((el) => [el.selectionStart, el.selectionEnd]),
     [5, 10],
+  );
+  const size = page.getByRole("combobox", { name: "Text size", exact: true });
+  await size.selectOption("28");
+  assert.equal(
+    await input.evaluate((el) => getComputedStyle(el).fontSize),
+    "28px",
+  );
+  await input.press("ControlOrMeta+Enter");
+  await page
+    .getByRole("button", { name: "Edit Persistent page draft", exact: true })
+    .dblclick();
+  assert.equal(await size.inputValue(), "28");
+  await size.selectOption("36");
+  await input.press("Escape");
+  assert.equal(
+    await page
+      .locator(".node.rea-selected .rea-node-text")
+      .evaluate((el) => getComputedStyle(el).fontSize),
+    "28px",
   );
   assert.deepEqual(errors, []);
   await page.screenshot({ path: "research/text-editing.png" });
