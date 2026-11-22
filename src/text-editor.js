@@ -1,3 +1,6 @@
+import { icon } from "./icons.js";
+import { setMarkup } from "./markup.js";
+import { inlineLinkPicker } from "./inline-link-picker.js";
 import { createRichSurface } from "./rich-text-surface.js";
 import {
   ALIGNMENTS,
@@ -5,6 +8,8 @@ import {
   wrapSelection,
   paragraphRange,
   listLines,
+  outlineStyles,
+  indentList,
   continueList,
 } from "./text-format.js";
 let editorSequence = 0;
@@ -16,6 +21,8 @@ export function createTextEditor({
   value,
   alignments = [],
   alignment = "center",
+  outlineStyle,
+  fontSize = 16,
   getPreferences,
   onCommit,
   onCancel,
@@ -25,6 +32,7 @@ export function createTextEditor({
   resolveTitle,
   onExpand,
   onOpenLink,
+  suggestLinks,
 }) {
   const localAbort = new doc.defaultView.AbortController();
   const abortEditor = () => localAbort.abort();
@@ -39,6 +47,8 @@ export function createTextEditor({
     onOpenLink,
     alignment,
     getAlignments: () => lineAlignments,
+    getOutlineStyle: () => outlineStyle,
+    setOutlineStyle: (style) => (outlineStyle = style),
   });
   const input = surface.input;
   input.id = `rea-text-editor-${++editorSequence}`;
@@ -111,6 +121,7 @@ export function createTextEditor({
         );
       previousValue = input.value;
     }
+    onDraft?.(input.value, input, Number.parseFloat(input.style.fontSize));
     const prefs = getPreferences(),
       count = characterCount(input.innerText.replaceAll("\u200b", ""));
     counter.hidden = !prefs.counterEnabled;
@@ -155,7 +166,6 @@ export function createTextEditor({
         }
       }
     }
-    onDraft?.(input.value);
     syncAlignment();
   };
   const replace = (result) => {
@@ -220,20 +230,68 @@ export function createTextEditor({
   action("Italic", "𝘐", () => wrap("*"));
   action("Highlight", "▰", () => wrap("=="));
   action("Numbered list", "1.", () => {
+    outlineStyle = undefined;
     input.value = listLines(input.value, selected.start, selected.end, true);
     input.focus();
     update();
   });
+  const outlineControl = doc.createElement("select");
+  outlineControl.className = "rea-outline-style";
+  outlineControl.setAttribute("aria-label", "Outline numbering style");
+  const prompt = doc.createElement("option");
+  prompt.value = "";
+  prompt.textContent = "Outline";
+  prompt.disabled = true;
+  outlineControl.append(prompt);
+  for (const style of outlineStyles) {
+    const option = doc.createElement("option");
+    option.value = style.id;
+    option.textContent = style.icon + " · " + style.label;
+    outlineControl.append(option);
+  }
+  outlineControl.value = "";
+  on(outlineControl, "pointerdown", remember);
+  on(outlineControl, "keydown", (event) => event.stopPropagation());
+  on(outlineControl, "change", () => {
+    outlineStyle = outlineControl.value;
+    outlineControl.value = "";
+    const value = listLines(
+      input.value,
+      selected.start,
+      selected.end,
+      true,
+      outlineStyle,
+    );
+    const { last } = paragraphRange(input.value, selected.start, selected.end);
+    const caret = value
+      .split("\n")
+      .slice(0, last + 1)
+      .join("\n").length;
+    replace({ value, start: caret, end: caret });
+  });
+  tools.append(outlineControl);
   action("Bullet list", "•", () => {
     input.value = listLines(input.value, selected.start, selected.end, false);
     input.focus();
     update();
   });
+  const picker = inlineLinkPicker({
+    doc,
+    input,
+    wrapper,
+    replace,
+    on,
+    suggest: suggestLinks,
+    rawLink: surface.rawLink,
+    signal: localAbort.signal,
+  });
   let linkPanel = null;
-  function editLink(internal) {
+  function editWebLink() {
     linkPanel?.remove();
     remember();
-    const existing = input.linkAtSelection(),
+    picker.close();
+    const link = input.linkAtSelection();
+    const existing = link?.internal ? null : link,
       range = existing
         ? { start: existing.start, end: existing.end }
         : selected;
@@ -244,21 +302,17 @@ export function createTextEditor({
     linkPanel = panel;
     const target = doc.createElement("input");
     target.setAttribute("aria-label", "Link target");
-    target.placeholder = internal
-      ? "Note or note#Heading"
-      : "https://example.com";
-    target.value = existing?.target || (internal ? text : "https://");
+    target.placeholder = "https://example.com";
+    target.value = existing?.target || "https://";
     const apply = doc.createElement("button");
     apply.textContent = "✓";
     apply.setAttribute("aria-label", "Apply link");
     const save = () => {
       const url = target.value.trim();
-      const valid = internal
-        ? url && !/[\n\r|\]]/.test(url)
-        : /^(https?:\/\/[^\s)]+|mailto:[^\s)]+)$/.test(url);
+      const valid = /^(https?:\/\/[^\s)]+|mailto:[^\s)]+)$/.test(url);
       target.setAttribute("aria-invalid", String(!valid));
       if (!valid) return;
-      const markup = internal ? `[[${url}|${text}]]` : `[${text}](${url})`;
+      const markup = `[${text}](${url})`;
       const old = input.value;
       panel.remove();
       linkPanel = null;
@@ -287,54 +341,109 @@ export function createTextEditor({
     target.focus();
     target.select();
   }
-  action("Internal note link", "[[ ]]", () => editLink(true));
-  action("Web link", "↗", () => editLink(false));
-  const align = doc.createElement("select");
-  align.setAttribute("aria-label", "Text alignment");
-  for (const a of ALIGNMENTS) {
-    const o = doc.createElement("option");
-    o.value = a;
-    o.textContent = a[0].toUpperCase() + a.slice(1);
-    align.append(o);
+  const sizeControl = doc.createElement("select");
+  sizeControl.className = "rea-text-size";
+  sizeControl.setAttribute("aria-label", "Text size");
+  sizeControl.title = "Text size (px)";
+  for (const size of [
+    ...new Set([10, 12, 13, 14, 16, 18, 20, 24, 28, 32, 36, 48, fontSize]),
+  ].sort((a, b) => a - b)) {
+    const option = doc.createElement("option");
+    option.value = String(size);
+    option.textContent = size + " px";
+    sizeControl.append(option);
   }
-  tools.append(align);
+  const setFontSize = (size) => {
+    sizeControl.value = String(size);
+    input.style.fontSize = size + "px";
+    input.style.lineHeight = Math.ceil(size * 1.4) + "px";
+  };
+  setFontSize(fontSize);
+  on(sizeControl, "pointerdown", remember);
+  on(sizeControl, "keydown", (event) => event.stopPropagation());
+  on(sizeControl, "change", () => {
+    setFontSize(Number(sizeControl.value));
+    input.focus();
+    input.setSelectionRange(selected.start, selected.end);
+    update();
+  });
+  tools.append(sizeControl);
+  const alignmentButtons = new Map();
+  const alignmentGroup = doc.createElement("div");
+  alignmentGroup.className = "rea-text-alignment";
+  alignmentGroup.setAttribute("role", "group");
+  alignmentGroup.setAttribute("aria-label", "Text alignment");
+  for (const choice of ALIGNMENTS) {
+    const b = action("Align " + choice, "", () => {
+      const { first, last } = paragraphRange(
+        input.value,
+        selected.start,
+        selected.end,
+      );
+      for (let i = first; i <= last; i++) lineAlignments[i] = choice;
+      input.focus();
+      input.setSelectionRange(selected.start, selected.end);
+      update();
+    });
+    setMarkup(b, icon("align-" + choice));
+    alignmentButtons.set(choice, b);
+    alignmentGroup.append(b);
+  }
+  tools.append(alignmentGroup);
   function syncAlignment() {
-    if (!align) return;
     const { first } = paragraphRange(
       input.value,
       input.selectionStart,
       input.selectionEnd,
     );
-    align.value = lineAlignments[first] || alignment;
+    const current = lineAlignments[first] || alignment;
+    for (const [choice, b] of alignmentButtons)
+      b.setAttribute("aria-pressed", String(choice === current));
     surface.refreshAlignment();
   }
-  on(align, "pointerdown", remember);
-  on(align, "change", () => {
-    const chosen = align.value;
-    selected = { start: input.selectionStart, end: input.selectionEnd };
-    const { first, last } = paragraphRange(
-      input.value,
-      selected.start,
-      selected.end,
-    );
-    for (let i = first; i <= last; i++) lineAlignments[i] = chosen;
-    input.focus();
-    input.setSelectionRange(selected.start, selected.end);
-    update();
-  });
+  function refreshLinks(clickedLink) {
+    surface.revealLinkAtCaret(clickedLink);
+    const raw = surface.rawLink();
+    if (
+      raw &&
+      raw.node.textContent === raw.node.dataset.rawLink &&
+      !/\[\[[^|\]]*\^/.test(raw.node.textContent)
+    )
+      picker.close();
+    else picker.refresh();
+  }
   action("Save text", "✓", onCommit);
   on(doc, "selectionchange", () => {
-    if (doc.activeElement === input) remember();
+    if (doc.activeElement === input) {
+      remember();
+      refreshLinks();
+    }
   });
   on(input, "keyup", remember);
-  on(input, "click", remember);
+  on(input, "click", (e) => {
+    if (e.metaKey || e.ctrlKey) return;
+    refreshLinks(e.target.closest("[data-text-link]"));
+    remember();
+  });
   on(input, "input", (e) => {
-    if (!e.isComposing && e.data?.length > 1 && e.data === input.textContent) {
+    if (!e.isComposing) surface.cleanPlaceholders();
+    if (
+      !e.isComposing &&
+      e.inputType !== "insertReplacementText" &&
+      e.data?.length > 1 &&
+      e.data === input.textContent
+    ) {
       input.value = e.data;
       input.setSelectionRange(input.value.length, input.value.length);
-    } else if (!e.isComposing) surface.normalize();
+    } else if (
+      !e.isComposing &&
+      e.inputType !== "insertReplacementText" &&
+      /[*_=\]`)$]/.test(e.data || "")
+    )
+      surface.normalize();
     remember();
     update();
+    if (!e.isComposing) refreshLinks();
   });
   on(input, "compositionend", () => {
     surface.normalize();
@@ -343,8 +452,51 @@ export function createTextEditor({
   });
   const handleKeyDown = (e) => {
     e.stopPropagation();
+    if (e.isComposing || e.keyCode === 229) return;
     remember();
     const mod = e.metaKey || e.ctrlKey;
+    if (mod && e.key.toLowerCase() === "k") {
+      e.preventDefault();
+      editWebLink();
+      return;
+    }
+    if (picker.keydown(e)) return;
+    if (e.key === "Tab" && !mod && !e.altKey) {
+      const result = indentList(
+        input.value,
+        selected.start,
+        selected.end,
+        e.shiftKey,
+        outlineStyle,
+      );
+      if (result) {
+        e.preventDefault();
+        replace(result);
+        return;
+      }
+    }
+    if (
+      !mod &&
+      !e.shiftKey &&
+      ["ArrowLeft", "ArrowRight"].includes(e.key) &&
+      surface.enterLink(e.key)
+    ) {
+      e.preventDefault();
+      remember();
+      return;
+    }
+    if (
+      !mod &&
+      !e.shiftKey &&
+      e.key === "Enter" &&
+      surface.finishRevealedLink()
+    ) {
+      e.preventDefault();
+      picker.close();
+      remember();
+      update();
+      return;
+    }
     if (mod && e.key.toLowerCase() === "a") {
       e.preventDefault();
       input.select();
@@ -401,7 +553,7 @@ export function createTextEditor({
       const continuation =
         !mod &&
         !e.shiftKey &&
-        continueList(input.value, selected.start, selected.end);
+        continueList(input.value, selected.start, selected.end, outlineStyle);
       if (continuation) {
         e.preventDefault();
         replace(continuation);
@@ -423,7 +575,7 @@ export function createTextEditor({
       if (
         e.target === input &&
         mod &&
-        (["a", "b", "i", "z", "home", "end"].includes(key) ||
+        (["a", "b", "i", "k", "z", "home", "end"].includes(key) ||
           (e.shiftKey && key === "h") ||
           key === "enter")
       )
@@ -458,6 +610,10 @@ export function createTextEditor({
       end: selected.start + text.length,
     });
   });
+  on(input, "blur", () => {
+    picker.close();
+    surface.finishRevealedLink(false);
+  });
   on(input, "wheel", (e) => e.stopPropagation());
   on(overflow, "pointerdown", (e) => e.preventDefault());
   on(overflow, "click", () => {
@@ -478,7 +634,10 @@ export function createTextEditor({
     input,
     wrapper,
     update,
+    setFontSize,
     getAlignments: () => lineAlignments,
+    getOutlineStyle: () => outlineStyle,
+    setOutlineStyle: (style) => (outlineStyle = style),
     remove: () => {
       localAbort.abort();
       signal.removeEventListener("abort", abortEditor);

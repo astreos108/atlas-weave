@@ -2,21 +2,15 @@ import { nearestAttachment, attachment } from "./connector-routing.js";
 /** A screen-pixel threshold keeps magnets small at every zoom; Alt bypasses them. */
 export function magneticAttachment(node, p, zoom = 1, enabled = true, toward) {
   const hit = nearestAttachment(node, p);
-  if (
+  const center = !!(
+    enabled &&
     toward &&
     Math.abs(p.x - node.x) < node.width * 0.18 &&
     Math.abs(p.y - node.y) < node.height * 0.18
-  ) {
+  );
+  if (center) {
     hit.side = nearestAttachment(node, toward).side;
-    hit.ratio = Math.max(
-      -1,
-      Math.min(
-        1,
-        ["left", "right"].includes(hit.side)
-          ? (p.y - node.y) / (node.height / 2)
-          : (p.x - node.x) / (node.width / 2),
-      ),
-    );
+    hit.ratio = 0;
   }
   const span = ["left", "right"].includes(hit.side) ? node.height : node.width;
   const candidates = [0, -0.5, 0.5];
@@ -32,7 +26,13 @@ export function magneticAttachment(node, p, zoom = 1, enabled = true, toward) {
         snapped = true;
         break;
       }
-  return { ...hit, ratio, snapped, point: attachment(node, hit.side, ratio) };
+  return {
+    ...hit,
+    ratio,
+    snapped,
+    center,
+    point: attachment(node, hit.side, ratio),
+  };
 }
 export function connectorAlignment(p, anchors, zoom = 1, enabled = true) {
   const point = { ...p },

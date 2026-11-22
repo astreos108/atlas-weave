@@ -1,4 +1,4 @@
-Atlas Weave 0.9.2 improves the pan-tool hand icon.
+AtlasWeave 0.9.2 improves the pan-tool hand icon.
 
 The new open-palm outline has clearer finger/thumb proportions, stays within the icon bounds, and matches the toolbar in light and dark modes. Pan behavior and shortcuts are unchanged.
 

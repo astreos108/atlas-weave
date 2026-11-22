@@ -94,9 +94,11 @@ try {
   assert.notEqual(await source(), moved);
   // Existing shapes stay put when a shape is added or its label size changes.
   const fixed = positions(await source());
+  await page.getByRole("button", { name: "Shapes", exact: true }).click();
   await page
     .getByRole("button", { name: "Add rectangle (R)", exact: true })
     .click();
+  await page.mouse.click(1120, 660);
   await page.waitForFunction(
     () => document.querySelectorAll(".node").length === 5,
   );
@@ -123,9 +125,11 @@ try {
   await page.waitForFunction(
     () => document.querySelectorAll(".node").length === 0,
   );
+  await page.getByRole("button", { name: "Shapes", exact: true }).click();
   await page
     .getByRole("button", { name: "Add decision (D)", exact: true })
     .click();
+  await page.mouse.click(700, 400);
   await page.waitForFunction(
     () => document.querySelectorAll(".node").length === 1,
   );

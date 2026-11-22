@@ -3,7 +3,15 @@ import js from "@eslint/js";
 import obsidianmd from "eslint-plugin-obsidianmd";
 import globals from "globals";
 export default defineConfig([
-  { ignores: ["node_modules/**", "dist/**", "main.js", "research/**"] },
+  {
+    ignores: [
+      "node_modules/**",
+      "dist/**",
+      "main.js",
+      "research/**",
+      "floorplan/**",
+    ],
+  },
   {
     files: ["src/**/*.js", "manifest.json", "package.json", "LICENSE"],
     ignores: ["src/browser.js"],

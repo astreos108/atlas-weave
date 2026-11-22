@@ -1,4 +1,4 @@
-import { inlineRuns } from "./text-format.js";
+import { paragraphRuns } from "./text-format.js";
 /** Safe DOM <-> Markdown seam. No pasted HTML or executable markup enters the document. */
 export function createRichSurface(
   doc,
@@ -10,6 +10,8 @@ export function createRichSurface(
   input.setAttribute("role", "textbox");
   input.setAttribute("aria-multiline", "true");
   input.spellcheck = true;
+  input.setAttribute("autocorrect", "on");
+  input.setAttribute("autocapitalize", "sentences");
   const selection = () => doc.defaultView.getSelection();
   function snapshot() {
     let source = "";
@@ -136,6 +138,11 @@ export function createRichSurface(
         : p.offsets[Math.min(offset, p.offsets.length - 1)];
     if (node === input) return offset === 0 ? 0 : snap.source.length;
     const child = node?.childNodes?.[offset];
+    const previous = node?.childNodes?.[offset - 1];
+    const beforeLink = snap.links.find((link) => link.node === child);
+    if (beforeLink) return beforeLink.start;
+    const afterLink = snap.links.find((link) => link.node === previous);
+    if (afterLink) return afterLink.end;
     const next = snap.points.find(
       (p) => child && (child === p.node || child.contains?.(p.node)),
     );
@@ -169,6 +176,14 @@ export function createRichSurface(
       return;
     }
     const at = (offset) => {
+      const link = snap.links.find(
+        (link) => offset === link.end || offset === link.start,
+      );
+      if (link) {
+        const parent = link.node.parentNode;
+        const index = [...parent.childNodes].indexOf(link.node);
+        return { node: parent, offset: index + (offset === link.end ? 1 : 0) };
+      }
       let best = null,
         distance = Infinity;
       for (const p of snap.points)
@@ -189,19 +204,20 @@ export function createRichSurface(
     selection().removeAllRanges();
     selection().addRange(r);
   }
-  function render(source) {
-    input.replaceChildren();
-    source.split("\n").forEach((text, i) => {
+  function render(source, preserve = false) {
+    const fragment = doc.createDocumentFragment();
+    paragraphRuns(source, resolveTitle).forEach((runs, i) => {
       const p = doc.createElement("div");
       p.dataset.paragraph = String(i);
       p.style.textAlign = getAlignments?.()[i] || alignment;
-      for (const run of inlineRuns(text, resolveTitle)) {
+      for (const run of runs) {
         let el = doc.createTextNode(run.text);
         if (run.link) {
           const a = doc.createElement("a");
+          a.contentEditable = "false";
           a.dataset.textLink = run.link;
           a.dataset.internal = String(run.internal);
-          a.dataset.wikiAlias = String(source.includes("[[" + run.link + "|"));
+          a.dataset.wikiAlias = String(!!run.wikiAlias);
           a.dataset.originalTitle = run.text;
           a.setAttribute("role", "link");
           a.append(el);
@@ -221,15 +237,69 @@ export function createRichSurface(
         p.append(el);
       }
       if (!p.childNodes.length) p.append(doc.createElement("br"));
-      input.append(p);
+      fragment.append(p);
     });
+    if (
+      preserve &&
+      input.childNodes.length === fragment.childNodes.length &&
+      [...input.childNodes].every((node, i) =>
+        node.isEqualNode(fragment.childNodes[i]),
+      )
+    )
+      return false;
+    input.replaceChildren(fragment);
+    return true;
+  }
+  function rawLink() {
+    const node = input.querySelector("[data-raw-link]");
+    if (!node) return null;
+    const snap = snapshot();
+    const points = snap.points.filter((point) => node.contains(point.node));
+    if (!points.length) return null;
+    return {
+      node,
+      start: points[0].offsets[0],
+      end: points.at(-1).offsets.at(-1),
+    };
+  }
+  function reveal(link, at) {
+    const markup = snapshot().source.slice(link.start, link.end);
+    const raw = doc.createElement("span");
+    raw.dataset.rawLink = markup;
+    raw.textContent = markup;
+    link.node.replaceWith(raw);
+    setRange(at, at);
+  }
+  function compactLink(at) {
+    render(snapshot().source);
+    setRange(at, at);
   }
   Object.defineProperties(input, {
     value: { get: () => snapshot().source, set: render },
     linkAtSelection: {
       value: () => {
         const sel = selection();
-        return snapshot().links.find((l) => l.node.contains(sel?.anchorNode));
+        const raw = rawLink();
+        if (raw?.node.contains(sel?.anchorNode)) {
+          const match =
+            /^\[([^\]\n]+)\]\((https?:\/\/[^\s)]+|mailto:[^\s)]+)\)$/.exec(
+              raw.node.textContent,
+            );
+          if (match)
+            return {
+              ...raw,
+              label: match[1],
+              target: match[2],
+              internal: false,
+            };
+        }
+        const range = getRange();
+        return snapshot().links.find(
+          (l) =>
+            l.node.contains(sel?.anchorNode) ||
+            (range.start === range.end &&
+              (range.start === l.end || range.start === l.start)),
+        );
       },
     },
     pendingMark: {
@@ -304,11 +374,67 @@ export function createRichSurface(
   render(value);
   return {
     input,
+    rawLink,
+    revealLinkAtCaret: (clickedLink = null) => {
+      const sel = selection();
+      if (
+        !clickedLink &&
+        (!sel?.isCollapsed || !input.contains(sel.anchorNode))
+      )
+        return;
+      const { start } = getRange();
+      const clickedStart = clickedLink
+        ? snapshot().links.find((link) => link.node === clickedLink)?.start
+        : undefined;
+      const raw = rawLink();
+      if (raw) {
+        if (clickedStart === undefined && raw.node.contains(sel?.anchorNode))
+          return;
+        compactLink(start);
+      }
+      const link = snapshot().links.find((link) =>
+        clickedStart !== undefined
+          ? link.start === clickedStart
+          : link.node.contains(sel?.anchorNode) && start < link.end,
+      );
+      if (link)
+        reveal(link, Math.max(link.start + 1, Math.min(link.end - 1, start)));
+    },
+    enterLink: (key) => {
+      const { start, end } = getRange();
+      if (start !== end || rawLink()) return false;
+      const link = snapshot().links.find((link) =>
+        key === "ArrowLeft" ? link.end === start : link.start === start,
+      );
+      if (!link) return false;
+      reveal(link, key === "ArrowLeft" ? link.end - 1 : link.start + 1);
+      return true;
+    },
+    finishRevealedLink: (restoreCaret = true) => {
+      const raw = rawLink();
+      if (!raw) return false;
+      if (restoreCaret) compactLink(raw.end);
+      else render(snapshot().source);
+      return true;
+    },
+    cleanPlaceholders: () => {
+      for (const holder of input.querySelectorAll("[data-caret-placeholder]")) {
+        if (!holder.textContent.replaceAll("\u200b", "")) continue;
+        const walker = doc.createTreeWalker(holder, 4);
+        let text;
+        while ((text = walker.nextNode())) {
+          let at;
+          while ((at = text.data.indexOf("\u200b")) !== -1)
+            text.deleteData(at, 1);
+        }
+        delete holder.dataset.caretPlaceholder;
+      }
+    },
     normalize: () => {
+      if (rawLink()) return;
       const r = getRange(),
         s = snapshot().source;
-      render(s);
-      setRange(r.start, r.end);
+      if (render(s, true)) setRange(r.start, r.end);
     },
     refreshAlignment: () => {
       [...input.children].forEach(

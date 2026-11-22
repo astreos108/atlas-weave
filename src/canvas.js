@@ -1,47 +1,30 @@
-import {
-  magneticAttachment,
-  connectorAlignment,
-  attachmentGuides,
-} from "./connector-guides.js";
-import { createTextEditor } from "./text-editor.js";
-import { gridLayers } from "./grid.js";
-import { backgroundHex, paperColors } from "./appearance.js";
-import { setMarkup, appendMarkup } from "./markup.js";
+import { createPointerInteractions } from "./board/pointer-interactions.js";
+import { createConnectorInteractions } from "./board/connector-interactions.js";
+import { createSelectionControls } from "./board/selection-controls.js";
+import { createViewport } from "./board/viewport.js";
+import { createTextSession } from "./board/text-session.js";
+import { createBoardPreferences } from "./board/preferences.js";
+import { createClipboardController } from "./board/clipboard-controller.js";
+import { createSourceDialog } from "./board/source-dialog.js";
+import { createCardEditor } from "./board/card-editor.js";
+import { cardNode, cardTypes } from "./content-card.js";
+import { duplicateOffset } from "./thought-placement.js";
+import { DEFAULT_BOARD_PAPER, DEFAULT_THOUGHT_COLOR } from "./appearance.js";
+import { setMarkup } from "./markup.js";
 import {
   membersFor,
+  frameOwners,
+  updateFrameMembership,
   createFrame,
-  arrangeNodes,
   removeNodes,
 } from "./domain/board-actions.js";
-import { resizeBox } from "./domain/resize-box.js";
 import { createSaveQueue } from "./workflows/save-queue.js";
 import mermaid from "./mermaid-renderer.js";
-import { createLayout, wireGeometry } from "./layout.js";
-import { INITIAL, parse, serialize, nextId, readBoard } from "./model.js";
-import {
-  snapValue,
-  snapPoint,
-  dragSegment,
-  dragBend,
-  edgeLink,
-} from "./connector-routing.js";
-import { alignMove } from "./alignment.js";
-import {
-  decodeClipboard,
-  svgClipboardModel,
-  exportSelection,
-  svgToPng,
-} from "./clipboard.js";
+import { createLayout } from "./layout.js";
+import { INITIAL, parse, serialize, nextId } from "./model.js";
+
 import { button } from "./icons.js";
 let instance = 0;
-const COLORS = [
-  ["#ffffff", "#cbd5e1"],
-  ["#ede9fe", "#a78bfa"],
-  ["#d1fae5", "#6ee7b7"],
-  ["#fef3c7", "#fbbf24"],
-  ["#ffe4e6", "#fda4af"],
-  ["#dbeafe", "#93c5fd"],
-];
 export function mount(root, options) {
   const doc = root.ownerDocument,
     win = doc.defaultView;
@@ -50,7 +33,6 @@ export function mount(root, options) {
     abort = new AbortController();
   let presenting = false,
     presentIndex = 0,
-    snapping = options.snap !== false,
     selection = new Set(),
     spacePan = false,
     source = options.source || INITIAL,
@@ -68,6 +50,7 @@ export function mount(root, options) {
     saveQueue = null,
     externalEditing = false,
     drag = null,
+    hoveredNode = null,
     editing = null,
     draft = null,
     title = options.title || "Untitled board",
@@ -76,10 +59,10 @@ export function mount(root, options) {
   setMarkup(
     root,
     `<main class="rea-workspace"><div class="rea-canvas" tabindex="0" aria-label="Board. Drag shapes to move. Double-click to edit text."><div class="rea-transform"><div class="rea-diagram"></div></div><div class="rea-empty" hidden>A little room to think.<small>Add a shape to get started.</small></div></div>
-    <button class="rea-title" aria-label="Rename board" title="Rename board"></button><button class="rea-recover" data-action="fit" hidden>Zoom to content</button><svg class="rea-guides"></svg><div class="rea-paste-menu rea-popover" hidden role="menu"></div><nav class="rea-toolbar" aria-label="Board tools">${button("select", "Select (V)", 'data-tool="select"')}${button("hand", "Pan (H or Space)", 'data-tool="hand"')}<i></i>${button("rect", "Add rectangle (R)", 'data-tool="rect"')}${button("round", "Add pill (O)", 'data-tool="round"')}${button("diamond", "Add decision (D)", 'data-tool="diamond"')}${button("connect", "Connect shapes (C)", 'data-tool="connect"')}<i></i>${button("more", "More board options", 'data-action="more" aria-expanded="false"')}</nav>
-    <div class="rea-more rea-popover" hidden role="menu" aria-label="Board options"><div class="rea-board-name"></div><div class="rea-menu-actions">${button("board", "New board", 'data-action="new"')}${button("import", "Import file", 'data-action="import"')}${button("source", "Mermaid source", 'data-action="source"')}${button("arrange", "Auto layout", 'data-action="arrange"')}${button("frame", "Frame selection", 'data-action="frame"')}${button("export", "Export Markdown", 'data-action="export"')}${button("image", "Copy as PNG (⌘⇧C)", 'data-action="copy-png"')}${button("vector", "Copy as SVG", 'data-action="copy-svg"')}${button("grid", "Snap to grid", 'data-action="snap"')}${button("dots", "Show grid dots", 'data-action="grid"')}${button("present", "Present board", 'data-action="present"')}${button("support", "Support development on Ko-fi", 'data-action="support"')}</div><div class="rea-background-controls" role="group" aria-label="Board background"><button data-background="ivory" aria-label="Ivory background" title="Ivory background"><span class="rea-background-swatch rea-bg-ivory"></span></button><button data-background="ice" aria-label="Ice background" title="Ice background"><span class="rea-background-swatch rea-bg-ice"></span></button><button data-background="sage" aria-label="Sage background" title="Sage background"><span class="rea-background-swatch rea-bg-sage"></span></button><input class="rea-background-hex" aria-label="Background hex color" title="Background hex color" placeholder="#fffdf5" maxlength="7" spellcheck="false"></div><div class="rea-text-preferences"><button data-action="counter" aria-label="Character counter" title="Character counter" aria-pressed="false">Aa</button><input type="number" class="rea-character-target" aria-label="Character target" title="Soft character target" min="1" max="10000" value="280"></div><div class="rea-theme-controls">${button("sun", "Light mode", 'data-action="light"')}${button("moon", "Dark mode", 'data-action="dark"')}</div></div>
+    <button class="rea-title" aria-label="Rename board" title="Rename board"></button><button class="rea-recover" data-action="fit" hidden>Zoom to content</button><svg class="rea-guides"></svg><div class="rea-paste-menu rea-popover" hidden role="menu"></div><nav class="rea-toolbar" aria-label="Board tools">${button("select", "Select (V)", 'data-tool="select"')}${button("hand", "Pan (H or Space)", 'data-tool="hand"')}<i></i> ${button("rect", "Shapes", 'data-action="shapes" aria-expanded="false"')}${button("text", "Place text (T)", 'data-tool="text"')}${button("line", "Draw line (L)", 'data-tool="line"')}<div class="rea-shape-menu rea-popover" aria-label="Shape choices" hidden>${button("rect", "Add rectangle (R)", 'data-tool="rect"')}${button("round", "Add pill (O)", 'data-tool="round"')}${button("diamond", "Add decision (D)", 'data-tool="diamond"')}${button("table", "Add table", 'data-tool="table"')}${button("source", "Add code block", 'data-tool="code"')}${button("latex", "Add LaTeX block", 'data-tool="latex"')}</div>${button("connect", "Connect shapes (C)", 'data-tool="connect"')}<i></i>${button("more", "More board options", 'data-action="more" aria-expanded="false"')}</nav>
+    <div class="rea-more rea-popover" hidden role="menu" aria-label="Board options"><div class="rea-board-name"></div><div class="rea-menu-actions">${button("board", "New board", 'data-action="new"')}${button("import", "Import file", 'data-action="import"')}${button("source", "Mermaid source", 'data-action="source"')}${button("arrange", "Auto layout", 'data-action="arrange"')}${button("frame", "Frame selection", 'data-action="frame"')}${button("export", "Export Markdown", 'data-action="export"')}${button("image", "Copy as PNG (⌘⇧C)", 'data-action="copy-png"')}${button("vector", "Copy as SVG", 'data-action="copy-svg"')}${button("grid", "Snap to grid", 'data-action="snap"')}${button("dots", "Show grid dots", 'data-action="grid"')}${button("present", "Present board", 'data-action="present"')}${button("support", "Support development on Ko-fi", 'data-action="support"')}</div><div class="rea-background-controls" role="group" aria-label="Board background"><button data-background="ivory" aria-label="Ivory background" title="Ivory background"><span class="rea-background-swatch rea-bg-ivory"></span></button><button data-background="ice" aria-label="Ice background" title="Ice background"><span class="rea-background-swatch rea-bg-ice"></span></button><button data-background="sage" aria-label="Sage background" title="Sage background"><span class="rea-background-swatch rea-bg-sage"></span></button><input class="rea-background-hex" aria-label="Background hex color" title="Background hex color" placeholder="${DEFAULT_BOARD_PAPER}" maxlength="7" spellcheck="false"></div><div class="rea-text-preferences"><button data-action="counter" aria-label="Character counter" title="Character counter" aria-pressed="false">Aa</button><input type="number" class="rea-character-target" aria-label="Character target" title="Soft character target" min="1" max="10000" value="280"></div><div class="rea-theme-controls">${button("sun", "Light mode", 'data-action="light"')}${button("moon", "Dark mode", 'data-action="dark"')}</div></div>
     <div class="rea-context rea-popover" hidden role="toolbar" aria-label="Selection options"></div><div class="rea-palette rea-popover" hidden aria-label="Shape colors"></div><div class="rea-handles" hidden></div><div class="rea-resizers" hidden></div><div class="rea-edge-controls" hidden></div><div class="rea-selection-bounds" hidden></div><div class="rea-marquee" hidden></div>
-    <svg class="rea-preview" hidden><defs><marker id="rea-preview-${uid}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10" fill="#7956d9"/></marker></defs><path class="rea-preview-line" marker-end="url(#rea-preview-${uid})"/></svg>
+    <svg class="rea-preview" hidden><defs><marker id="rea-preview-${uid}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10" class="rea-preview-arrow"/></marker></defs><rect class="rea-thought-ghost" rx="9" hidden/><path class="rea-preview-line" marker-end="url(#rea-preview-${uid})"/></svg>
     <div class="rea-zoom">${button("undo", "Undo", 'data-action="undo"')}${button("redo", "Redo", 'data-action="redo"')}<i></i>${button("minus", "Zoom out", 'data-action="out"')}<button class="rea-percent" data-action="fit" title="Fit diagram" aria-label="Fit diagram">100%</button>${button("plus", "Zoom in", 'data-action="in"')}</div>
     <div class="rea-presenter rea-popover" hidden>${button("minus", "Previous idea", 'data-action="previous"')}<span class="rea-present-title"></span>${button("plus", "Next idea", 'data-action="next"')}${button("close", "Exit presentation", 'data-action="exit-present"')}</div><span class="rea-status" role="status">All changes saved locally</span><div class="rea-modal-backdrop" hidden><section class="rea-source-dialog rea-popover" role="dialog" aria-modal="true" aria-label="Mermaid source"><div class="rea-dialog-heading"><strong>Mermaid</strong>${button("close", "Close source", 'data-action="close-source"')}</div><textarea class="rea-source" spellcheck="false" aria-label="Mermaid source"></textarea><div class="rea-source-error" role="alert"></div><div class="rea-dialog-footer"><label>Direction <select class="rea-direction"><option value="LR">Left → right</option><option value="TD">Top → bottom</option><option value="RL">Right → left</option><option value="BT">Bottom → top</option></select></label><button data-action="import-file" class="rea-import-file" hidden>Choose file…</button><button class="rea-primary" data-action="apply-source">Apply changes</button></div></section></div>
     <input class="rea-file" type="file" accept=".board,.md,.mmd,.mermaid,.svg,.json,.excalidraw,.tldr,text/plain" hidden></main>`,
@@ -95,119 +78,21 @@ export function mount(root, options) {
     modal = $(".rea-modal-backdrop");
   $(".rea-board-name").textContent = title;
   $(".rea-title").textContent = title;
-  function setTheme(theme, save = true) {
-    root.dataset.theme = theme;
-    for (const mode of ["light", "dark"])
-      root
-        .querySelector(`[data-action=${mode}]`)
-        .setAttribute("aria-pressed", String(mode === theme));
-    if (root.dataset.background) {
-      const colors = paperColors(root.dataset.background, theme);
-      root.style.setProperty("--paper", colors.paper);
-      root.style.setProperty("--grid", colors.grid);
-    }
-    if (layout) view();
-    if (save)
-      Promise.resolve(options.setTheme?.(theme)).catch(() =>
-        status("Could not save theme preference.", true),
-      );
-  }
-  setTheme(options.theme || "light", false);
-  function setAppearance(patch, save = true) {
-    const background =
-        backgroundHex(patch.background) || root.dataset.background || "#fffdf5",
-      showGrid = patch.showGrid ?? root.dataset.grid !== "false";
-    root.dataset.background = background;
-    root.dataset.grid = String(showGrid);
-    const colors = paperColors(background, root.dataset.theme);
-    root.style.setProperty("--paper", colors.paper);
-    root.style.setProperty("--grid", colors.grid);
-    $(".rea-background-hex").value = background;
-    for (const button of root.querySelectorAll("button[data-background]"))
-      button.setAttribute(
-        "aria-pressed",
-        String(backgroundHex(button.dataset.background) === background),
-      );
-    $("[data-action=grid]").setAttribute("aria-pressed", String(showGrid));
-    if (layout) view();
-    if (save)
-      Promise.resolve(options.setAppearance?.({ background, showGrid })).catch(
-        () => status("Could not save background preference.", true),
-      );
-  }
-  setAppearance(
-    {
-      background: options.background || "ivory",
-      showGrid: options.showGrid !== false,
+  const preferences = createBoardPreferences({
+    root,
+    $,
+    signal: abort.signal,
+    options,
+    refreshView() {
+      if (layout) view();
     },
-    false,
-  );
-  onBackgroundInput();
-  function onBackgroundInput() {
-    const input = $(".rea-background-hex");
-    input.addEventListener(
-      "change",
-      () => {
-        const color = backgroundHex(input.value);
-        input.setAttribute("aria-invalid", String(!color));
-        if (color) setAppearance({ background: color });
-      },
-      { signal: abort.signal },
-    );
-    input.addEventListener(
-      "keydown",
-      (e) => {
-        if (e.key === "Enter") {
-          e.stopPropagation();
-          input.blur();
-        }
-      },
-      { signal: abort.signal },
-    );
-  }
-  let textPreferences = {
-    counterEnabled: options.counterEnabled === true,
-    characterTarget: options.characterTarget || 280,
-  };
-  function setTextPreferences(patch, save = true) {
-    textPreferences = { ...textPreferences, ...patch };
-    textPreferences.characterTarget = Math.max(
-      1,
-      Math.min(
-        10000,
-        Math.round(Number(textPreferences.characterTarget) || 280),
-      ),
-    );
-    $("[data-action=counter]").setAttribute(
-      "aria-pressed",
-      String(textPreferences.counterEnabled),
-    );
-    $(".rea-character-target").value = textPreferences.characterTarget;
-    $(".rea-character-target").hidden = !textPreferences.counterEnabled;
-    editing?.editor.update();
-    if (save)
-      Promise.resolve(options.setTextPreferences?.(textPreferences)).catch(() =>
-        status("Could not save text preferences.", true),
-      );
-  }
-  setTextPreferences({}, false);
-  $(".rea-character-target").addEventListener(
-    "change",
-    (e) => setTextPreferences({ characterTarget: e.target.value }),
-    { signal: abort.signal },
-  );
-  function setSnap(value, save = true) {
-    snapping = value;
-    root.dataset.snap = String(value);
-    $("[data-action=snap]").setAttribute("aria-pressed", String(value));
-    if (save)
-      Promise.resolve(options.setSnap?.(value)).catch(() =>
-        status("Could not save grid preference.", true),
-      );
-  }
-  setSnap(snapping, false);
-  const snapped = (p, e = {}) => snapPoint(p, snapping && !e.altKey);
-
+    refreshEditor() {
+      editing?.editor.update();
+    },
+    status,
+  });
+  const { setTheme, setAppearance, setTextPreferences, setSnap, snapped } =
+    preferences;
   if (!options.newBoard) $("[data-action=new]").hidden = true;
   function on(el, event, fn, opts = {}) {
     el.addEventListener(event, fn, { ...opts, signal: abort.signal });
@@ -238,302 +123,169 @@ export function mount(root, options) {
       el && model?.nodes.find((n) => el.id.includes(`flowchart-${n.id}-`))?.id
     );
   }
-  function toWorld(x, y) {
-    return new DOMPoint(x, y).matrixTransform(
-      diagram.querySelector("svg").getScreenCTM().inverse(),
-    );
-  }
-  function toLocal(p) {
-    const screen = new DOMPoint(p.x, p.y).matrixTransform(
-        diagram.querySelector("svg").getScreenCTM(),
-      ),
-      r = canvas.getBoundingClientRect();
-    return { x: screen.x - r.left, y: screen.y - r.top };
-  }
+  const {
+    toWorld,
+    toLocal,
+    view,
+    fit,
+    focusIdea,
+    present,
+    exitPresent,
+    scale,
+    bindWheel,
+  } = createViewport({
+    board: {
+      get selection() {
+        return selection;
+      },
+      set selection(value) {
+        selection = value;
+      },
+      get selected() {
+        return selected;
+      },
+      set selected(value) {
+        selected = value;
+      },
+      get selectedEdge() {
+        return selectedEdge;
+      },
+      set selectedEdge(value) {
+        selectedEdge = value;
+      },
+      get zoom() {
+        return zoom;
+      },
+      set zoom(value) {
+        zoom = value;
+      },
+      get pan() {
+        return pan;
+      },
+      set pan(value) {
+        pan = value;
+      },
+      get presenting() {
+        return presenting;
+      },
+      set presenting(value) {
+        presenting = value;
+      },
+      get presentIndex() {
+        return presentIndex;
+      },
+      set presentIndex(value) {
+        presentIndex = value;
+      },
+      get layout() {
+        return layout;
+      },
+      get model() {
+        return model;
+      },
+      get drag() {
+        return drag;
+      },
+    },
+    $,
+    root,
+    canvas,
+    diagram,
+    transform,
+    on,
+    finishText: () => finishText(),
+    placeControls: () => placeControls(),
+    positionCardEditor: () => cardEditor.position(),
+    highlight: () => highlight(),
+    hideMenus,
+    selectionControls: () => selectionControls(),
+  });
   function hideMenus() {
     $(".rea-paste-menu").hidden = true;
     more.hidden = true;
+    $(".rea-shape-menu").hidden = true;
+    $("[data-action=shapes]").setAttribute("aria-expanded", "false");
     palette.hidden = true;
     $("[data-action=more]").setAttribute("aria-expanded", "false");
   }
-  function syncSelection() {
-    selection = new Set(
-      [...selection].filter((id) => model?.nodes.some((n) => n.id === id)),
-    );
-    selected = selection.size === 1 ? [...selection][0] : null;
-  }
-  function selectionBox() {
-    if (!layout || !selection.size) return null;
-    const ns = [...selection].map((id) => layout.nodes.get(id)).filter(Boolean);
-    if (!ns.length) return null;
-    const x = Math.min(...ns.map((n) => n.x - n.width / 2)),
-      y = Math.min(...ns.map((n) => n.y - n.height / 2)),
-      right = Math.max(...ns.map((n) => n.x + n.width / 2)),
-      bottom = Math.max(...ns.map((n) => n.y + n.height / 2));
-    return { x, y, width: right - x, height: bottom - y };
-  }
-  function highlight() {
-    diagram.querySelectorAll(".node").forEach((el) => {
-      const id = nodeId(el);
-      el.classList.toggle("rea-selected", selection.has(id));
-      el.classList.toggle(
-        "rea-target",
-        drag?.target === id || keyboardConnect === id,
-      );
-      el.setAttribute("tabindex", "0");
-      el.setAttribute("role", "button");
-      el.setAttribute(
-        "aria-label",
-        `Edit ${model?.nodes.find((n) => n.id === id)?.label || "shape"}`,
-      );
-    });
-    diagram
-      .querySelectorAll("[data-edge]")
-      .forEach((el) =>
-        el.classList.toggle(
-          "rea-selected-edge",
-          Number(el.dataset.edge) === selectedEdge,
-        ),
-      );
-  }
-  function view() {
-    transform.style.transform = `translate(${pan.x}px,${pan.y}px) scale(${zoom})`;
-    $(".rea-percent").textContent = `${Math.round(zoom * 100)}%`;
-    const layers = gridLayers(zoom, pan),
-      color = getComputedStyle(root).getPropertyValue("--grid").trim();
-    canvas.style.backgroundImage = layers
-      .map(
-        (l) =>
-          `radial-gradient(${l.visible ? color : "transparent"} ${l.radius}px, transparent ${l.radius}px)`,
-      )
-      .join(",");
-    canvas.style.backgroundSize = layers
-      .map((l) => `${l.size}px ${l.size}px`)
-      .join(",");
-    canvas.style.backgroundPosition = layers
-      .map((l) => `${l.x}px ${l.y}px`)
-      .join(",");
-    placeControls();
-    const b = layout?.bounds();
-    $(".rea-recover").hidden =
-      !b ||
-      (b.x * zoom + pan.x < canvas.clientWidth - 70 &&
-        (b.x + b.width) * zoom + pan.x > 80 &&
-        b.y * zoom + pan.y < canvas.clientHeight - 60 &&
-        (b.y + b.height) * zoom + pan.y > 50);
-  }
-  function animateView() {
-    if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    const before = transform.style.transform;
-    view();
-    const after = transform.style.transform;
-    transform.animate([{ transform: before }, { transform: after }], {
-      duration: 220,
-      easing: "cubic-bezier(.2,.8,.2,1)",
-    });
-  }
-  function fit() {
-    const svg = diagram.querySelector("svg");
-    if (!svg) return;
-    const b = layout ? layout.bounds() : svg.viewBox.baseVal,
-      w = Math.max(100, canvas.clientWidth - 220),
-      h = Math.max(100, canvas.clientHeight - 140);
-    zoom = Math.min(1.2, Math.max(0.05, Math.min(w / b.width, h / b.height)));
-    pan = {
-      x: 110 + (w - b.width * zoom) / 2 - (layout ? b.x * zoom : 0),
-      y: 70 + (h - b.height * zoom) / 2 - (layout ? b.y * zoom : 0),
-    };
-    animateView();
-  }
-  function placeControls() {
-    drawEdgeControls();
-    const resizers = $(".rea-resizers"),
-      frame = $(".rea-selection-bounds");
-    if (editing || drag?.moved || !layout) {
-      context.hidden = true;
-      handles.hidden = true;
-      resizers.hidden = true;
-      frame.hidden = true;
-      return;
-    }
-    const n = layout.nodes.get(selected),
-      box = selectionBox();
-    let anchor;
-    handles.hidden = !n || n.shape === "frame";
-    resizers.hidden = !n;
-    frame.hidden = !box;
-    if (box) {
-      const topLeft = toLocal({ x: box.x, y: box.y }),
-        bottomRight = toLocal({ x: box.x + box.width, y: box.y + box.height });
-      anchor = { x: (topLeft.x + bottomRight.x) / 2, y: topLeft.y - 82 };
-      for (const [key, value] of Object.entries({
-        left: topLeft.x,
-        top: topLeft.y,
-        width: bottomRight.x - topLeft.x,
-        height: bottomRight.y - topLeft.y,
-      }))
-        frame.style[key] = `${value}px`;
-    }
-    if (n) {
-      const top = toLocal({ x: n.x, y: n.y - n.height / 2 }),
-        bottom = toLocal({ x: n.x, y: n.y + n.height / 2 }),
-        left = toLocal({ x: n.x - n.width / 2, y: n.y }),
-        right = toLocal({ x: n.x + n.width / 2, y: n.y });
-      for (const [side, p] of Object.entries({ top, right, bottom, left })) {
-        const b = handles.querySelector(`[data-port=${side}]`);
-        b.style.left = `${p.x}px`;
-        b.style.top = `${p.y}px`;
-        const q = handles.querySelector(`[data-quick-add=${side}]`);
-        q.style.left = `${p.x + ({ left: -28, right: 28 }[side] || 0)}px`;
-        q.style.top = `${p.y + ({ top: -28, bottom: 28 }[side] || 0)}px`;
-      }
-      for (const [corner, p] of Object.entries({
-        n: { x: top.x, y: top.y },
-        e: { x: right.x, y: right.y },
-        s: { x: bottom.x, y: bottom.y },
-        w: { x: left.x, y: left.y },
-        nw: toLocal({ x: n.x - n.width / 2, y: n.y - n.height / 2 }),
-        ne: toLocal({ x: n.x + n.width / 2, y: n.y - n.height / 2 }),
-        se: toLocal({ x: n.x + n.width / 2, y: n.y + n.height / 2 }),
-        sw: toLocal({ x: n.x - n.width / 2, y: n.y + n.height / 2 }),
-      })) {
-        const b = resizers.querySelector(`[data-resize=${corner}]`);
-        b.style.left = `${p.x}px`;
-        b.style.top = `${p.y}px`;
-        if (corner.length === 1) {
-          if (["n", "s"].includes(corner))
-            b.style.width = `${Math.max(38, n.width * zoom - 20)}px`;
-          else b.style.height = `${Math.max(38, n.height * zoom - 20)}px`;
-        }
-      }
-    } else if (selectedEdge !== null) {
-      const link = layout.links[selectedEdge];
-      if (link?.geometry) {
-        const points = link.geometry.points || [link.geometry.label],
-          locals = points.map(toLocal);
-        anchor = {
-          x:
-            (Math.min(...locals.map((p) => p.x)) +
-              Math.max(...locals.map((p) => p.x))) /
-            2,
-          y:
-            Math.min(
-              ...locals.map((p) => p.y),
-              ...(link.labelBox
-                ? [link.labelBox.getBBox().y * zoom + pan.y]
-                : []),
-            ) - 78,
-        };
-      }
-    }
-    if (!anchor) {
-      context.hidden = true;
-      return;
-    }
-    context.hidden = false;
-    const half = context.offsetWidth / 2;
-    context.style.left = `${Math.max(half + 82, Math.min(canvas.clientWidth - half - 10, anchor.x))}px`;
-    const top =
-      anchor.y < 58
-        ? Math.min(
-            canvas.clientHeight - 55,
-            (box
-              ? toLocal({ x: box.x, y: box.y + box.height }).y
-              : anchor.y + 100) + 40,
-          )
-        : anchor.y;
-    context.style.top = `${Math.max(58, Math.min(canvas.clientHeight - 50, top))}px`;
-    if (!palette.hidden) {
-      palette.style.left = context.style.left;
-      palette.style.top = `${parseFloat(context.style.top) + 48}px`;
-    }
-  }
-  function selectionControls() {
-    palette.hidden = true;
-    syncSelection();
-    const n = model?.nodes.find((n) => n.id === selected);
-    setMarkup(
-      context,
-      n
-        ? `${button("text", "Edit text", 'data-selection="text"')}<button aria-label="Shape color" title="Shape color" data-selection="color"><span class="rea-color-dot"></span></button><select aria-label="Shape type" class="rea-shape-type"><option value="rect">▢</option><option value="round">▱</option><option value="diamond">◇</option></select><i></i>${button("plus", "Add child idea (Tab)", 'data-selection="child"')}${button("duplicate", "Duplicate shape (⌘D)", 'data-selection="duplicate"')}${button("trash", "Delete shape", 'data-selection="delete"')}`
-        : selectedEdge !== null
-          ? `${button("text", "Edit connection label", 'data-selection="edge-text"')}<button aria-label="Connection color" title="Connection color" data-selection="color"><span class="rea-color-dot"></span></button><select aria-label="Connector routing" class="rea-edge-routing"><option value="auto">Auto</option><option value="straight">Straight</option><option value="orthogonal">Right angle</option></select><select aria-label="Connection label width" class="rea-edge-width" title="Label width"><option value="0">Auto width</option><option value="100">Narrow</option><option value="160">Medium</option><option value="240">Wide</option><option value="320">Extra wide</option></select><select aria-label="Connection text size" class="rea-edge-font"><option value="13">13 px</option><option value="16">16 px</option><option value="20">20 px</option><option value="24">24 px</option><option value="32">32 px</option></select>${button("arrange", "Reset connector route", 'data-selection="reset-route"')}${button("trash", "Delete connection", 'data-selection="delete"')}`
-          : selection.size > 1
-            ? `<span class="rea-selection-count">${selection.size} shapes</span><button aria-label="Shape color" title="Shape color" data-selection="color"><span class="rea-color-dot"></span></button>${button("duplicate", "Duplicate shapes (⌘D)", 'data-selection="duplicate"')}${button("trash", "Delete shapes", 'data-selection="delete"')}${button("frame", "Frame selection", 'data-selection="frame"')}<select class="rea-arrangement" aria-label="Arrange selection"><option value="">Arrange…</option><option value="left">Align left</option><option value="center">Align centers</option><option value="right">Align right</option><option value="top">Align top</option><option value="middle">Align middles</option><option value="bottom">Align bottom</option><option value="distribute-x">Distribute horizontally</option><option value="distribute-y">Distribute vertically</option></select>`
-            : "",
-    );
-    if (n?.shape === "frame") {
-      const type = context.querySelector(".rea-shape-type");
-      setMarkup(type, '<option value="frame">Frame</option>');
-      type.disabled = true;
-      context.querySelector("[data-selection=child]").hidden = true;
-    }
-    if (n) {
-      context.querySelector(".rea-color-dot").style.background = n.fill;
-      context.querySelector(".rea-shape-type").value = n.shape;
-    }
-    if (selectedEdge !== null && model?.edges[selectedEdge]) {
-      const e = model.edges[selectedEdge];
-      context.querySelector(".rea-color-dot").style.background =
-        e.color || "#9b96aa";
-      context.querySelector(".rea-edge-routing").value =
-        e.routing || "straight";
-      context.querySelector(".rea-edge-width").value = String(
-        e.labelWidth || 0,
-      );
-      context.querySelector(".rea-edge-font").value = String(
-        e.labelFontSize || 13,
-      );
-    }
-    const item =
-      n || (selectedEdge !== null ? model?.edges[selectedEdge] : null);
-    if (item) {
-      if (options.pickLink)
-        appendMarkup(
-          context,
-          button(
-            "link",
-            item.link ? "Change note link" : "Add note link",
-            'data-selection="note-link"',
-          ),
-        );
-      if (edgeLink(item) && options.openLink)
-        appendMarkup(
-          context,
-          button("link", "Open linked note", 'data-selection="open-link"'),
-        );
-      if (item.link)
-        appendMarkup(
-          context,
-          button("close", "Remove note link", 'data-selection="remove-link"'),
-        );
-    }
-    placeControls();
-    highlight();
-  }
-  for (const side of ["top", "right", "bottom", "left"]) {
-    const b = doc.createElement("button");
-    b.className = "rea-port";
-    b.dataset.port = side;
-    b.setAttribute("aria-label", `Drag ${side} connection handle`);
-
-    handles.append(b);
-    const q = doc.createElement("button");
-    q.className = "rea-quick-add";
-    q.dataset.quickAdd = side;
-    q.setAttribute("aria-label", `Add idea ${side}`);
-    q.textContent = "+";
-    handles.append(q);
-  }
-  for (const corner of ["nw", "n", "ne", "e", "se", "s", "sw", "w"]) {
-    const b = doc.createElement("button");
-    b.className = "rea-resize";
-    b.dataset.resize = corner;
-    b.setAttribute("aria-label", `Resize ${corner} corner`);
-    b.dataset.edgeGrip = String(corner.length === 1);
-
-    $(".rea-resizers").append(b);
-  }
+  const {
+    syncSelection,
+    highlight,
+    placePorts,
+    placeControls,
+    selectionControls,
+    selectNode,
+    selectEdge,
+    bindSelectionActions,
+  } = createSelectionControls({
+    board: {
+      get selection() {
+        return selection;
+      },
+      set selection(value) {
+        selection = value;
+      },
+      get selected() {
+        return selected;
+      },
+      set selected(value) {
+        selected = value;
+      },
+      get selectedEdge() {
+        return selectedEdge;
+      },
+      set selectedEdge(value) {
+        selectedEdge = value;
+      },
+      get layout() {
+        return layout;
+      },
+      get model() {
+        return model;
+      },
+      get drag() {
+        return drag;
+      },
+      get keyboardConnect() {
+        return keyboardConnect;
+      },
+      get hoveredNode() {
+        return hoveredNode;
+      },
+      get editing() {
+        return editing;
+      },
+      get presenting() {
+        return presenting;
+      },
+      get tool() {
+        return tool;
+      },
+      get zoom() {
+        return zoom;
+      },
+      get pan() {
+        return pan;
+      },
+    },
+    $,
+    doc,
+    canvas,
+    diagram,
+    context,
+    handles,
+    palette,
+    on,
+    nodeId,
+    toLocal,
+    hideMenus,
+    isCardEditing: () => cardEditor.active,
+    startText: (...args) => startText(...args),
+    change,
+    frameSelection,
+    duplicate,
+    removeSelection,
+  });
   on(handles, "dblclick", (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -544,27 +296,7 @@ export function mount(root, options) {
     e.stopPropagation();
     if (selected) fitText(selected);
   });
-  on($(".rea-resizers"), "pointerdown", (e) => {
-    const corner = e.target.closest("[data-resize]")?.dataset.resize;
-    if (e.button !== 0 || !corner || !selected) return;
-    e.preventDefault();
-    finishText();
-    hideMenus();
-    const n = layout.nodes.get(selected);
-    drag = {
-      kind: "resize",
-      id: selected,
-      corner,
-      start: toWorld(e.clientX, e.clientY),
-      x: n.x,
-      y: n.y,
-      width: n.width,
-      height: n.height,
-      positions: layout.positions(),
-      moved: false,
-    };
-    canvas.setPointerCapture(e.pointerId);
-  });
+  on($(".rea-resizers"), "pointerdown", (e) => startResize(e));
   async function render(autoFit = false, editAfter = null) {
     const ticket = ++epoch;
     model = parse(source);
@@ -585,7 +317,8 @@ export function mount(root, options) {
             existing.append(el);
           }
         layout = createLayout(existing, model, nodeId, {
-          resolveLinkTitle: options.resolveLinkTitle,
+          resolveLinkTitle: resolveBoardLinkTitle,
+          renderMath: options.renderMath,
         });
         $(".rea-empty").hidden = !!model.nodes.length;
         if (autoFit) fit();
@@ -602,7 +335,8 @@ export function mount(root, options) {
       svg.setAttribute("height", box.height);
       layout = model
         ? createLayout(svg, model, nodeId, {
-            resolveLinkTitle: options.resolveLinkTitle,
+            resolveLinkTitle: resolveBoardLinkTitle,
+            renderMath: options.renderMath,
           })
         : null;
       $(".rea-empty").hidden = !!model?.nodes.length || !model;
@@ -671,6 +405,8 @@ export function mount(root, options) {
     }
   }
   function setTool(next) {
+    hoveredNode = null;
+    $(".rea-preview").setAttribute("hidden", "");
     tool = next;
     keyboardConnect = null;
     root.querySelectorAll("[data-tool]").forEach((b) => {
@@ -679,15 +415,15 @@ export function mount(root, options) {
     });
     canvas.classList.toggle("rea-connect-tool", next === "connect");
     canvas.classList.toggle("rea-hand-tool", next === "hand");
+    placePorts();
     highlight();
   }
-  function add(shape, position, frameId) {
+  function add(shape, position, frameId, line) {
     finishText();
     hideMenus();
-    let id;
+    const id = model ? nextId(model) : null;
     change(
       (m) => {
-        id = nextId(m);
         const r = canvas.getBoundingClientRect(),
           p =
             position ||
@@ -707,110 +443,176 @@ export function mount(root, options) {
             p.x += 35;
             p.y += 100;
           }
-        m.nodes.push({
-          id,
-          label: shape === "diamond" ? "A decision" : "A new thought",
-          shape,
-          fill: "#ede9fe",
-          stroke: "#a78bfa",
-          position: snapped(p),
-        });
+        const card = Object.hasOwn(cardTypes, shape)
+          ? structuredClone(cardTypes[shape])
+          : null;
+        m.nodes.push(
+          card
+            ? { id, ...cardNode(card), position: snapped(p) }
+            : {
+                id,
+                label:
+                  shape === "line"
+                    ? ""
+                    : shape === "text"
+                      ? "Text"
+                      : shape === "diamond"
+                        ? "A decision"
+                        : "A new thought",
+                ...line,
+                shape,
+                ...DEFAULT_THOUGHT_COLOR,
+                position: line ? p : snapped(p),
+              },
+        );
         if (frameId) m.nodes.find((n) => n.id === frameId)?.members.push(id);
+        else updateFrameMembership(m, [id]);
         selected = id;
         selection = new Set([id]);
         selectedEdge = null;
       },
-      { editAfter: null },
+      {
+        editAfter:
+          shape === "text" || Object.hasOwn(cardTypes, shape) ? id : null,
+      },
     );
     setTool("select");
   }
-  function child(side = "right") {
-    if (!selected || !model) return;
-    finishText();
-    const parent = model.nodes.find((n) => n.id === selected),
-      at = layout.nodes.get(selected),
-      id = nextId(model);
-    change(
-      (m) => {
-        m.nodes.push({
-          id,
-          label: "A new thought",
-          shape: "rect",
-          fill: parent.fill,
-          stroke: parent.stroke,
-          size: { width: at.width, height: at.height },
-          position: snapped({
-            x: at.x + ({ right: 340, left: -340 }[side] || 0),
-            y: at.y + ({ top: -180, bottom: 180 }[side] || 0),
-          }),
-        });
-        m.edges.push({
-          from: parent.id,
-          to: id,
-          label: "",
-          routing: "auto",
-          fromSide: side,
-        });
-        selection = new Set([id]);
-        selected = id;
-        selectedEdge = null;
+  const {
+    child,
+    connect,
+    hitNode,
+    startConnect,
+    previewConnection,
+    startEdgeDrag,
+    moveEdge,
+    endEdge,
+    drawGuides,
+    bindQuickAdd,
+    bindConnectorHandles,
+  } = createConnectorInteractions({
+    board: {
+      get selection() {
+        return selection;
       },
-      { editAfter: id },
-    );
-  }
-  on(handles, "click", (e) => {
-    const side = e.target.closest("[data-quick-add]")?.dataset.quickAdd;
-    if (side) child(side);
+      set selection(value) {
+        selection = value;
+      },
+      get selected() {
+        return selected;
+      },
+      set selected(value) {
+        selected = value;
+      },
+      get selectedEdge() {
+        return selectedEdge;
+      },
+      set selectedEdge(value) {
+        selectedEdge = value;
+      },
+      get hoveredNode() {
+        return hoveredNode;
+      },
+      set hoveredNode(value) {
+        hoveredNode = value;
+      },
+      get layout() {
+        return layout;
+      },
+      get model() {
+        return model;
+      },
+      get drag() {
+        return drag;
+      },
+      set drag(value) {
+        drag = value;
+      },
+      get zoom() {
+        return zoom;
+      },
+      get suppressClick() {
+        return suppressClick;
+      },
+      get externalEditing() {
+        return externalEditing;
+      },
+    },
+    $,
+    doc,
+    canvas,
+    handles,
+    context,
+    on,
+    preferences,
+    snapped,
+    finishText: () => finishText(),
+    hideMenus,
+    selectNode,
+    change,
+    setTool,
+    toLocal,
+    toWorld,
+    highlight,
+    placeControls,
+    selectionControls,
   });
-  function focusIdea(id) {
-    const n = layout?.nodes.get(id);
-    if (!n) return;
-    selection = new Set([id]);
-    selected = id;
-    selectedEdge = null;
-    zoom = Math.min(
-      1.6,
-      Math.max(
-        0.2,
-        Math.min(
-          (canvas.clientWidth - 180) / n.width,
-          (canvas.clientHeight - 160) / n.height,
-        ),
-      ),
-    );
-    pan = {
-      x: canvas.clientWidth / 2 - n.x * zoom,
-      y: canvas.clientHeight / 2 - n.y * zoom,
-    };
-    animateView();
-    highlight();
-    $(".rea-present-title").textContent = n.label;
+  bindQuickAdd();
+  function resolveBoardLinkTitle(target) {
+    if (target.startsWith("@shape:"))
+      return model?.nodes
+        .find((n) => n.id === target.slice("@shape:".length))
+        ?.label.split("\n")[0];
+    return options.resolveLinkTitle?.(target);
   }
-  function present(delta = 0) {
-    if (!model?.nodes.length) return;
-    finishText();
-    hideMenus();
-    presenting = true;
-    root.classList.add("rea-presenting");
-    $(".rea-presenter").hidden = false;
-    presentIndex = Math.max(
-      0,
-      Math.min(model.nodes.length - 1, presentIndex + delta),
-    );
-    focusIdea(model.nodes[presentIndex].id);
-    canvas.focus();
+  function openBoardLink(target) {
+    if (target.startsWith("@shape:")) {
+      const id = target.slice("@shape:".length);
+      if (!layout?.nodes.has(id))
+        return status("The linked shape is unavailable.", true);
+      finishText();
+      focusIdea(id);
+      return;
+    }
+    options.openLink?.(target);
   }
-  function exitPresent() {
-    presenting = false;
-    root.classList.remove("rea-presenting");
-    $(".rea-presenter").hidden = true;
-    fit();
-    selectionControls();
+  function suggestBoardLinks(query) {
+    if (!query.startsWith("@")) return options.suggestLinks?.(query) || [];
+    const needle = query.slice(1).toLowerCase().trim();
+    return model.nodes
+      .filter(
+        (n) =>
+          n.id !== selected &&
+          (n.label + " " + n.id).toLowerCase().includes(needle),
+      )
+      .slice(0, 12)
+      .map((n) => ({
+        label: n.label.split("\n")[0] || n.id,
+        detail: "Shape on this board",
+        target: "@shape:" + n.id,
+      }));
   }
   function duplicate() {
     if (!selection.size) return;
-    const originals = membersFor(model, selection);
     change((m) => {
+      const originals = membersFor(m, selection);
+      const nodes = m.nodes.filter((n) => originals.has(n.id));
+      const owners = frameOwners(m);
+      const frameMembers = new Map(
+        nodes
+          .filter((n) => n.members)
+          .map((n) => [
+            n.id,
+            nodes
+              .filter((child) => owners.get(child.id) === n)
+              .map((child) => child.id),
+          ]),
+      );
+      const { x: dx, y: dy } = duplicateOffset(
+        nodes,
+        m.nodes,
+        preferences.snapping,
+      );
       const map = new Map();
       for (const n of [...m.nodes])
         if (originals.has(n.id)) {
@@ -819,7 +621,8 @@ export function mount(root, options) {
           m.nodes.push({
             ...n,
             id,
-            position: { x: n.position.x + 40, y: n.position.y + 80 },
+            position: { x: n.position.x + dx, y: n.position.y + dy },
+            ...(n.shape === "frame" ? { members: frameMembers.get(n.id) } : {}),
           });
         }
       for (const n of m.nodes)
@@ -835,14 +638,20 @@ export function mount(root, options) {
             ...(e.waypoints
               ? {
                   waypoints: e.waypoints.map((p) => ({
-                    x: p.x + 40,
-                    y: p.y + 80,
+                    x: p.x + dx,
+                    y: p.y + dy,
                   })),
                 }
               : {}),
           })),
       );
-      selection = new Set(map.values());
+      updateFrameMembership(
+        m,
+        [...selection]
+          .filter((id) => !originals.has(owners.get(id)?.id))
+          .map((id) => map.get(id)),
+      );
+      selection = new Set([...selection].map((id) => map.get(id)));
       selected = selection.size === 1 ? [...selection][0] : null;
     });
   }
@@ -850,7 +659,7 @@ export function mount(root, options) {
     if (selection.size) {
       const ids = new Set(selection);
       change((m) => {
-        removeNodes(m, ids);
+        removeNodes(m, ids, { deleteFrameContents: true });
       });
     } else if (selectedEdge !== null)
       change((m) => m.edges.splice(selectedEdge, 1));
@@ -859,916 +668,229 @@ export function mount(root, options) {
     selectedEdge = null;
     selectionControls();
   }
-  function selectNode(id, additive = false, preserve = false) {
-    if (!id) return;
-    if (additive) {
-      if (selection.has(id)) selection.delete(id);
-      else selection.add(id);
-    } else if (!preserve || !selection.has(id)) selection = new Set([id]);
-    syncSelection();
-    selectedEdge = null;
-    hideMenus();
-    selectionControls();
-  }
-  function selectEdge(index) {
-    selection.clear();
-    selected = null;
-    selectedEdge = index;
-    hideMenus();
-    selectionControls();
-  }
-  function startText(id = null, edgeIndex = null) {
-    finishText();
-    hideMenus();
-    const n = id && layout?.nodes.get(id),
-      edge = edgeIndex !== null && model?.edges[edgeIndex];
-    if (!n && !edge) return;
-    let p,
-      width = 200;
-    if (n) {
+  const cardEditor = createCardEditor({
+    doc,
+    win,
+    root,
+    canvas,
+    signal: abort.signal,
+    renderMath: options.renderMath,
+    getZoom: () => zoom,
+    toLocal,
+    selectCard(id) {
       selection = new Set([id]);
-      selected = id;
       selectedEdge = null;
-      p = toLocal(n);
-      width = Math.max(100, n.width * zoom - 26);
-    } else {
-      selection.clear();
-      selected = null;
-      selectedEdge = edgeIndex;
-      const a = layout.nodes.get(edge.from),
-        b = layout.nodes.get(edge.to);
-      p = toLocal(
-        layout.links[edgeIndex]?.geometry?.label || {
-          x: (a.x + b.x) / 2,
-          y: (a.y + b.y) / 2,
-        },
-      );
-      width = (edge.labelWidth || 180) * zoom;
-    }
-    const foreign = doc.createElementNS(
-      "http://www.w3.org/2000/svg",
-      "foreignObject",
-    );
-    foreign.classList.add("rea-live-foreign");
-    const host = doc.createElement("div");
-    host.className = "rea-live-host";
-    if (n?.shape === "frame") host.classList.add("rea-live-frame-title");
-    foreign.append(host);
-    const worldWidth = n
-      ? n.shape === "frame"
-        ? Math.min(n.width - 36, Math.max(180, n.label.length * 9))
-        : n.width - (n.shape === "diamond" ? n.width * 0.55 : 32)
-      : edge.labelWidth || 180;
-    const worldHeight = n
-      ? n.shape === "frame"
-        ? Math.min(80, n.height - 20)
-        : n.height - 28
-      : Math.max(60, (edge.labelFontSize || 13) * 4);
-    foreign.setAttribute(
-      "x",
-      n
-        ? -n.width / 2 +
-            (n.shape === "frame"
-              ? 18
-              : n.shape === "diamond"
-                ? n.width * 0.275
-                : 16)
-        : layout.links[edgeIndex].geometry.label.x - worldWidth / 2,
-    );
-    foreign.setAttribute(
-      "y",
-      n
-        ? n.shape === "frame"
-          ? -n.height / 2 + 10
-          : -n.height / 2 + 14
-        : layout.links[edgeIndex].geometry.label.y - worldHeight / 2,
-    );
-    foreign.setAttribute("width", worldWidth);
-    foreign.setAttribute("height", worldHeight);
-    (n ? n.el : diagram.querySelector("svg")).append(foreign);
-    if (!n) layout.links[edgeIndex].label?.setAttribute("visibility", "hidden");
-    const originalSize = n ? { width: n.width, height: n.height } : null;
-    const editor = createTextEditor({
-      doc,
-      root,
-      signal: abort.signal,
-      value: n ? n.label : edge.label,
-      label: n ? "Shape text" : "Connection text",
-      surfaceHost: host,
-      resolveTitle: options.resolveLinkTitle,
-      onOpenLink: (link, internal) =>
-        internal
-          ? options.openLink?.(link)
-          : win.open(link, "_blank", "noopener,noreferrer"),
-      onExpand: () => {
-        if (!n || n.shape === "frame") return;
-        const size = layout.fitText(n.id);
-        layout.resize(n.id, size);
-        layout.redraw();
-        const inset = n.shape === "diamond" ? n.width * 0.55 : 32;
-        foreign.setAttribute("x", -n.width / 2 + inset / 2);
-        foreign.setAttribute("y", -n.height / 2 + 14);
-        foreign.setAttribute("width", n.width - inset);
-        foreign.setAttribute("height", n.height - 28);
-        wrapper.style.width = `${n.width * zoom}px`;
-        wrapper.style.height = `${n.height * zoom}px`;
-      },
-      onDraft: (value) => {
-        if (n) {
-          n.label = value;
-          layout.resize(n.id, { width: n.width, height: n.height });
-        }
-      },
-      alignment: n?.textAlign || "center",
-      alignments: n?.textAlignments || [],
-      getPreferences: () => textPreferences,
-      onCommit: () => {
-        finishText();
-        canvas.focus();
-      },
-      onCancel: () => {
-        finishText(true);
-        canvas.focus();
-      },
-    });
-    const { input, wrapper } = editor;
-    const editorWidth = Math.min(width, canvas.clientWidth - 32),
-      height = n
-        ? n.shape === "frame"
-          ? 52
-          : n.height * zoom - 4
-        : Math.max(70, (edge.labelFontSize || 13) * zoom * 4);
-    wrapper.style.width = `${editorWidth}px`;
-    wrapper.style.height = `${Math.min(canvas.clientHeight - 130, Math.max(40, height))}px`;
-    wrapper.style.left = `${Math.max(16 + editorWidth / 2, Math.min(canvas.clientWidth - 16 - editorWidth / 2, p.x))}px`;
-    wrapper.style.top = `${Math.max(80 + height / 2, Math.min(canvas.clientHeight - 40 - height / 2, n?.shape === "frame" ? toLocal({ x: n.x, y: n.y - n.height / 2 }).y + 30 : p.y))}px`;
-    input.style.fontSize = `${edge ? edge.labelFontSize || 13 : 16}px`;
-    if (n) input.style.color = n.textEl.style.fill;
-    if (n?.shape === "frame") {
-      const at = toLocal({
-        x: n.x - n.width / 2 + 18 + worldWidth / 2,
-        y: n.y - n.height / 2 + 10 + worldHeight / 2,
-      });
-      wrapper.style.width = `${worldWidth * zoom}px`;
-      wrapper.style.height = `${worldHeight * zoom}px`;
-      wrapper.style.left = `${at.x}px`;
-      wrapper.style.top = `${at.y}px`;
-    }
-    editing = {
-      input,
-      editor,
-      id,
-      edgeIndex,
-      foreign,
-      originalSize,
-      original: input.value,
-      originalAlignments: JSON.stringify(n?.textAlignments || []),
-    };
-    if (n) n.el.classList.add("rea-editing");
-    selectionControls();
-    input.focus();
-    input.select();
-    editor.update();
-  }
-  function getEditorSession() {
-    return editing
-      ? {
-          id: editing.id,
-          edgeIndex: editing.edgeIndex,
-          value: editing.input.value,
-          start: editing.input.selectionStart,
-          end: editing.input.selectionEnd,
-          alignments: editing.editor.getAlignments(),
-          viewport: { zoom, pan: { ...pan } },
-        }
-      : null;
-  }
-  function restoreEditorSession(session) {
-    if (!session) return;
-    if (
-      Number.isFinite(session.viewport?.zoom) &&
-      Number.isFinite(session.viewport?.pan?.x) &&
-      Number.isFinite(session.viewport?.pan?.y)
-    ) {
-      zoom = Math.max(0.05, Math.min(3, session.viewport.zoom));
-      pan = { ...session.viewport.pan };
-      view();
-    }
-    startText(session.id, session.edgeIndex);
-    if (editing) {
-      editing.input.value = session.value;
-      editing.input.setSelectionRange(session.start, session.end);
-      editing.editor.update();
-    }
-  }
-  function finishText(cancel = false) {
-    if (!editing) return;
-    const current = editing,
-      alignments = current.editor.getAlignments();
-    editing = null;
-    current.editor.remove();
-    current.foreign.remove();
-    if (current.id) {
-      const n = layout.nodes.get(current.id),
-        saved = model.nodes.find((n) => n.id === current.id);
-      if (n && saved) {
-        n.label = saved.label;
-        layout.resize(
-          n.id,
-          cancel ? current.originalSize : { width: n.width, height: n.height },
-        );
-      }
-    } else
-      layout.links[current.edgeIndex]?.label?.removeAttribute("visibility");
-    diagram
-      .querySelectorAll(".rea-editing")
-      .forEach((el) => el.classList.remove("rea-editing"));
-    if (
-      !cancel &&
-      (current.input.value !== current.original ||
-        JSON.stringify(alignments) !== current.originalAlignments)
-    ) {
-      const value = current.input.value;
-      change((m) => {
-        if (current.id) {
-          const n = m.nodes.find((n) => n.id === current.id);
-          if (n) {
-            n.label = value || "Untitled";
-            n.textAlignments = alignments;
-          }
-        } else if (m.edges[current.edgeIndex])
-          m.edges[current.edgeIndex].label = value;
-      });
-    }
-    placeControls();
-  }
-  function fitText(id) {
-    finishText();
-    const n = layout?.nodes.get(id);
-    if (!n || n.shape === "frame") return;
-    const size = layout.fitText(id);
-    change((m) => {
-      m.nodes.find((n) => n.id === id).size = size;
-    });
-  }
-
-  function connect(from, to, fromSide, targetAttachment) {
-    if (from === to) return;
-    change((m) => {
-      if (!m.edges.some((e) => e.from === from && e.to === to))
-        m.edges.push({
-          from,
-          to,
-          label: "",
-          routing: "auto",
-          ...(fromSide ? { fromSide, fromRatio: 0 } : {}),
-          ...(targetAttachment
-            ? { toSide: targetAttachment.side, toRatio: targetAttachment.ratio }
-            : {}),
-        });
-    });
-    setTool("select");
-  }
-  function hitNode(x, y, exclude) {
-    const p = toWorld(x, y);
-    for (const n of [...layout.nodes.values()].reverse()) {
-      if (n.id === exclude || n.shape === "frame") continue;
-      const dx = Math.abs(p.x - n.x) / (n.width / 2 + 8 / zoom),
-        dy = Math.abs(p.y - n.y) / (n.height / 2 + 8 / zoom);
-      if (n.shape === "diamond" ? dx + dy <= 1.12 : dx <= 1 && dy <= 1)
-        return n.id;
-    }
-    return null;
-  }
-  function startConnect(e, from, fromSide) {
-    finishText();
-    hideMenus();
-    selectNode(from);
-    drag = {
-      kind: "connect",
-      from,
-      fromSide,
-      start: { x: e.clientX, y: e.clientY },
-      moved: false,
-      target: null,
-    };
-    canvas.setPointerCapture(e.pointerId);
-    context.hidden = true;
-    handles.hidden = true;
-  }
-  on(handles, "pointerdown", (e) => {
-    if (e.button !== 0) return;
-    const port = e.target.closest("[data-port]");
-    if (port && selected) {
-      e.preventDefault();
-      e.stopPropagation();
-      startConnect(e, selected, port.dataset.port);
-    }
-  });
-  function previewConnection(e) {
-    drag.target = hitNode(e.clientX, e.clientY, drag.from);
-    const a = layout.nodes.get(drag.from),
-      target = drag.target
-        ? layout.nodes.get(drag.target)
-        : {
-            ...toWorld(e.clientX, e.clientY),
-            width: 0,
-            height: 0,
-            shape: "rect",
-          },
-      hit = drag.target
-        ? magneticAttachment(
-            target,
-            toWorld(e.clientX, e.clientY),
-            zoom,
-            !e.altKey,
-            a,
-          )
-        : null,
-      geo = wireGeometry(a, target, false, {
-        routing: "auto",
-        fromSide: drag.fromSide,
-        fromRatio: 0,
-        ...(hit ? { toSide: hit.side, toRatio: hit.ratio } : {}),
-      }),
-      points = geo.points.map(toLocal);
-    drag.targetAttachment = hit;
-    drawGuides(hit ? attachmentGuides(target, hit) : []);
-    $(".rea-preview").hidden = false;
-    $(".rea-preview-line").setAttribute(
-      "d",
-      points.map((p, i) => `${i ? "L" : "M"}${p.x} ${p.y}`).join(" "),
-    );
-    highlight();
-  }
-  function drawEdgeControls() {
-    const holder = $(".rea-edge-controls");
-    holder.hidden =
-      selectedEdge === null || !layout || !!editing || !!drag?.moved;
-    if (holder.hidden) return;
-    const link = layout.links[selectedEdge],
-      points = link?.geometry?.points;
-    if (!points?.length) {
-      holder.hidden = true;
-      return;
-    }
-    holder.replaceChildren();
-    function handle(kind, index, p, label) {
-      const at = toLocal(p),
-        b = doc.createElement("button");
-      b.className = `rea-edge-control rea-edge-${kind}`;
-      b.dataset.edgeControl = kind;
-      b.dataset.index = String(index);
-      b.setAttribute("aria-label", label);
-      b.title = label;
-      b.style.left = `${at.x}px`;
-      b.style.top = `${at.y}px`;
-      holder.append(b);
-    }
-    handle("from", 0, points[0], "Reconnect source endpoint");
-    handle("to", points.length - 1, points.at(-1), "Reconnect target endpoint");
-    for (let i = 1; i < points.length - 1; i++)
-      handle("bend", i, points[i], `Drag connector bend ${i}`);
-    for (let i = 0; i < points.length - 1; i++) {
-      if (points.length > 2 && (i === 0 || i === points.length - 2)) continue;
-      const a = points[i],
-        b = points[i + 1];
-      if (Math.hypot(b.x - a.x, b.y - a.y) > 14)
-        handle(
-          "segment",
-          i,
-          { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 },
-          `Drag connector segment ${i + 1}`,
-        );
-    }
-    if (link.labelBox) {
-      const b = link.labelBox.getBoundingClientRect(),
-        r = canvas.getBoundingClientRect(),
-        h = doc.createElement("button");
-      h.className = "rea-edge-control rea-edge-width-handle";
-      h.dataset.edgeControl = "label-width";
-      h.setAttribute("aria-label", "Resize connection label");
-      h.title = "Drag to resize label width";
-      h.style.left = `${b.right - r.left + 5}px`;
-      h.style.top = `${b.top + b.height / 2 - r.top}px`;
-      holder.append(h);
-    }
-  }
-  function startEdgeDrag(e, kind, index = 0) {
-    if (e.button !== 0 || selectedEdge === null || !layout) return;
-    e.preventDefault();
-    finishText();
-    hideMenus();
-    const link = layout.links[selectedEdge];
-    drag = {
-      kind: "edge",
-      action: kind,
-      index,
-      edgeIndex: selectedEdge,
-      original: structuredClone(link.edge),
-      points: structuredClone(link.geometry.points),
-      start: toWorld(e.clientX, e.clientY),
-      clientX: e.clientX,
-      clientY: e.clientY,
-      moved: false,
-      target: null,
-    };
-    canvas.setPointerCapture(e.pointerId);
-  }
-  on($(".rea-edge-controls"), "pointerdown", (e) => {
-    const b = e.target.closest("[data-edge-control]");
-    if (b)
-      startEdgeDrag(e, b.dataset.edgeControl, Number(b.dataset.index) || 0);
-  });
-  function connectorAnchors(exclude) {
-    return [...layout.nodes.values()]
-      .filter((n) => n.shape !== "frame")
-      .flatMap((n) => [
-        { x: n.x, y: n.y },
-        { x: n.x - n.width / 2, y: n.y },
-        { x: n.x + n.width / 2, y: n.y },
-        { x: n.x, y: n.y - n.height / 2 },
-        { x: n.x, y: n.y + n.height / 2 },
-      ])
-      .concat(
-        layout.links.flatMap((l, i) =>
-          i === exclude ? [] : l.geometry?.points || [],
-        ),
-      );
-  }
-  function moveEdge(e) {
-    const d = drag,
-      link = layout.links[d.edgeIndex],
-      p = snapped(toWorld(e.clientX, e.clientY), e);
-    if (
-      !d.moved &&
-      Math.hypot(e.clientX - d.clientX, e.clientY - d.clientY) < 3
-    )
-      return;
-    d.moved = true;
-    link.edge = structuredClone(d.original);
-    if (d.action === "from" || d.action === "to") {
-      d.target = hitNode(e.clientX, e.clientY);
-      const n = d.target
-          ? layout.nodes.get(d.target)
-          : { ...p, width: 0, height: 0, shape: "rect" },
-        attachment = magneticAttachment(
-          n,
-          toWorld(e.clientX, e.clientY),
-          zoom,
-          !e.altKey,
-          layout.nodes.get(
-            d.action === "from" ? d.original.to : d.original.from,
-          ),
-        ),
-        prefix = d.action === "from" ? "from" : "to";
-      drawGuides(d.target ? attachmentGuides(n, attachment) : []);
-      link.edge[`${prefix}Side`] = attachment.side;
-      link.edge[`${prefix}Ratio`] = attachment.ratio;
-      if (prefix === "from") link.previewFrom = n;
-      else link.previewTo = n;
-    } else if (d.action === "label") {
-      const aligned = connectorAlignment(
-        toWorld(e.clientX, e.clientY),
-        connectorAnchors(d.edgeIndex),
-        zoom,
-        !e.altKey,
-      );
-      for (const axis of ["x", "y"])
-        if (aligned.guides.some((g) => g.axis === axis))
-          p[axis] = aligned.point[axis];
-      drawGuides(aligned.guides);
-      const before = d.original.labelOffset || { x: 0, y: 0 };
-      link.edge.labelOffset = {
-        x: before.x + p.x - d.start.x,
-        y: before.y + p.y - d.start.y,
-      };
-    } else if (d.action === "label-width") {
-      link.edge.labelWidth = Math.max(
-        60,
-        Math.min(800, (d.original.labelWidth || 180) + 2 * (p.x - d.start.x)),
-      );
-    } else {
-      const aligned = connectorAlignment(
-        toWorld(e.clientX, e.clientY),
-        connectorAnchors(d.edgeIndex),
-        zoom,
-        !e.altKey,
-      );
-      for (const axis of ["x", "y"])
-        if (aligned.guides.some((g) => g.axis === axis))
-          p[axis] = aligned.point[axis];
-      drawGuides(aligned.guides);
-      const points =
-        d.action === "bend"
-          ? dragBend(d.points, d.index, p)
-          : dragSegment(d.points, d.index, p);
-      link.edge.routing = "orthogonal";
-      link.edge.waypoints = points.slice(1, -1);
-    }
-    layout.redraw();
-    highlight();
-    placeControls();
-  }
-  function endEdge(d, cancel) {
-    const link = layout.links[d.edgeIndex];
-    const next = structuredClone(link.edge);
-    delete link.previewFrom;
-    delete link.previewTo;
-    link.edge = structuredClone(d.original);
-    if (!cancel && d.moved) {
-      if (d.action === "from" || d.action === "to") {
-        if (d.target) next[d.action] = d.target;
-        else {
-          layout.redraw();
-          selectionControls();
-          return;
-        }
-      }
-      change((m) => {
-        m.edges[d.edgeIndex] = next;
-      });
-    } else layout.redraw();
-    selectionControls();
-  }
-  on(canvas, "pointerdown", (e) => {
-    if (externalEditing) return;
-    if (e.button !== 0 && e.button !== 1) return;
-    const textLink = e.target.closest("[data-text-link]");
-    if (textLink && (e.metaKey || e.ctrlKey)) {
-      e.preventDefault();
-      if (textLink.dataset.internal === "true")
-        options.openLink?.(textLink.dataset.textLink);
-      else win.open(textLink.dataset.textLink, "_blank", "noopener,noreferrer");
-      return;
-    }
-    finishText();
-    hideMenus();
-    const node = e.target.closest(".node"),
-      id = nodeId(node),
-      edge = e.target.closest("[data-edge]");
-    if ((e.ctrlKey || e.metaKey) && options.openLink) {
-      const item = id
-        ? model.nodes.find((n) => n.id === id)
-        : edge
-          ? model.edges[Number(edge.dataset.edge)]
-          : null;
-      if (edgeLink(item)) {
-        options.openLink(edgeLink(item));
-        return;
-      }
-    }
-    if (edge && e.target.closest(".rea-wire-label,.rea-edge-label-bg")) {
-      selectEdge(Number(edge.dataset.edge));
-      startEdgeDrag(e, "label");
-      return;
-    }
-    if (e.button === 1 || spacePan || tool === "hand") {
-      e.preventDefault();
-      drag = {
-        kind: "pan",
-        x: e.clientX,
-        y: e.clientY,
-        px: pan.x,
-        py: pan.y,
-        moved: false,
-      };
-      return;
-    }
-    if (id && layout) {
-      if (tool === "connect") {
-        startConnect(e, id);
-        return;
-      }
-      if (e.shiftKey) {
-        selectNode(id, true);
-        return;
-      }
-      selectNode(id, false, true);
-      drag = {
-        kind: "node",
-        id,
-        ids: [...membersFor(model, selection)],
-        start: toWorld(e.clientX, e.clientY),
-        clientX: e.clientX,
-        clientY: e.clientY,
-        moved: false,
-        positions: layout.positions(),
-        edges: layout.links.map((l) => structuredClone(l.edge)),
-      };
-    } else if (!e.target.closest("[data-edge]")) {
-      const base = e.shiftKey ? new Set(selection) : new Set();
-      selection = base;
-      selected = null;
-      selectedEdge = null;
-      selectionControls();
-      drag = {
-        kind: "marquee",
-        x: e.clientX,
-        y: e.clientY,
-        base: new Set(base),
-        moved: false,
-      };
-      canvas.setPointerCapture(e.pointerId);
-    }
-  });
-  function updatePointer(e) {
-    if (!drag) return;
-    if (drag.kind === "edge") {
-      moveEdge(e);
-      return;
-    }
-    if (drag.kind === "connect") {
-      if (Math.hypot(e.clientX - drag.start.x, e.clientY - drag.start.y) > 4)
-        drag.moved = true;
-      previewConnection(e);
-      return;
-    }
-    if (drag.kind === "pan") {
-      if (Math.hypot(e.clientX - drag.x, e.clientY - drag.y) < 3) return;
-      drag.moved = true;
-      canvas.setPointerCapture(e.pointerId);
-      pan = {
-        x: drag.px + e.clientX - drag.x,
-        y: drag.py + e.clientY - drag.y,
-      };
-      view();
-      canvas.classList.add("panning");
-      return;
-    }
-    if (drag.kind === "marquee") {
-      if (Math.hypot(e.clientX - drag.x, e.clientY - drag.y) < 3) return;
-      drag.moved = true;
-      const r = canvas.getBoundingClientRect(),
-        left = Math.min(drag.x, e.clientX),
-        top = Math.min(drag.y, e.clientY),
-        right = Math.max(drag.x, e.clientX),
-        bottom = Math.max(drag.y, e.clientY);
-      const box = $(".rea-marquee");
-      box.hidden = false;
-      for (const [key, v] of Object.entries({
-        left: left - r.left,
-        top: top - r.top,
-        width: right - left,
-        height: bottom - top,
-      }))
-        box.style[key] = `${v}px`;
-      const a = toWorld(left, top),
-        b = toWorld(right, bottom);
-      selection = new Set(drag.base);
-      for (const n of layout?.nodes.values() || [])
-        if (
-          n.x + n.width / 2 >= a.x &&
-          n.x - n.width / 2 <= b.x &&
-          n.y + n.height / 2 >= a.y &&
-          n.y - n.height / 2 <= b.y
-        )
-          selection.add(n.id);
       syncSelection();
-      highlight();
-      placeControls();
-      return;
-    }
-    if (drag.kind === "resize") {
-      const p = toWorld(e.clientX, e.clientY),
-        next = resizeBox(
-          drag,
-          drag.corner,
-          { x: p.x - drag.start.x, y: p.y - drag.start.y },
-          {
-            snap: snapping && !e.altKey,
-            others: e.altKey
-              ? []
-              : [...layout.nodes.values()].filter(
-                  (n) => n.id !== drag.id && n.shape !== "frame",
-                ),
-            threshold: 6 / zoom,
-          },
-        );
-      if (e.shiftKey && drag.corner.length === 2) {
-        const factor = Math.max(
-          next.width / drag.width,
-          next.height / drag.height,
-        );
-        next.width = drag.width * factor;
-        next.height = drag.height * factor;
-        next.x =
-          drag.x +
-          ((next.width - drag.width) * (drag.corner.includes("e") ? 1 : -1)) /
-            2;
-        next.y =
-          drag.y +
-          ((next.height - drag.height) * (drag.corner.includes("s") ? 1 : -1)) /
-            2;
-      }
-      drag.moved = true;
-      const actual = layout.resize(drag.id, next);
-      layout.move(drag.id, {
-        x:
-          next.x +
-          ((actual.width - next.width) * (drag.corner.includes("w") ? -1 : 1)) /
-            2,
-        y:
-          next.y +
-          ((actual.height - next.height) *
-            (drag.corner.includes("n") ? -1 : 1)) /
-            2,
-      });
-      drawGuides(next.guides);
-      layout.redraw();
-      placeControls();
-      return;
-    }
-    if (
-      !drag.moved &&
-      Math.hypot(e.clientX - drag.clientX, e.clientY - drag.clientY) < 3
-    )
-      return;
-    drag.moved = true;
-    canvas.setPointerCapture(e.pointerId);
-    canvas.classList.add("rea-dragging");
-    const p = toWorld(e.clientX, e.clientY),
-      primary = drag.positions[drag.id],
-      target = snapped(
-        {
-          x: primary.x + p.x - drag.start.x,
-          y: primary.y + p.y - drag.start.y,
-        },
-        e,
-      ),
-      moving = layout.nodes.get(drag.id),
-      aligned = e.altKey
-        ? { x: 0, y: 0, guides: [] }
-        : alignMove(
-            { ...target, width: moving.width, height: moving.height },
-            [...layout.nodes.values()].filter((n) => !drag.ids.includes(n.id)),
-            6 / zoom,
-          ),
-      dx = target.x + aligned.x - primary.x,
-      dy = target.y + aligned.y - primary.y;
-    drawGuides(aligned.guides);
-    for (const id of drag.ids) {
-      const before = drag.positions[id];
-      layout.move(id, { x: before.x + dx, y: before.y + dy });
-    }
-    for (let i = 0; i < layout.links.length; i++) {
-      const original = drag.edges[i];
-      if (
-        drag.ids.includes(original.from) &&
-        drag.ids.includes(original.to) &&
-        original.waypoints
-      )
-        layout.links[i].edge.waypoints = original.waypoints.map((p) => ({
-          x: p.x + dx,
-          y: p.y + dy,
-        }));
-    }
-    layout.redraw();
-    placeControls();
-  }
-  let pointerFrame = 0,
-    pendingPointer = null;
-  on(canvas, "pointermove", (e) => {
-    pendingPointer = e;
-    if (!pointerFrame)
-      pointerFrame = win.requestAnimationFrame(() => {
-        pointerFrame = 0;
-        const latest = pendingPointer;
-        pendingPointer = null;
-        if (latest) updatePointer(latest);
-      });
+    },
+    selectionControls,
+    status,
+    change,
   });
-  function endDrag(e, cancel = false) {
-    if (pendingPointer) {
-      win.cancelAnimationFrame(pointerFrame);
-      pointerFrame = 0;
-      const latest = pendingPointer;
-      pendingPointer = null;
-      if (!cancel) updatePointer(latest);
-    }
-    drawGuides([]);
-    const done = drag;
-    drag = null;
-    canvas.classList.remove("panning", "rea-dragging");
-    $(".rea-preview").hidden = true;
-    $(".rea-marquee").hidden = true;
-    highlight();
-    if (!done) return;
-    if (done.kind === "edge") {
-      if (done.moved) {
-        suppressClick = true;
-        win.setTimeout(() => (suppressClick = false), 0);
-      }
-      endEdge(done, cancel);
-      return;
-    }
-    if (done.kind === "marquee") {
-      if (cancel) selection = done.base;
-      syncSelection();
-      selectionControls();
-      return;
-    }
-    if (done.kind === "resize") {
-      if (cancel) {
-        layout.resize(done.id, { width: done.width, height: done.height });
-        layout.move(done.id, { x: done.x, y: done.y });
-        layout.redraw();
-      } else if (done.moved) {
-        const n = layout.nodes.get(done.id),
-          positions = layout.positions();
-        change((m) => {
-          const node = m.nodes.find((x) => x.id === done.id);
-          node.size = { width: n.width, height: n.height };
-          node.position = positions[done.id];
-        });
-      }
-      placeControls();
-      return;
-    }
-    if (done.moved) {
-      suppressClick = true;
-      win.setTimeout(() => (suppressClick = false), 0);
-    }
-    if (done.kind === "connect") {
-      if (!cancel && done.moved) {
-        const r = canvas.getBoundingClientRect();
-        if (done.target) {
-          connect(done.from, done.target, done.fromSide, done.targetAttachment);
-          selection = new Set([done.target]);
-          selected = done.target;
-        } else if (
-          hitNode(e.clientX, e.clientY) !== done.from &&
-          e.clientX > r.left + 85 &&
-          e.clientX < r.right - 10 &&
-          e.clientY > r.top + 10 &&
-          e.clientY < r.bottom - 60
-        ) {
-          const p = toWorld(e.clientX, e.clientY);
-          change(
-            (m) => {
-              const base = m.nodes.find((n) => n.id === done.from),
-                id = nextId(m);
-              m.nodes.push({
-                ...base,
-                id,
-                label: "A new thought",
-                position: snapped(p),
-              });
-              m.edges.push({
-                from: done.from,
-                to: id,
-                label: "",
-                routing: "auto",
-                ...(done.fromSide ? { fromSide: done.fromSide } : {}),
-              });
-              selected = id;
-              selection = new Set([id]);
-              selectedEdge = null;
-            },
-            { editAfter: null },
-          );
-          setTool("select");
-        }
-      } else if (!cancel && tool === "connect") {
-        if (keyboardConnect && keyboardConnect !== done.from) {
-          connect(keyboardConnect, done.from);
-          keyboardConnect = null;
-        } else keyboardConnect = done.from;
-      }
-    } else if (done.kind === "node" && done.moved) {
-      if (cancel) {
-        for (const [id, p] of Object.entries(done.positions))
-          layout.move(id, p);
-        done.edges?.forEach(
-          (edge, i) => (layout.links[i].edge = structuredClone(edge)),
-        );
-        layout.redraw();
-      } else {
-        const positions = layout.positions(),
-          edges = layout.links.map((l) => structuredClone(l.edge));
-        change((m) => {
-          for (const n of m.nodes)
-            if (positions[n.id]) n.position = positions[n.id];
-          m.edges = edges;
-        });
-      }
-    }
-    placeControls();
-    highlight();
-  }
-  on(canvas, "pointerup", (e) => endDrag(e));
-  on(canvas, "pointercancel", (e) => endDrag(e, true));
-  on(canvas, "lostpointercapture", (e) => {
-    if (drag) endDrag(e, true);
+  const {
+    startText,
+    finishText,
+    getEditorSession,
+    restoreEditorSession,
+    fitText,
+  } = createTextSession({
+    board: {
+      get editing() {
+        return editing;
+      },
+      set editing(value) {
+        editing = value;
+      },
+      get selection() {
+        return selection;
+      },
+      set selection(value) {
+        selection = value;
+      },
+      get selected() {
+        return selected;
+      },
+      set selected(value) {
+        selected = value;
+      },
+      get selectedEdge() {
+        return selectedEdge;
+      },
+      set selectedEdge(value) {
+        selectedEdge = value;
+      },
+      get zoom() {
+        return zoom;
+      },
+      set zoom(value) {
+        zoom = value;
+      },
+      get pan() {
+        return pan;
+      },
+      set pan(value) {
+        pan = value;
+      },
+      get layout() {
+        return layout;
+      },
+      get model() {
+        return model;
+      },
+    },
+    doc,
+    win,
+    root,
+    canvas,
+    diagram,
+    signal: abort.signal,
+    preferences,
+    cardEditor,
+    hideMenus,
+    toLocal,
+    resolveBoardLinkTitle,
+    suggestBoardLinks,
+    openBoardLink,
+    selectionControls,
+    view,
+    change,
+    placeControls,
   });
+  bindConnectorHandles();
+  const {
+    startResize,
+    bindPointerEvents,
+    bindPointerBlur,
+    endDrag,
+    cancelPointerFrame,
+  } = createPointerInteractions({
+    board: {
+      get drag() {
+        return drag;
+      },
+      set drag(value) {
+        drag = value;
+      },
+      get hoveredNode() {
+        return hoveredNode;
+      },
+      set hoveredNode(value) {
+        hoveredNode = value;
+      },
+      get pan() {
+        return pan;
+      },
+      set pan(value) {
+        pan = value;
+      },
+      get selection() {
+        return selection;
+      },
+      set selection(value) {
+        selection = value;
+      },
+      get selected() {
+        return selected;
+      },
+      set selected(value) {
+        selected = value;
+      },
+      get selectedEdge() {
+        return selectedEdge;
+      },
+      set selectedEdge(value) {
+        selectedEdge = value;
+      },
+      get suppressClick() {
+        return suppressClick;
+      },
+      set suppressClick(value) {
+        suppressClick = value;
+      },
+      get keyboardConnect() {
+        return keyboardConnect;
+      },
+      set keyboardConnect(value) {
+        keyboardConnect = value;
+      },
+      get spacePan() {
+        return spacePan;
+      },
+      set spacePan(value) {
+        spacePan = value;
+      },
+      get externalEditing() {
+        return externalEditing;
+      },
+      get tool() {
+        return tool;
+      },
+      get editing() {
+        return editing;
+      },
+      get layout() {
+        return layout;
+      },
+      get model() {
+        return model;
+      },
+      get zoom() {
+        return zoom;
+      },
+    },
+    $,
+    win,
+    root,
+    canvas,
+    handles,
+    transform,
+    on,
+    openLink: options.openLink?.bind(options),
+    preferences,
+    cardEditor,
+    snapped,
+    toWorld,
+    finishText,
+    hideMenus,
+    nodeId,
+    selectEdge,
+    startEdgeDrag,
+    showSource: () => showSource(),
+    add,
+    startConnect,
+    selectNode,
+    hitNode,
+    placePorts,
+    moveEdge,
+    previewConnection,
+    drawGuides,
+    view,
+    syncSelection,
+    highlight,
+    placeControls,
+    selectionControls,
+    change,
+    endEdge,
+    connect,
+    child,
+    setTool,
+  });
+  bindPointerEvents();
   on(diagram, "click", (e) => {
-    if (suppressClick) return;
+    if (suppressClick || tool === "hand" || spacePan) return;
+    const link = e.target.closest("[data-text-link]");
+    if (link) {
+      e.preventDefault();
+      if (link.dataset.internal === "true")
+        openBoardLink(link.dataset.textLink);
+      else win.open(link.dataset.textLink, "_blank", "noopener,noreferrer");
+      return;
+    }
     const edge = e.target.closest("[data-edge]");
     if (edge) selectEdge(Number(edge.dataset.edge));
   });
   function selectedBorderAt(e) {
     const n = layout?.nodes.get(selected);
-    if (!n || n.shape === "frame") return null;
+    if (!n || n.card || n.shape === "frame") return null;
     const p = toWorld(e.clientX, e.clientY),
       dx = Math.abs(p.x - n.x),
       dy = Math.abs(p.y - n.y),
@@ -1781,6 +903,8 @@ export function mount(root, options) {
       : null;
   }
   on(diagram, "dblclick", (e) => {
+    if (cardEditor.active || tool === "hand" || spacePan || suppressClick)
+      return;
     e.preventDefault();
     e.stopPropagation();
     const border = selectedBorderAt(e);
@@ -1803,12 +927,21 @@ export function mount(root, options) {
         8 / zoom;
       if (n.shape === "frame" && p.y > n.y - n.height / 2 + 55)
         add("rect", p, id);
-      else if (atEdge && n.shape !== "frame") fitText(id);
-      else startText(id);
+      else if (atEdge && !n.card && n.shape !== "frame") fitText(id);
+      else if (n.card?.type === "table") {
+        const cell = e.target.closest("td,th");
+        cardEditor.editCard(n, cell?.parentElement.rowIndex, cell?.cellIndex);
+      } else startText(id);
     } else if (edge) startText(null, Number(edge.dataset.edge));
   });
   on(diagram, "keydown", (e) => {
     if (e.key !== "Enter") return;
+    const link = e.target.closest("[data-text-link]");
+    if (link) {
+      link.dispatchEvent(new win.MouseEvent("click", { bubbles: true }));
+      e.preventDefault();
+      return;
+    }
     const edge = e.target.closest("[data-edge]");
     if (edge) {
       e.preventDefault();
@@ -1837,165 +970,8 @@ export function mount(root, options) {
     if (!e.target.closest(".node,[data-edge]") && model)
       add("rect", toWorld(e.clientX, e.clientY));
   });
-  on(context, "click", (e) => {
-    const action = e.target.closest("[data-selection]")?.dataset.selection;
-    if (action === "frame") frameSelection();
-    if (action === "child") child();
-    if (action === "text") startText(selected);
-    if (action === "edge-text") startText(null, selectedEdge);
-    if (action === "duplicate") duplicate();
-    if (action === "delete") removeSelection();
-    if (action === "note-link") chooseLink();
-    if (action === "open-link") {
-      const item = selected
-        ? model.nodes.find((n) => n.id === selected)
-        : model.edges[selectedEdge];
-      if (edgeLink(item)) options.openLink?.(edgeLink(item));
-    }
-    if (action === "remove-link")
-      change((m) => {
-        const item = selected
-          ? m.nodes.find((n) => n.id === selected)
-          : m.edges[selectedEdge];
-        delete item.link;
-      });
-    if (action === "reset-route")
-      change((m) => {
-        const edge = m.edges[selectedEdge];
-        delete edge.waypoints;
-        delete edge.labelOffset;
-        delete edge.fromSide;
-        delete edge.toSide;
-        delete edge.fromRatio;
-        delete edge.toRatio;
-        edge.routing = "auto";
-      });
-    if (action === "color") {
-      if (palette.hidden) showPalette();
-      else palette.hidden = true;
-      placeControls();
-    }
-  });
-  on(context, "change", (e) => {
-    if (e.target.matches(".rea-arrangement")) {
-      const mode = e.target.value;
-      if (mode) change((m) => arrangeNodes(m, [...selection], mode));
-      return;
-    }
-    if (e.target.matches(".rea-shape-type"))
-      change(
-        (m) => (m.nodes.find((n) => n.id === selected).shape = e.target.value),
-      );
-    if (e.target.matches(".rea-edge-routing"))
-      change((m) => {
-        m.edges[selectedEdge].routing = e.target.value;
-        delete m.edges[selectedEdge].waypoints;
-      });
-    if (e.target.matches(".rea-edge-font"))
-      change(
-        (m) => (m.edges[selectedEdge].labelFontSize = Number(e.target.value)),
-      );
-    if (e.target.matches(".rea-edge-width"))
-      change((m) => {
-        if (Number(e.target.value))
-          m.edges[selectedEdge].labelWidth = Number(e.target.value);
-        else delete m.edges[selectedEdge].labelWidth;
-      });
-  });
-  async function chooseLink() {
-    const before = source,
-      id = selected,
-      index = selectedEdge;
-    if (!options.pickLink || (!id && index === null)) return;
-    finishText();
-    try {
-      const link = await options.pickLink();
-      if (!link || disposed) return;
-      if (source !== before) {
-        status("Board changed while choosing a link. Choose it again.", true);
-        return;
-      }
-      change((m) => {
-        const item = id ? m.nodes.find((n) => n.id === id) : m.edges[index];
-        if (item) item.link = link;
-      });
-    } catch (e) {
-      status(`Could not choose link: ${e.message}`, true);
-    }
-  }
-  function showPalette() {
-    palette.replaceChildren();
-    const isEdge = selectedEdge !== null,
-      choices = isEdge
-        ? [
-            ["#9b96aa", "#9b96aa"],
-            ["#8b5cf6", "#8b5cf6"],
-            ["#3b82f6", "#3b82f6"],
-            ["#10b981", "#10b981"],
-            ["#f59e0b", "#f59e0b"],
-            ["#ef4444", "#ef4444"],
-          ]
-        : COLORS;
-    for (const [fill, stroke] of choices) {
-      const b = doc.createElement("button");
-      b.style.background = fill;
-      b.style.borderColor = stroke;
-      b.setAttribute(
-        "aria-label",
-        `${isEdge ? "Connection color" : "Color"} ${fill}`,
-      );
-      b.title = fill;
-      palette.append(b);
-      on(b, "click", () => {
-        change((m) => {
-          if (isEdge) m.edges[selectedEdge].color = fill;
-          else
-            for (const n of m.nodes)
-              if (selection.has(n.id)) Object.assign(n, { fill, stroke });
-        });
-        palette.hidden = true;
-      });
-    }
-    palette.hidden = false;
-  }
-  function scale(
-    factor,
-    x = canvas.clientWidth / 2,
-    y = canvas.clientHeight / 2,
-    animate = false,
-  ) {
-    finishText();
-    const next = Math.max(0.05, Math.min(3, zoom * factor));
-    pan = {
-      x: x - ((x - pan.x) * next) / zoom,
-      y: y - ((y - pan.y) * next) / zoom,
-    };
-    zoom = next;
-    if (animate) animateView();
-    else view();
-  }
-  on(
-    canvas,
-    "wheel",
-    (e) => {
-      e.preventDefault();
-      if (drag) return;
-      if (e.ctrlKey || e.metaKey) {
-        const r = canvas.getBoundingClientRect();
-        scale(
-          Math.exp(-e.deltaY * 0.008),
-          e.clientX - r.left,
-          e.clientY - r.top,
-        );
-      } else {
-        finishText();
-        pan.x -= e.deltaX;
-        pan.y -= e.deltaY;
-        view();
-      }
-    },
-    { passive: false },
-  );
+  bindSelectionActions();
+  bindWheel();
   function travel(delta) {
     finishText(true);
     if (cursor + delta < 0 || cursor + delta >= history.length) return;
@@ -2009,104 +985,98 @@ export function mount(root, options) {
     render();
     persist();
   }
-  let importing = false;
-  function showSource(asImport = false) {
-    finishText();
-    hideMenus();
-    importing = asImport;
-    modal.hidden = false;
-    modal
-      .querySelector("section")
-      .setAttribute(
-        "aria-label",
-        asImport ? "Import Mermaid" : "Mermaid source",
-      );
-    $(".rea-dialog-heading strong").textContent = asImport
-      ? "Import Mermaid"
-      : "Mermaid";
-    $(".rea-source").setAttribute(
-      "placeholder",
-      asImport ? "Paste Mermaid code or a fenced Mermaid block here…" : "",
-    );
-    $(".rea-source").value = asImport ? "" : (draft ?? source);
-    $(".rea-source-error").textContent = "";
-    $(".rea-direction").value = model?.direction || "LR";
-    $(".rea-direction").disabled = asImport || !model;
-    $(".rea-import-file").hidden = !asImport;
-    $("[data-action=apply-source]").textContent = asImport
-      ? "Import diagram"
-      : "Apply changes";
-    $(".rea-source").focus();
+  function setTitle(next) {
+    title = next;
+    $(".rea-board-name").textContent = title;
+    $(".rea-title").textContent = title;
   }
-  function closeSource() {
-    if (!importing) draft = $(".rea-source").value;
-    modal.hidden = true;
-    canvas.focus();
-  }
-  async function applySource() {
-    const entered = $(".rea-source").value,
-      value = readBoard(entered) || entered;
-    try {
-      await mermaid.parse(value);
-      if (importing) {
-        selection.clear();
-        selected = null;
-        selectedEdge = null;
-      }
-      commit(value, { autoFit: importing });
-      modal.hidden = true;
-      canvas.focus();
-    } catch {
-      $(".rea-source-error").textContent =
-        "Check your syntax. The saved board has not changed.";
-    }
-  }
-  function download() {
-    const url = URL.createObjectURL(
-        new Blob(
-          [`# ${title}\n\n\x60\x60\x60mermaid\n${source}\n\x60\x60\x60\n`],
-          { type: "text/markdown" },
-        ),
-      ),
-      a = doc.createElement("a");
-    a.href = url;
-    a.download = `${title.replace(/[\\/:*?"<>|]/g, "-") || "Board"}.md`;
-    a.click();
-    win.setTimeout(() => URL.revokeObjectURL(url), 1000);
-  }
-  function drawGuides(guides) {
-    const svg = $(".rea-guides");
-    svg.replaceChildren();
-    for (const g of guides) {
-      const a = toLocal(
-          g.axis === "x"
-            ? { x: g.value, y: g.start }
-            : { x: g.start, y: g.value },
-        ),
-        b = toLocal(
-          g.axis === "x" ? { x: g.value, y: g.end } : { x: g.end, y: g.value },
-        ),
-        line = doc.createElementNS("http://www.w3.org/2000/svg", "line");
-      for (const [k, v] of Object.entries({
-        x1: a.x,
-        y1: a.y,
-        x2: b.x,
-        y2: b.y,
-      }))
-        line.setAttribute(k, v);
-      if (g.kind) line.classList.add("rea-connector-guide");
-      svg.append(line);
-      if (g.point) {
-        const at = toLocal(g.point),
-          dot = doc.createElementNS("http://www.w3.org/2000/svg", "circle");
-        dot.setAttribute("cx", at.x);
-        dot.setAttribute("cy", at.y);
-        dot.setAttribute("r", 4);
-        dot.classList.add("rea-connector-snap");
-        svg.append(dot);
-      }
-    }
-  }
+  const clipboard = createClipboardController({
+    doc,
+    win,
+    root,
+    canvas,
+    diagram,
+    modal,
+    $,
+    on,
+    uid,
+    options,
+    board: {
+      get source() {
+        return source;
+      },
+      get model() {
+        return model;
+      },
+      get layout() {
+        return layout;
+      },
+      get editing() {
+        return editing;
+      },
+      get selectedEdge() {
+        return selectedEdge;
+      },
+      get selection() {
+        return selection;
+      },
+      get snapping() {
+        return preferences.snapping;
+      },
+      get title() {
+        return title;
+      },
+      get epoch() {
+        return epoch;
+      },
+      set selection(value) {
+        selection = value;
+      },
+      set selectedEdge(value) {
+        selectedEdge = value;
+      },
+      set epoch(value) {
+        epoch = value;
+      },
+    },
+    cardEditor,
+    finishText,
+    hideMenus,
+    commit,
+    change,
+    toWorld,
+    status,
+    nodeId,
+    selectNode,
+    selectEdge,
+    freezePositions,
+  });
+  const { pasteText, pasteFromClipboard, copyVisual, download } = clipboard;
+  const sourceDialog = createSourceDialog({
+    $,
+    modal,
+    canvas,
+    on,
+    finishText,
+    hideMenus,
+    getDraft: () => draft,
+    setDraft: (value) => {
+      draft = value;
+    },
+    getSource: () => source,
+    getModel: () => model,
+    clearSelection() {
+      selection.clear();
+      selected = null;
+      selectedEdge = null;
+    },
+    commit,
+    pasteText,
+    fixedTitle: options.fixedTitle,
+    setTitle,
+    status,
+  });
+  const { showSource, closeSource, applySource } = sourceDialog;
   on($(".rea-title"), "click", () => {
     const b = $(".rea-title"),
       input = doc.createElement("input");
@@ -2144,287 +1114,14 @@ export function mount(root, options) {
     input.focus();
     input.select();
   });
-  let pastePoint = null;
-  async function pasteText(text, html = "") {
-    finishText();
-    const before = source;
-    try {
-      const decoded = /<svg[\s>]/i.test(text)
-        ? svgClipboardModel(text, doc)
-        : /<svg[\s>]/i.test(html) && !/^\s*(?:flowchart|graph|[[{])/.test(text)
-          ? svgClipboardModel(
-              html.slice(html.indexOf("<svg"), html.indexOf("</svg>") + 6),
-              doc,
-            )
-          : decodeClipboard(
-              text ||
-                new win.DOMParser().parseFromString(html, "text/html").body
-                  .textContent,
-            );
-      if (decoded.source) await mermaid.parse(decoded.source);
-      if (source !== before)
-        throw new Error(
-          "Board changed while reading the clipboard. Paste again.",
-        );
-      if (!decoded.model) {
-        if (model?.nodes.length)
-          throw new Error(
-            "Paste this Mermaid diagram type into an empty board, or edit it in Mermaid source.",
-          );
-        selection.clear();
-        commit(decoded.source, { autoFit: true });
-        return;
-      }
-      if (!model)
-        throw new Error(
-          "This diagram uses source-only Mermaid. Create an editable flowchart board to paste shapes.",
-        );
-      const incoming = parse(serialize(decoded.model));
-      if (!incoming)
-        throw new Error("Unsupported or invalid shape geometry in clipboard.");
-      if (!incoming.nodes.length) return;
-      if (
-        incoming.nodes.length > 300 ||
-        incoming.nodes.length + model.nodes.length > 300
-      )
-        throw new Error("Paste is limited to 300 shapes.");
-      // Resolve Mermaid auto layout offscreen once, then insert every shape at the paste location.
-      let positions = incoming.nodes.every((n) => n.position)
-        ? Object.fromEntries(incoming.nodes.map((n) => [n.id, n.position]))
-        : null;
-      if (!positions) {
-        const result = await mermaid.render(
-            `rea-paste-${uid}-${++epoch}`,
-            serialize(incoming),
-          ),
-          holder = doc.createElement("div");
-        holder.className = "rea-offscreen-measure";
-        setMarkup(holder, result.svg);
-        root.append(holder);
-        try {
-          const svg = holder.querySelector("svg"),
-            l = createLayout(
-              svg,
-              incoming,
-              (el) =>
-                incoming.nodes.find((n) => el.id.includes(`flowchart-${n.id}-`))
-                  ?.id,
-            );
-          positions = l.positions();
-          for (const n of incoming.nodes) {
-            const at = l.nodes.get(n.id);
-            n.size = { width: at.width, height: at.height };
-          }
-        } finally {
-          holder.remove();
-        }
-      }
-      if (source !== before)
-        throw new Error("Board changed during paste. Paste again.");
-      const r = canvas.getBoundingClientRect(),
-        explicit = !!pastePoint,
-        at =
-          pastePoint ||
-          toWorld(
-            r.left + canvas.clientWidth / 2,
-            r.top + canvas.clientHeight / 2,
-          );
-      pastePoint = null;
-      const xs = Object.values(positions).map((p) => p.x),
-        ys = Object.values(positions).map((p) => p.y),
-        cx = (Math.min(...xs) + Math.max(...xs)) / 2,
-        cy = (Math.min(...ys) + Math.max(...ys)) / 2,
-        offset = {
-          x: snapValue(at.x - cx, snapping),
-          y: snapValue(at.y - cy, snapping),
-        };
-      if (!explicit) {
-        for (let tries = 0; tries < 50; tries++) {
-          const overlaps = incoming.nodes.some((n) =>
-            [...layout.nodes.values()].some(
-              (b) =>
-                Math.abs(positions[n.id].x + offset.x - b.x) <
-                  ((n.size?.width || 160) + b.width) / 2 + 16 &&
-                Math.abs(positions[n.id].y + offset.y - b.y) <
-                  ((n.size?.height || 80) + b.height) / 2 + 16,
-            ),
-          );
-          if (!overlaps) break;
-          offset.x += 40;
-          offset.y += 80;
-        }
-      }
-      change((m) => {
-        const ids = new Map();
-        for (const n of incoming.nodes) {
-          const id = nextId(m);
-          ids.set(n.id, id);
-          m.nodes.push({
-            ...n,
-            id,
-            position: {
-              x: positions[n.id].x + offset.x,
-              y: positions[n.id].y + offset.y,
-            },
-          });
-        }
-        for (const n of m.nodes)
-          if ([...ids.values()].includes(n.id) && n.members)
-            n.members = n.members.map((id) => ids.get(id)).filter(Boolean);
-        for (const e of incoming.edges)
-          m.edges.push({
-            ...e,
-            from: ids.get(e.from),
-            to: ids.get(e.to),
-            ...(e.waypoints
-              ? {
-                  waypoints: e.waypoints.map((p) => ({
-                    x: p.x + offset.x,
-                    y: p.y + offset.y,
-                  })),
-                }
-              : {}),
-          });
-        selection = new Set(ids.values());
-        selectedEdge = null;
-      });
-      if (decoded.notice) status(decoded.notice);
-    } catch (e) {
-      status(`Paste: ${e.message}`, true);
-    }
-  }
-  async function pasteFromClipboard() {
-    hideMenus();
-    try {
-      const data = options.readClipboard
-        ? await options.readClipboard()
-        : { text: await navigator.clipboard.readText() };
-      await pasteText(data.text, data.html);
-    } catch {
-      status(
-        "Clipboard access unavailable. Press ⌘V / Ctrl+V on the board.",
-        true,
-      );
-    }
-  }
-  on(root, "paste", (e) => {
-    if (
-      e.target.isContentEditable ||
-      e.target.closest?.('[contenteditable="true"]') ||
-      /INPUT|TEXTAREA|SELECT/.test(e.target.tagName) ||
-      !modal.hidden
-    )
-      return;
-    e.preventDefault();
-    e.stopPropagation();
-    const data = e.clipboardData,
-      text =
-        data.getData("application/x-excalidraw") || data.getData("text/plain"),
-      html = data.getData("text/html");
-    if (!text && !html) {
-      status(
-        "This clipboard contains only an image or a private app format. Copy as SVG or Mermaid for editable shapes.",
-        true,
-      );
-      return;
-    }
-    pasteText(text, html);
-  });
-  on(root, "copy", (e) => {
-    if (
-      e.target.isContentEditable ||
-      e.target.closest?.('[contenteditable="true"]') ||
-      /INPUT|TEXTAREA|SELECT/.test(e.target.tagName) ||
-      !model
-    )
-      return;
-    e.preventDefault();
-    e.stopPropagation();
-    const ids = selection.size
-        ? membersFor(model, selection)
-        : selectedEdge !== null
-          ? new Set([
-              model.edges[selectedEdge].from,
-              model.edges[selectedEdge].to,
-            ])
-          : new Set(model.nodes.map((n) => n.id)),
-      copy = structuredClone(model);
-    freezePositions(copy);
-    copy.nodes = copy.nodes.filter((n) => ids.has(n.id));
-    copy.edges = copy.edges.filter(
-      (e, i) => selectedEdge === i || (ids.has(e.from) && ids.has(e.to)),
-    );
-    e.clipboardData.setData("text/plain", serialize(copy));
-    status("Copied Mermaid shapes.");
-  });
-  async function copyVisual(kind) {
-    finishText();
-    hideMenus();
-    try {
-      if (!layout)
-        throw new Error(
-          "Image copying currently supports editable flowcharts.",
-        );
-      const image = exportSelection(
-        diagram.querySelector("svg"),
-        layout,
-        membersFor(model, selection),
-        selectedEdge,
-        getComputedStyle(root).getPropertyValue("--paper").trim(),
-      );
-      if (kind === "png") {
-        const blob = await svgToPng(image, doc);
-        if (options.copyImage)
-          await options.copyImage(await blob.arrayBuffer());
-        else
-          await navigator.clipboard.write([
-            new ClipboardItem({ "image/png": blob }),
-          ]);
-      } else if (options.copySvg) await options.copySvg(image.text);
-      else {
-        try {
-          await navigator.clipboard.write([
-            new ClipboardItem({
-              "text/plain": new Blob([image.text], { type: "text/plain" }),
-              "text/html": new Blob([image.text], { type: "text/html" }),
-            }),
-          ]);
-        } catch {
-          await navigator.clipboard.writeText(image.text);
-        }
-      }
-      status(
-        `Copied ${selection.size ? "selection" : "content"} as ${kind.toUpperCase()}.`,
-      );
-    } catch (e) {
-      status(`Copy failed: ${e.message}`, true);
-    }
-  }
-  on(canvas, "contextmenu", (e) => {
-    if (editing) return;
-    e.preventDefault();
-    finishText();
-    hideMenus();
-    pastePoint = toWorld(e.clientX, e.clientY);
-    const id = nodeId(e.target.closest(".node")),
-      edge = e.target.closest("[data-edge]");
-    if (id && !selection.has(id)) selectNode(id);
-    if (edge) selectEdge(Number(edge.dataset.edge));
-    const menu = $(".rea-paste-menu");
-    setMarkup(
-      menu,
-      '<button data-action="paste">Paste</button><button data-action="copy-png">Copy as PNG · ⌘⇧C</button><button data-action="copy-svg">Copy as SVG</button><button data-action="fit">Zoom to content</button>',
-    );
-    menu.hidden = false;
-    const r = canvas.getBoundingClientRect();
-    menu.style.left = `${Math.max(80, Math.min(canvas.clientWidth - 210, e.clientX - r.left))}px`;
-    menu.style.top = `${Math.max(55, Math.min(canvas.clientHeight - 180, e.clientY - r.top))}px`;
-  });
+  clipboard.bind();
+  clipboard.bindContextMenu();
   function frameSelection() {
     if (!selection.size) {
       status("Select shapes to place in a frame.");
       return;
     }
+    canvas.focus();
     change((m) => {
       const id = nextId(m);
       createFrame(m, { id, ids: [...selection] });
@@ -2435,7 +1132,9 @@ export function mount(root, options) {
   }
   const actions = {
     counter: () =>
-      setTextPreferences({ counterEnabled: !textPreferences.counterEnabled }),
+      setTextPreferences({
+        counterEnabled: !preferences.textPreferences.counterEnabled,
+      }),
     support: () =>
       win.open(
         "https://ko-fi.com/theprasanjitsahoo",
@@ -2456,7 +1155,7 @@ export function mount(root, options) {
     next: () => present(1),
     previous: () => present(-1),
     "exit-present": exitPresent,
-    snap: () => setSnap(!snapping),
+    snap: () => setSnap(!preferences.snapping),
     grid: () => setAppearance({ showGrid: root.dataset.grid !== "true" }),
     light: () => setTheme("light"),
     dark: () => setTheme("dark"),
@@ -2508,52 +1207,22 @@ export function mount(root, options) {
       e.target.closest("[data-background]")?.dataset.background;
     if (background) setAppearance({ background });
     const action = e.target.closest("[data-action]")?.dataset.action;
+    if (action === "shapes") {
+      const menu = $(".rea-shape-menu");
+      const open = menu.hidden;
+      hideMenus();
+      menu.hidden = !open;
+      $("[data-action=shapes]").setAttribute("aria-expanded", String(open));
+    }
     if (action) actions[action]?.();
     const t = e.target.closest("[data-tool]")?.dataset.tool;
     if (t) {
       finishText();
       hideMenus();
-      if (["rect", "round", "diamond"].includes(t)) add(t);
-      else setTool(t);
+      setTool(t);
     }
   });
-  on($(".rea-source"), "input", () => (draft = $(".rea-source").value));
-  on($(".rea-direction"), "change", (e) => {
-    const next = parse($(".rea-source").value);
-    if (next) {
-      next.direction = e.target.value;
-      for (const n of next.nodes) delete n.position;
-      $(".rea-source").value = serialize(next);
-      draft = $(".rea-source").value;
-    }
-  });
-  on($(".rea-file"), "change", async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    try {
-      const text = await file.text();
-      if (/\.(svg|json|excalidraw|tldr)$/i.test(file.name)) {
-        await pasteText(text);
-        e.target.value = "";
-        return;
-      }
-      const next = readBoard(text) || text;
-      await mermaid.parse(next);
-      if (!options.fixedTitle) {
-        title = file.name.replace(/\.(board|md|mmd|mermaid)$/, "");
-        $(".rea-board-name").textContent = title;
-        $(".rea-title").textContent = title;
-      }
-      selection.clear();
-      selected = null;
-      selectedEdge = null;
-      modal.hidden = true;
-      commit(next, { autoFit: true });
-    } catch {
-      status("Could not import that Mermaid file.", true);
-    }
-    e.target.value = "";
-  });
+  sourceDialog.bind();
   on(root, "keydown", (e) => {
     if (presenting && ["ArrowRight", "ArrowLeft", "Escape"].includes(e.key)) {
       e.preventDefault();
@@ -2615,6 +1284,12 @@ export function mount(root, options) {
       travel(e.shiftKey ? 1 : -1);
       return;
     }
+    if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key.toLowerCase() === "g") {
+      e.preventDefault();
+      e.stopPropagation();
+      frameSelection();
+      return;
+    }
     if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "d") {
       e.preventDefault();
       duplicate();
@@ -2643,20 +1318,24 @@ export function mount(root, options) {
       d: "diamond",
       o: "round",
       c: "connect",
+      t: "text",
+      l: "line",
       v: "select",
       h: "hand",
     }[e.key.toLowerCase()];
     if (t) {
       e.preventDefault();
-      if (["rect", "round", "diamond"].includes(t)) add(t);
-      else setTool(t);
+      setTool(t);
     }
   });
   on(win, "keyup", (e) => {
     if (e.key === " ") spacePan = false;
   });
-  on(win, "blur", () => (spacePan = false));
-  const resize = new ResizeObserver(() => placeControls());
+  bindPointerBlur();
+  const resize = new ResizeObserver(() => {
+    placeControls();
+    cardEditor.position();
+  });
   resize.observe(canvas);
   setTool("select");
   Promise.resolve(render(true)).then(() =>
@@ -2664,9 +1343,10 @@ export function mount(root, options) {
   );
   return {
     destroy() {
+      cardEditor.close();
       finishText();
       disposed = true;
-      win.cancelAnimationFrame(pointerFrame);
+      cancelPointerFrame();
       resize.disconnect();
       abort.abort();
       setMarkup(root, "");
@@ -2703,10 +1383,6 @@ export function mount(root, options) {
         externalEditing = false;
       }
     },
-    setTitle(next) {
-      title = next;
-      $(".rea-board-name").textContent = title;
-      $(".rea-title").textContent = title;
-    },
+    setTitle,
   };
 }

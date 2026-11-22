@@ -230,9 +230,11 @@ try {
   const savedBeforeTypeSwitch = await stored();
   await apply("sequenceDiagram\nAlice->>Bob: Hello");
   await page.locator(".actor").first().waitFor();
+  await page.getByRole("button", { name: "Shapes", exact: true }).click();
   await page
     .getByRole("button", { name: "Add rectangle (R)", exact: true })
     .click();
+  await page.mouse.click(750, 450);
   assert.equal(
     await page
       .getByRole("textbox", { name: "Mermaid source", exact: true })

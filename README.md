@@ -1,4 +1,4 @@
-# Atlas Weave
+# AtlasWeave
 
 A visual thinking and learning board for Obsidian. Connect concepts, explain mechanisms, and organize ideas through editable Mermaid diagrams.
 
@@ -6,7 +6,7 @@ A visual thinking and learning board for Obsidian. Connect concepts, explain mec
 
 ![An editable Board with a native frame](research/public-release.png)
 
-Inspired by visual tools, including Whimsical, Miro, and others. Atlas Weave is an independent project, unaffiliated with those products or with Obsidian.
+Inspired by visual tools, including Whimsical, Miro, and others. AtlasWeave is an independent project, unaffiliated with those products or with Obsidian.
 
 Built primarily for learning—connecting concepts, tracing mechanisms, and explaining ideas—with room for planning, brainstorming, and other visual thinking.
 
@@ -22,7 +22,7 @@ Built primarily for learning—connecting concepts, tracing mechanisms, and expl
 - Paste Mermaid directly or through right-click → Paste. Import files. Copy selected shapes as Mermaid, PNG or SVG.
 - Link to vault notes, headings and blocks. Optional external MCP bridge and reusable assistant skill.
 - Optional character counter with a personal soft target; typing is never blocked. Live in-place text editing stays open across app/tab switches.
-- Basic Markdown text: `**bold**`, `*italic*`, `==highlight==`, inline code, `[[Note|alias]]` and `[label](https://example.com)`. Command/Ctrl-click links to follow them; note titles/aliases appear instead of raw wiki syntax.
+- Basic Markdown text: `**bold**`, `*italic*`, `==highlight==`, inline code, `[[Note|alias]]` and `[label](https://example.com)`. Click links on the board, or Command/Ctrl-click while editing. Note titles and aliases appear as link text.
 - Numbered/bullet list tools, selection wrapping with brackets/parentheses, text undo/redo and per-paragraph left/center/right/justify alignment. Select text or place the caret in a paragraph, then use the floating text toolbar; changes display immediately.
 - Double-click a selected shape border/handle to fit text. Overflow keeps the full source and shows an ellipsis; the editing chevron expands the field. Frame titles edit from the header; double-click empty interior space to add a member.
 
@@ -32,9 +32,9 @@ This repository is independently downloadable. **Publication on GitHub does not 
 
 1. Download `main.js`, `manifest.json`, `styles.css` and `THIRD_PARTY_NOTICES.txt` from a [release](https://github.com/astreos108/atlas-weave/releases).
 2. Create `CONFIG_DIR/plugins/rea-whimsical/` inside your vault and put the files there. `CONFIG_DIR` is your vault configuration folder, usually `.obsidian`.
-3. Enable **Atlas Weave** under Community plugins. Use the ribbon's easel icon or the **New board** command.
+3. Enable **AtlasWeave** under Community plugins. Use the ribbon's easel icon or the **New board** command.
 
-The historical plugin ID `rea-whimsical` remains stable for existing installations and MCP configuration. The product name is Atlas Weave (formerly REA Board). Initial public support is **desktop Obsidian 1.13.0+**. Mobile is not declared supported until tested; desktop-only clipboard and optional transport adapters are guarded separately.
+The historical plugin ID `rea-whimsical` remains stable for existing installations and MCP configuration. The product name is AtlasWeave. Initial public support is **desktop Obsidian 1.13.0+**. Mobile is not declared supported until tested; desktop-only clipboard and optional transport adapters are guarded separately.
 
 Existing Markdown notes with a Mermaid block can open through **Open current note as board**. Other Markdown content and later Mermaid blocks are retained. Conflicting saves are rejected rather than overwritten. Unsaved failed saves are retained in plugin data and can be restored **as a separate board** from plugin settings.
 
@@ -75,7 +75,7 @@ Vault links open native notes/headings/blocks. `.board` links do **not** yet par
 
 ## External assistants through MCP
 
-There is **no embedded AI, model client or provider API key**. The bridge is **off by default**. Enable **External MCP bridge** in Atlas Weave settings only if needed. Separately enable **Allow MCP note reading** if your assistant needs vault excerpts. The assistant is responsible for its own model connection and any data it sends to its provider.
+There is **no embedded AI, model client or provider API key**. The bridge is **off by default**. Enable **External MCP bridge** in AtlasWeave settings only if needed. Separately enable **Allow MCP note reading** if your assistant needs vault excerpts. The assistant is responsible for its own model connection and any data it sends to its provider.
 
 Install this checkout's dependencies with `npm ci`, then configure your MCP client:
 
@@ -136,7 +136,10 @@ MIT © 2026 Prasanjit Sahoo. Mermaid, DOMPurify and the MCP SDK retain their ups
 
 ### Writing details
 
-The counter is a **soft target**, off by default, configured in More or Atlas Weave settings. It counts visible Unicode grapheme characters, including spaces and line breaks, while excluding Markdown markers and hidden link destinations; it is not Twitter's weighted URL counting algorithm. No truncation or payment gate is applied.
+Type `[[` in a shape to search vault notes. Use `#` for headings, `#^` for blocks, or `|` for display text. The popup also offers those controls. Select an existing block ID, or choose an ordinary paragraph to add an ID to its note. Type `[[@` to link to another shape on the current board. Use `[label](https://example.com)` or Command/Ctrl+K for a web link. Move the caret into a link to edit its full source, then move away to see its display text. A corner icon marks shapes that contain links.
+
+
+The counter is a **soft target**, off by default, configured in More or AtlasWeave settings. It counts visible Unicode grapheme characters, including spaces and line breaks, while excluding Markdown markers and hidden link destinations; it is not Twitter's weighted URL counting algorithm. No truncation or payment gate is applied.
 
 The editor displays supported formatting live on the shape, with no separate white text field. Frame titles edit at their header text. Markdown is retained in the Mermaid label source. A small link-target popover changes destinations without exposing Markdown syntax. This is a focused rich editor, rather than Obsidian's full Markdown editor. Embedded images, callouts, tables and plugin-provided Markdown extensions are not promised. Use Shift+Enter for an ordinary new line; Enter continues a list, an empty list item ends it, and Command/Ctrl+Enter or the checkmark commits. Escape cancels the current edit. Alignment applies to selected source paragraphs and may differ between paragraphs; ordinary justify leaves the final wrapped line ragged.
 
@@ -145,3 +148,11 @@ App/window blur leaves the current field open. Navigating away from a Board save
 Grid dots use fixed world-space levels at 20, 100 and 500 units. Their origin stays attached to the board during pan and zoom. Fine marks fade from use when too dense; snapping remains at 20 units. Existing off-grid positions and manually chosen dimensions are preserved rather than silently changing your layout.
 
 Connector edits show **teal** alignment guides, distinct from red shape guides. Midpoints and quarter-points use magnets no larger than four screen pixels (and smaller on short edges). A small teal marker shows an exact snap. Other attachment positions stay adjustable; hold Alt to bypass guides, magnets and grid snapping. Empty frame backgrounds are not connector targets.
+
+In Obsidian, shape, frame-title and connector labels render inline math (`$\Delta P$`) and display math (`$$\frac{\Delta P}{R}$$`) with the built-in MathJax engine. Edit the TeX directly in place; commit to see the rendered equation. Formula source stays in Mermaid. Escape currency signs (`\$`) or use code spans for literal dollar expressions. The standalone browser demo retains formula source when Obsidian's renderer is unavailable. Supported LaTeX follows the host's MathJax configuration, rather than a complete LaTeX document compiler.
+
+macOS text replacements work with native typing (for example, `del.` followed by a space). Obsidian's **Edit → Substitutions → Text Replacement** must be enabled. The plugin preserves the operating system's editing context rather than maintaining a second replacement dictionary.
+
+### Interactive architecture map
+
+Run `npm run floorplan` to generate a local map of AtlasWeave's modules and workflows, or `npm run floorplan:open` to refresh and open it. See [the Floorplan guide](docs/floorplan/README.md) for setup and maintenance.

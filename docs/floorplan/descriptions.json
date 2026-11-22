@@ -1,0 +1,296 @@
+{
+  "files": {
+    "src/alignment.js": {
+      "name": "Alignment",
+      "description": "Finds nearby shape edges and centers so moving ideas can align precisely."
+    },
+    "src/appearance.js": {
+      "name": "Appearance",
+      "description": "Defines shared light and dark colors for board content and connectors."
+    },
+    "src/connector-geometry.js": {
+      "name": "Connector geometry",
+      "description": "Calculates connector attachment points and the geometry around shapes."
+    },
+    "src/connector-guides.js": {
+      "name": "Connector guides",
+      "description": "Shows alignment and snapping guides while connecting ideas."
+    },
+    "src/connector-projection.js": {
+      "name": "Connector projection",
+      "description": "Projects connector ends onto shape boundaries as shapes move."
+    },
+    "src/connector-routing.js": {
+      "name": "Connector routing",
+      "description": "Builds and simplifies connector paths between attached shapes."
+    },
+    "src/grid.js": {
+      "name": "Grid",
+      "description": "Keeps the board grid and snapping consistent as the view changes."
+    },
+    "src/import-routing.js": {
+      "name": "Import routing",
+      "description": "Arranges imported diagrams and separates connector paths for readability."
+    },
+    "src/layout.js": {
+      "name": "Layout",
+      "description": "Measures shapes and text and prepares the board for drawing."
+    },
+    "src/math-source.js": {
+      "name": "Math source",
+      "description": "Recognizes mathematical source inside board text."
+    },
+    "src/math-text.js": {
+      "name": "Math text",
+      "description": "Prepares mathematical expressions for display and measurement."
+    },
+    "src/mermaid-renderer.js": {
+      "name": "Mermaid renderer",
+      "description": "Uses Mermaid to render diagram source and recover its visual layout."
+    },
+    "src/smart-routing.js": {
+      "name": "Smart routing",
+      "description": "Adjusts connector paths to avoid crossing through other shapes."
+    },
+    "src/thought-placement.js": {
+      "name": "Thought placement",
+      "description": "Finds space for a new idea without overlapping existing ideas."
+    },
+    "src/canvas.js": {
+      "name": "Canvas",
+      "description": "Coordinates board rendering, selection, gestures, editing, and toolbar actions."
+    },
+    "src/content-card.js": {
+      "name": "Content card",
+      "description": "Parses and edits table, fenced code, and equation content on the board."
+    },
+    "src/icons.js": {
+      "name": "Icons",
+      "description": "Supplies consistent SVG icons for board controls."
+    },
+    "src/inline-link-picker.js": {
+      "name": "Inline link picker",
+      "description": "Offers note, heading, and passage suggestions while editing a link."
+    },
+    "src/markup.js": {
+      "name": "Markup",
+      "description": "Sanitizes generated HTML and SVG before adding it to the interface."
+    },
+    "src/rich-text-surface.js": {
+      "name": "Rich text surface",
+      "description": "Converts between editable formatted text and its saved source."
+    },
+    "src/text-editor.js": {
+      "name": "Text editor",
+      "description": "Manages text editing, formatting controls, outlines, and keyboard behavior."
+    },
+    "styles.css": {
+      "name": "Styles",
+      "description": "Styles the board, editors, controls, and light and dark appearances."
+    },
+    "index.html": {
+      "name": "Index",
+      "description": "Loads the standalone browser preview of the board."
+    },
+    "src/clipboard.js": {
+      "name": "Clipboard",
+      "description": "Recognizes pasted board content and prepares editable imports and copied selections."
+    },
+    "src/desktop-clipboard.js": {
+      "name": "Desktop clipboard",
+      "description": "Connects desktop clipboard access to the board clipboard workflow."
+    },
+    "src/domain/board-actions.js": {
+      "name": "Board actions",
+      "description": "Applies frame membership, moving, deletion, arrangement, and connector reversal rules."
+    },
+    "src/domain/resize-box.js": {
+      "name": "Resize box",
+      "description": "Resizes a shape while keeping its opposite edge fixed."
+    },
+    "src/map-patterns.js": {
+      "name": "Map patterns",
+      "description": "Creates starter idea maps and adds branches for common thinking patterns."
+    },
+    "src/model.js": {
+      "name": "Model",
+      "description": "Reads and writes Mermaid while preserving editable board content and metadata."
+    },
+    "src/text-format.js": {
+      "name": "Text format",
+      "description": "Handles inline formatting, alignment, character counts, and multilevel list sequences."
+    },
+    "src/inline-note-links.js": {
+      "name": "Inline note links",
+      "description": "Parses inline vault links and prepares note and passage suggestions."
+    },
+    "src/note-links.js": {
+      "name": "Note links",
+      "description": "Resolves vault notes, headings, and blocks and opens linked destinations."
+    },
+    "src/plugin-settings.js": {
+      "name": "Plugin settings",
+      "description": "Presents AtlasWeave preferences inside Obsidian settings."
+    },
+    "src/plugin.js": {
+      "name": "Plugin",
+      "description": "Registers AtlasWeave in Obsidian and connects board files, settings, and the local bridge."
+    },
+    "src/workflows/save-queue.js": {
+      "name": "Save queue",
+      "description": "Orders board saves so overlapping edits can be written consistently."
+    },
+    "mcp/call.mjs": {
+      "name": "Call",
+      "description": "Lets a developer call a board tool through the local assistant connection."
+    },
+    "mcp/server.mjs": {
+      "name": "Server",
+      "description": "Exposes board tools to assistants and forwards calls to the Obsidian bridge."
+    },
+    "src/bridge-contract.js": {
+      "name": "Bridge contract",
+      "description": "Defines available assistant tools and their accepted inputs."
+    },
+    "src/bridge-operations.js": {
+      "name": "Bridge operations",
+      "description": "Validates and applies assistant requests to read or change a board."
+    },
+    "src/bridge-server.js": {
+      "name": "Bridge server",
+      "description": "Runs the optional local HTTP bridge and checks access to board requests."
+    },
+    "build.mjs": {
+      "name": "Build",
+      "description": "Bundles the Obsidian plugin and writes release license notices."
+    },
+    "eslint.config.mjs": {
+      "name": "Eslint.config",
+      "description": "Configures JavaScript checks and Obsidian plugin coding rules."
+    },
+    "scripts/check-architecture.mjs": {
+      "name": "Check architecture",
+      "description": "Checks that required architecture boundaries and bridge contracts remain intact."
+    },
+    "scripts/license-notices.mjs": {
+      "name": "License notices",
+      "description": "Collects dependency licenses for the distributed plugin."
+    },
+    "scripts/verify-reproducible.mjs": {
+      "name": "Verify reproducible",
+      "description": "Builds twice and compares outputs to check reproducibility."
+    },
+    "scripts/floorplan.mjs": {
+      "name": "Floorplan",
+      "description": "Installs the pinned Floorplan tool locally and builds or opens the architecture map."
+    },
+    "src/browser.css": {
+      "name": "Browser",
+      "description": "Sizes the standalone browser preview to fill its window."
+    },
+    "src/browser.js": {
+      "name": "Browser",
+      "description": "Starts the browser preview and saves its sample board locally."
+    },
+    "tests/advanced.mjs": {
+      "name": "Advanced",
+      "description": "Exercises advanced board editing workflows in a browser."
+    },
+    "tests/bridge-operations.test.mjs": {
+      "name": "Bridge operations checks",
+      "description": "Checks assistant operations and rejection of invalid board changes."
+    },
+    "tests/browser.mjs": {
+      "name": "Browser",
+      "description": "Exercises core board behavior through the standalone browser preview."
+    },
+    "tests/connector-editing.mjs": {
+      "name": "Connector editing",
+      "description": "Checks connector editing through browser interactions."
+    },
+    "tests/connector-guides.test.mjs": {
+      "name": "Connector guides checks",
+      "description": "Checks connector alignment and snapping calculations."
+    },
+    "tests/content-cards.mjs": {
+      "name": "Content cards",
+      "description": "Checks editable tables, code, and equations in the browser."
+    },
+    "tests/direct-connectors.mjs": {
+      "name": "Direct connectors",
+      "description": "Checks creating connections directly from shapes."
+    },
+    "tests/foundation.mjs": {
+      "name": "Foundation",
+      "description": "Checks foundational board workflows in the browser."
+    },
+    "tests/foundation.test.mjs": {
+      "name": "Foundation checks",
+      "description": "Checks foundational board data and behavior rules."
+    },
+    "tests/geometry.test.mjs": {
+      "name": "Geometry checks",
+      "description": "Checks shape geometry and connector routing calculations."
+    },
+    "tests/inline-links.mjs": {
+      "name": "Inline links",
+      "description": "Checks inline link editing and suggestions in the browser."
+    },
+    "tests/inline-note-links.test.mjs": {
+      "name": "Inline note links checks",
+      "description": "Checks parsing and suggestion rules for inline vault links."
+    },
+    "tests/interactions.mjs": {
+      "name": "Interactions",
+      "description": "Checks pointer and keyboard interactions with the board."
+    },
+    "tests/live-writing.mjs": {
+      "name": "Live writing",
+      "description": "Checks formatted text editing while typing."
+    },
+    "tests/math-rendering.mjs": {
+      "name": "Math rendering",
+      "description": "Checks equation rendering through the browser interface."
+    },
+    "tests/math-text.test.mjs": {
+      "name": "Math text checks",
+      "description": "Checks mathematical source handling and text preparation."
+    },
+    "tests/mcp-live.mjs": {
+      "name": "Mcp live",
+      "description": "Exercises the assistant bridge against a running board."
+    },
+    "tests/model.test.mjs": {
+      "name": "Model checks",
+      "description": "Checks Mermaid parsing, serialization, and board document round trips."
+    },
+    "tests/positioning.mjs": {
+      "name": "Positioning",
+      "description": "Checks placement and arrangement of board elements."
+    },
+    "tests/public-release.mjs": {
+      "name": "Public release",
+      "description": "Exercises user workflows expected for a public release."
+    },
+    "tests/public-release.test.mjs": {
+      "name": "Public release checks",
+      "description": "Checks board rules needed for public release behavior."
+    },
+    "tests/run-browser.mjs": {
+      "name": "Run browser",
+      "description": "Runs the browser verification suites together."
+    },
+    "tests/runtime.mjs": {
+      "name": "Runtime",
+      "description": "Provides the browser test runtime and shared setup."
+    },
+    "tests/text-editing.mjs": {
+      "name": "Text editing",
+      "description": "Checks editing and formatting text through the browser."
+    },
+    "tests/text-format.test.mjs": {
+      "name": "Text format checks",
+      "description": "Checks inline formatting and multilevel list numbering rules."
+    }
+  }
+}

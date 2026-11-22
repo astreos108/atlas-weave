@@ -8,10 +8,13 @@ import {
   normalizePath,
   addIcon,
   Platform,
+  renderMath,
+  loadMathJax,
+  finishRenderMath,
 } from "obsidian";
 import { mount } from "./canvas.js";
 import { BoardSettings } from "./plugin-settings.js";
-import { pickNoteLink } from "./note-links.js";
+import { suggestNoteLinks } from "./inline-note-links.js";
 import { readBoard, replaceBoard } from "./model.js";
 const VIEW = "rea-whimsical";
 class BoardView extends FileView {
@@ -51,6 +54,13 @@ class BoardView extends FileView {
       );
       return;
     }
+    try {
+      await loadMathJax();
+    } catch {
+      new Notice(
+        "Math rendering unavailable. Formula source remains editable.",
+      );
+    }
     this.boardPath = file.path;
     this.board = mount(this.contentEl, {
       title: file.basename,
@@ -63,6 +73,11 @@ class BoardView extends FileView {
       characterTarget: this.plugin.settings.characterTarget,
       setTextPreferences: (patch) => this.plugin.setTextPreferences(patch),
       editorSession: this.plugin.editorSessions.get(file.path),
+      renderMath: (source, display) => {
+        const rendered = renderMath(source, display);
+        void finishRenderMath().catch(() => {});
+        return rendered;
+      },
       resolveLinkTitle: (target) =>
         this.app.metadataCache.getFirstLinkpathDest(
           target.split("#")[0],
@@ -70,7 +85,7 @@ class BoardView extends FileView {
         )?.basename,
       setAppearance: (patch) => this.plugin.setAppearance(patch),
       setSnap: (value) => this.plugin.setSnap(value),
-      pickLink: () => pickNoteLink(this.app),
+      suggestLinks: (query) => suggestNoteLinks(this.app, file.path, query),
       setTheme: (theme) => this.plugin.setTheme(theme),
       fixedTitle: true,
       ...this.plugin.clipboard,

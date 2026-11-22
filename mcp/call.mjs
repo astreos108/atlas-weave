@@ -8,7 +8,7 @@ const project = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const bridgeFile = process.env.REA_BOARD_BRIDGE_FILE;
 if (!bridgeFile) {
   process.stderr.write(
-    "Set REA_BOARD_BRIDGE_FILE to the credential path shown by your vault configuration. Enable MCP in Atlas Weave first.\n",
+    "Set REA_BOARD_BRIDGE_FILE to the credential path shown by your vault configuration. Enable MCP in AtlasWeave first.\n",
   );
   process.exit(1);
 }

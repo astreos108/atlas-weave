@@ -1,3 +1,4 @@
+import { parse as parseBoard } from "./model.js";
 import mermaid from "mermaid";
 mermaid.initialize({
   startOnLoad: false,
@@ -37,6 +38,13 @@ export default {
   },
   async render(id, source) {
     checkSource(source);
-    return mermaid.render(id, source);
+    // Editable Board labels are projected again by createLayout with native
+    // Obsidian MathJax. Prevent Mermaid's KaTeX pass from interpreting encoded
+    // label newlines (#10;) as TeX. This seed-layout string is never persisted.
+    const layoutSource =
+      source.includes("$$") && parseBoard(source)
+        ? source.replaceAll("$$", "＄＄")
+        : source;
+    return mermaid.render(id, layoutSource);
   },
 };

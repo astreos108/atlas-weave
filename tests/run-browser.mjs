@@ -45,10 +45,14 @@ try {
     "positioning",
     "advanced",
     "connector-editing",
+    "direct-connectors",
     "foundation",
     "public-release",
     "text-editing",
     "live-writing",
+    "inline-links",
+    "math-rendering",
+    "content-cards",
   ])
     await run(file);
 } finally {

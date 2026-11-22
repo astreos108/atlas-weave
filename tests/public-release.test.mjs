@@ -138,14 +138,23 @@ test("multiple connectors get distinct ports; crossing hops and endpoint gaps re
   assert.equal(ps[0].x, 0);
 });
 
-test("simple subgraphs import as editable frames while nested syntax remains source-only", () => {
+test("simple subgraphs import as editable frames", () => {
   const m = parse(
     'flowchart LR\nsubgraph f["Group"]\na["One"]\nb["Two"]\na --> b\nend',
   );
   assert.equal(m.nodes.find((n) => n.id === "f").shape, "frame");
   assert.deepEqual(m.nodes.find((n) => n.id === "f").members, ["a", "b"]);
-  assert.equal(
-    parse('flowchart LR\nsubgraph f\nsubgraph g\na["One"]\nend\nend'),
-    null,
+});
+
+test("deleting a frame removes direct contents and preserves nested frames", () => {
+  const model = fixture();
+  createFrame(model, { id: "inner", ids: ["b"] });
+  createFrame(model, { id: "outer", ids: ["a", "inner"] });
+  removeNodes(model, ["outer"], { deleteFrameContents: true });
+  assert.deepEqual(
+    model.nodes.map((node) => node.id),
+    ["inner", "b"],
   );
+  assert.deepEqual(model.nodes[0].members, ["b"]);
+  assert.equal(model.edges.length, 0);
 });

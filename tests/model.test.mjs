@@ -101,3 +101,41 @@ test("manual routes, label offsets, endpoint ratios and note links round trip", 
   );
   assert.equal(parse(source.replace('"fromRatio":0.5', '"fromRatio":2')), null);
 });
+
+test("two-way Mermaid edges round-trip and reverse their saved attachments", async () => {
+  const { reverseConnector } = await import("../src/domain/board-actions.js");
+  const model = parse('flowchart LR\na["A"] <-->|Related| b["B"]');
+  const [edge] = model.edges;
+  assert.equal(edge.bidirectional, true);
+  Object.assign(edge, {
+    fromSide: "right",
+    fromRatio: 0.5,
+    toRatio: 0,
+    waypoints: [
+      { x: 200, y: 90 },
+      { x: 200, y: 180 },
+    ],
+  });
+  const before = structuredClone(edge);
+  reverseConnector(edge);
+  assert.equal(edge.from, "b");
+  assert.equal(edge.fromSide, undefined);
+  assert.equal(edge.toSide, "right");
+  assert.equal(edge.fromRatio, 0);
+  assert.deepEqual(edge.waypoints, [...before.waypoints].reverse());
+  assert.deepEqual(parse(serialize(model)).edges[0], edge);
+  reverseConnector(edge);
+  assert.deepEqual(edge, before);
+});
+
+test("nested frames preserve direct membership and reject cycles", () => {
+  const model = parse(
+    'flowchart LR\nsubgraph outer\nsubgraph inner\na["Idea"]\nend\nend',
+  );
+  assert.deepEqual(model.nodes.find((n) => n.id === "outer").members, [
+    "inner",
+  ]);
+  assert.deepEqual(parse(serialize(model)), model);
+  model.nodes.find((n) => n.id === "inner").members.push("outer");
+  assert.equal(parse(serialize(model)), null);
+});

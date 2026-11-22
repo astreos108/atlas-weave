@@ -1,17 +1,24 @@
 import { parse, readBoard } from "./model.js";
 const color = (v, fallback) => (/^#[0-9a-f]{6}$/i.test(v || "") ? v : fallback);
+export function clipboardMermaid(text) {
+  const source = text.trim();
+  const fenced = readBoard(source);
+  if (fenced) return fenced;
+  if (
+    /^(?:flowchart|graph|mindmap|sequenceDiagram|classDiagram|stateDiagram(?:-v2)?|erDiagram|gantt|pie|timeline|journey|quadrantChart|gitGraph|xychart(?:-beta)?|sankey(?:-beta)?|architecture(?:-beta)?|block(?:-beta)?|packet(?:-beta)?|kanban|requirementDiagram|C4\w*)(?=\s|$)/.test(
+      source,
+    )
+  )
+    return source;
+  if (/^subgraph[ \t]+/.test(source)) return "flowchart LR\n" + source;
+  return null;
+}
+
 export function decodeClipboard(text) {
   if (!text || text.length > 2_000_000)
     throw new Error("Clipboard is empty or too large.");
-  const candidate =
-    readBoard(text) ||
-    text.trim().replace(/^```(?:mermaid)?\s*\n?|\n?```$/g, "");
-  if (
-    /^(?:flowchart|graph|mindmap|sequenceDiagram|classDiagram|stateDiagram|erDiagram|gantt|pie|timeline|journey|quadrantChart|gitGraph|xychart|sankey|architecture|block|packet|kanban|requirementDiagram|C4)/.test(
-      candidate,
-    )
-  )
-    return { source: candidate, model: parse(candidate) };
+  const candidate = clipboardMermaid(text);
+  if (candidate) return { source: candidate, model: parse(candidate) };
   let data;
   try {
     data = JSON.parse(text);
@@ -230,10 +237,37 @@ export function exportSelection(svg, layout, ids, edgeIndex, background) {
       "font-size",
       "font-weight",
       "text-anchor",
+      "white-space",
       "opacity",
       "paint-order",
     ])
       el.style.setProperty(prop, s.getPropertyValue(prop));
+    if (originals.get(i).closest(".rea-math-label,.rea-content-card")) {
+      for (const prop of [
+        "color",
+        "display",
+        "width",
+        "height",
+        "box-sizing",
+        "flex-direction",
+        "justify-content",
+        "text-align",
+        "white-space",
+        "overflow-wrap",
+        "vertical-align",
+        "margin",
+        "padding",
+        "position",
+        "visibility",
+        "font-style",
+        "line-height",
+        "border",
+        "border-collapse",
+        "background-color",
+        "overflow",
+      ])
+        el.style.setProperty(prop, s.getPropertyValue(prop));
+    }
   });
   if (partial) {
     for (const el of styled.querySelectorAll(".node")) {
@@ -285,23 +319,21 @@ export function exportSelection(svg, layout, ids, edgeIndex, background) {
   };
 }
 export async function svgToPng({ text, width, height }, ownerDocument) {
-  const url = URL.createObjectURL(new Blob([text], { type: "image/svg+xml" }));
-  try {
-    const img = new Image();
-    img.src = url;
-    await img.decode();
-    const scale = Math.min(2, 8192 / Math.max(width, height)),
-      canvas = ownerDocument.createElement("canvas");
-    canvas.width = Math.ceil(width * scale);
-    canvas.height = Math.ceil(height * scale);
-    canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
-    return await new Promise((resolve, reject) =>
-      canvas.toBlob(
-        (b) => (b ? resolve(b) : reject(new Error("PNG encoding failed."))),
-        "image/png",
-      ),
-    );
-  } finally {
-    URL.revokeObjectURL(url);
-  }
+  // SVG foreignObject labels must be self-contained data images. Chromium
+  // treats a blob-backed SVG containing HTML as cross-origin canvas content.
+  const url = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(text)}`;
+  const img = new Image();
+  img.src = url;
+  await img.decode();
+  const scale = Math.min(2, 8192 / Math.max(width, height)),
+    canvas = ownerDocument.createElement("canvas");
+  canvas.width = Math.ceil(width * scale);
+  canvas.height = Math.ceil(height * scale);
+  canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+  return await new Promise((resolve, reject) =>
+    canvas.toBlob(
+      (b) => (b ? resolve(b) : reject(new Error("PNG encoding failed."))),
+      "image/png",
+    ),
+  );
 }

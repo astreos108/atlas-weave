@@ -7,6 +7,7 @@ import {
   wrapSelection,
   listLines,
   continueList,
+  indentList,
 } from "../src/text-format.js";
 import { gridLayers } from "../src/grid.js";
 import { parse, serialize } from "../src/model.js";
@@ -78,4 +79,32 @@ test("per-paragraph alignment round trips in version 5 and malformed values are 
     m.nodes[0].textAlignments,
   );
   assert.equal(parse(source.replace('"justify"', '"malformed"')), null);
+});
+
+test("outline numbering follows each requested sequence and renumbers branches", () => {
+  const source =
+    "Topic\n  Subtopic\n    Detail\n      Example\n        Minor\n          Point\n      Next Example\n    Next Detail\n  Next Subtopic\nNext Topic";
+  const traditional = listLines(source, 0, source.length, true, "traditional");
+  assert.equal(
+    traditional,
+    "I. Topic\n  A. Subtopic\n    1. Detail\n      a. Example\n        (1) Minor\n          (a) Point\n      b. Next Example\n    2. Next Detail\n  B. Next Subtopic\nII. Next Topic",
+  );
+  const shorter =
+    "Topic\n  Subtopic\n    Detail\n      Example\n  Next Subtopic\nNext Topic";
+  const mixed = listLines(shorter, 0, shorter.length, true, "mixed");
+  assert.equal(
+    mixed,
+    "1. Topic\n  i. Subtopic\n    a. Detail\n      (1) Example\n  ii. Next Subtopic\n2. Next Topic",
+  );
+  const decimal = listLines(shorter, 0, shorter.length, true, "decimal");
+  assert.equal(
+    decimal,
+    "1. Topic\n  1.1. Subtopic\n    1.1.1. Detail\n      1.1.1.1. Example\n  1.2. Next Subtopic\n2. Next Topic",
+  );
+  const next = continueList("1. Topic", 8, 8, "decimal");
+  const nested = indentList(next.value, next.start, next.end, false, "decimal");
+  assert.equal(nested.value, "1. Topic\n  1.1. ");
+  assert.equal(nested.start, nested.value.length);
+  const outdented = indentList(nested.value, nested.start, nested.end, true);
+  assert.equal(outdented.value, "1. Topic\n2. ");
 });

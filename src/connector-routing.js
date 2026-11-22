@@ -155,10 +155,3 @@ export function pathGeometry(points) {
     label: pathMidpoint(points),
   };
 }
-export function edgeLink(item) {
-  return (
-    item?.link ||
-    item?.label?.match(/\[\[([^\]|]+)(?:\|[^\]]+)?\]\]/)?.[1] ||
-    null
-  );
-}
