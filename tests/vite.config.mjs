@@ -6,6 +6,7 @@ export default defineConfig({
     include: ["mermaid", "dompurify"],
   },
   server: {
+    hmr: false,
     watch: {
       ignored: ["**/research/**"],
     },
