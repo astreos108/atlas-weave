@@ -51,6 +51,7 @@ try {
         }),
       },
     };
+    window.mountLinkBoard = mount;
     window.linkBoard = mount(document.querySelector("#app"), {
       source: 'flowchart LR\na["Read"] --> b["Other thought"]',
       suggestLinks: (query) => suggestNoteLinks(app, "Test.board", query),
@@ -121,11 +122,11 @@ try {
     await page.evaluate(() => window.openedTarget),
     /^Drafts\/Scratchpad#\^atlas-/,
   );
-  const target = await page.evaluate(async () => {
-    await window.linkBoard.flush();
+  await page.evaluate(() => window.linkBoard.flush());
+  const target = await page.evaluate(() => {
     const source = window.savedSource;
     window.linkBoard.destroy();
-    const { mount } = await import("/src/canvas.js");
+    const mount = window.mountLinkBoard;
     const target = window.openedTarget;
     window.openedTarget = null;
     window.linkBoard = mount(document.querySelector("#app"), {
