@@ -7,7 +7,7 @@ const page = await browser.newPage({ viewport: { width: 1440, height: 960 } }),
 page.on("pageerror", (e) => errors.push(e.message));
 const stored = () =>
   page.evaluate(
-    () => JSON.parse(localStorage.getItem("rea-whimsical-board-v1")).source,
+    () => JSON.parse(localStorage.getItem("atlasweave-board-v1")).source,
   );
 const source = () => import("../src/model.js");
 async function center(loc) {
@@ -47,7 +47,7 @@ async function apply(text) {
 }
 try {
   await page.addInitScript(() =>
-    localStorage.setItem("rea-whimsical-snap", "false"),
+    localStorage.setItem("atlasweave-snap", "false"),
   );
   await page.goto(process.env.REA_BOARD_TEST_URL || "http://127.0.0.1:5178");
   await page.locator(".node").first().waitFor();

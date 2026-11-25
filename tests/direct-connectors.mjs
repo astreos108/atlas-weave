@@ -17,7 +17,7 @@ page.setDefaultTimeout(8000);
 const read = async () =>
   parse(
     await page.evaluate(
-      () => JSON.parse(localStorage.getItem("rea-whimsical-board-v1")).source,
+      () => JSON.parse(localStorage.getItem("atlasweave-board-v1")).source,
     ),
   );
 const node = (name) =>
@@ -37,10 +37,7 @@ const ghost = page.locator(".rea-thought-ghost");
 try {
   await page.addInitScript(
     (source) =>
-      localStorage.setItem(
-        "rea-whimsical-board-v1",
-        JSON.stringify({ source }),
-      ),
+      localStorage.setItem("atlasweave-board-v1", JSON.stringify({ source })),
     source,
   );
   await page.goto(process.env.REA_BOARD_TEST_URL || "http://127.0.0.1:5199");
@@ -77,7 +74,7 @@ try {
   assert.equal(await ghost.isVisible(), false);
   await page.mouse.up();
   await page.waitForFunction(() =>
-    JSON.parse(localStorage.getItem("rea-whimsical-board-v1")).source.includes(
+    JSON.parse(localStorage.getItem("atlasweave-board-v1")).source.includes(
       "a --> c",
     ),
   );
@@ -161,7 +158,7 @@ try {
     .getByRole("button", { name: "Reverse connector", exact: true })
     .click();
   await page.waitForFunction(() =>
-    JSON.parse(localStorage.getItem("rea-whimsical-board-v1")).source.includes(
+    JSON.parse(localStorage.getItem("atlasweave-board-v1")).source.includes(
       "c -->|",
     ),
   );

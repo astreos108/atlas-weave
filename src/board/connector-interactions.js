@@ -39,7 +39,13 @@ export function createConnectorInteractions({
     );
   }
   function child(side = "right", from = board.selected, box, edit = true) {
-    if (!from || !board.model || !board.layout?.nodes.has(from)) return;
+    if (
+      !from ||
+      !board.model ||
+      !board.layout?.nodes.has(from) ||
+      board.layout.nodes.get(from).shape === "text"
+    )
+      return;
     finishText();
     const parent = board.model.nodes.find((n) => n.id === from);
     const { x, y, width, height } = box || thoughtPosition(from, side);
@@ -102,7 +108,11 @@ export function createConnectorInteractions({
     });
   }
   function connect(from, to, fromSide, targetAttachment) {
-    if (from === to) return;
+    if (
+      from === to ||
+      [from, to].some((id) => board.layout.nodes.get(id)?.shape === "text")
+    )
+      return;
     change((m) => {
       if (!m.edges.some((e) => e.from === from && e.to === to))
         m.edges.push({
@@ -126,7 +136,7 @@ export function createConnectorInteractions({
   function hitNode(x, y, exclude) {
     const p = toWorld(x, y);
     for (const n of [...board.layout.nodes.values()].reverse()) {
-      if (n.id === exclude || n.shape === "frame") continue;
+      if (n.id === exclude || ["frame", "text"].includes(n.shape)) continue;
       const dx = Math.abs(p.x - n.x) / (n.width / 2 + 8 / board.zoom),
         dy = Math.abs(p.y - n.y) / (n.height / 2 + 8 / board.zoom);
       if (n.shape === "diamond" ? dx + dy <= 1.12 : dx <= 1 && dy <= 1)
@@ -135,6 +145,7 @@ export function createConnectorInteractions({
     return null;
   }
   function startConnect(e, from, fromSide, quickAdd = false) {
+    if (board.layout.nodes.get(from)?.shape === "text") return;
     finishText();
     hideMenus();
     selectNode(from);

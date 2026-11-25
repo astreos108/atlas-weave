@@ -40,6 +40,7 @@ try {
     "foundation",
     "public-release",
     "text-editing",
+    "text-annotations",
     "live-writing",
     "inline-links",
     "math-rendering",

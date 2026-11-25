@@ -1,0 +1,10 @@
+flowchart LR
+  step0["Axial tilt"]
+  step1["More direct sunlight"]
+  step2["More energy per unit area#10;#91;#91;Why seasons happen#35;^season-angle#124;Read the source passage#93;#93;"]
+  step0 -->|changes the angle| step1
+  step1 -->|concentrates energy| step2
+  style step0 fill:#ede9fe,stroke:#a78bfa
+  style step1 fill:#ede9fe,stroke:#a78bfa
+  style step2 fill:#ede9fe,stroke:#a78bfa
+  %% board-layout: {"version":3,"nodes":{"step0":{"x":180,"y":160,"width":250,"height":100},"step1":{"x":520,"y":160,"width":250,"height":100},"step2":{"x":860,"y":160,"width":250,"height":100}},"edges":{"0":{"routing":"auto"},"1":{"routing":"auto"}}}

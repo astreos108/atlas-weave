@@ -1,3 +1,4 @@
+import { annotationSize } from "./domain/text-annotation.js";
 import { cardContent } from "./content-card.js";
 import { frameOwners } from "./domain/board-actions.js";
 /*! @license Heroicons Link, MIT, Copyright (c) Tailwind Labs, Inc.
@@ -233,6 +234,12 @@ export function createLayout(svg, model, identify, options = {}) {
   function fitText(id) {
     const n = nodes.get(id);
     if (!n) return null;
+    if (n.shape === "text")
+      return annotationSize(
+        { ...n, textWrap: false },
+        (text, run) => measureRun(text, run, false, n.textSize || 16),
+        options.resolveLinkTitle,
+      );
     const size = n.textSize || 16;
     const measure = (text, run) =>
       measureRun(text, run, n.shape === "frame", size);
@@ -270,8 +277,21 @@ export function createLayout(svg, model, identify, options = {}) {
   function resize(id, size) {
     const n = nodes.get(id);
     if (!n) return;
-    n.width = Math.min(4000, Math.max(80, size.width));
-    n.height = Math.min(4000, Math.max(48, size.height));
+    if (n.shape === "text")
+      size = annotationSize(
+        n,
+        (text, run) => measureRun(text, run, false, n.textSize || 16),
+        options.resolveLinkTitle,
+        n.textWrap ? size.width : undefined,
+      );
+    n.width = Math.min(
+      4000,
+      Math.max(n.shape === "text" ? 16 : 80, size.width),
+    );
+    n.height = Math.min(
+      4000,
+      Math.max(n.shape === "text" ? 24 : 48, size.height),
+    );
     if (n.cardEl) {
       n.cardEl.setAttribute("x", -n.width / 2);
       n.cardEl.setAttribute("y", -n.height / 2);
@@ -280,7 +300,8 @@ export function createLayout(svg, model, identify, options = {}) {
       position(n);
       return { width: n.width, height: n.height };
     }
-    const inset = n.shape === "diamond" ? n.width * 0.55 : 32,
+    const inset =
+        n.shape === "text" ? 0 : n.shape === "diamond" ? n.width * 0.55 : 32,
       fontSize = n.textSize || 16,
       lineHeight = Math.ceil(fontSize * 1.4),
       measure = (text, run) =>
@@ -292,7 +313,10 @@ export function createLayout(svg, model, identify, options = {}) {
       measure,
       options.resolveLinkTitle,
     );
-    const capacity = Math.max(1, Math.floor((n.height - 28) / lineHeight));
+    const capacity = Math.max(
+      1,
+      Math.floor((n.height - (n.shape === "text" ? 0 : 28)) / lineHeight),
+    );
     const lines =
       n.shape === "frame" ? allLines.slice(0, 2) : allLines.slice(0, capacity);
     n.textOverflow = n.shape !== "frame" && allLines.length > capacity;
@@ -341,7 +365,9 @@ export function createLayout(svg, model, identify, options = {}) {
       const alignment =
         n.shape === "frame" || line.list
           ? "left"
-          : n.textAlignments?.[line.paragraph] || n.textAlign || "center";
+          : n.textAlignments?.[line.paragraph] ||
+            n.textAlign ||
+            (n.shape === "text" ? "left" : "center");
       const usable = n.width - inset,
         total = line.runs.reduce((sum, r) => sum + measure(r.text, r), 0);
       let x =
@@ -442,7 +468,8 @@ export function createLayout(svg, model, identify, options = {}) {
       n.mathEl.classList.add("rea-node-math");
       const content = n.mathEl.firstElementChild;
       content.style.fontSize = `${fontSize}px`;
-      content.style.textAlign = n.textAlign || "center";
+      content.style.textAlign =
+        n.textAlign || (n.shape === "text" ? "left" : "center");
       content.classList.toggle("rea-math-frame", n.shape === "frame");
     }
     position(n);

@@ -9,7 +9,7 @@ page.on("pageerror", (e) => errors.push(e.message));
 page.setDefaultTimeout(10000);
 const source = () =>
     page.evaluate(
-      () => JSON.parse(localStorage.getItem("rea-whimsical-board-v1")).source,
+      () => JSON.parse(localStorage.getItem("atlasweave-board-v1")).source,
     ),
   model = async () => parse(await source());
 const center = async (el) => {

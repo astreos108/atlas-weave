@@ -543,7 +543,7 @@
   font-size: 12px;
   padding: 8px 14px;
 }
-.workspace-leaf-content[data-type="rea-whimsical"] .view-content {
+.workspace-leaf-content[data-type="atlasweave"] .view-content {
   padding: 0 !important;
   overflow: hidden;
 }
@@ -1720,4 +1720,20 @@
 }
 .rea .rea-table-editor :is(td, th).rea-table-drop-after {
   box-shadow: inset -2px 0 var(--purple);
+}
+
+/* Canvas annotations share typography tools, not card padding or surfaces. */
+.rea .rea-live-annotation {
+  align-items: flex-start;
+}
+.rea .rea-live-annotation .rea-live-surface {
+  overflow: visible;
+}
+.rea .rea-text-node .rea-shape-body {
+  display: none;
+  fill: none !important;
+  stroke: none !important;
+}
+.rea .rea-text-node .rea-link-indicator {
+  display: none;
 }

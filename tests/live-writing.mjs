@@ -55,7 +55,7 @@ const field = page.getByRole("textbox", { name: "Shape text", exact: true });
 const model = () =>
   page
     .evaluate(
-      () => JSON.parse(localStorage.getItem("rea-whimsical-board-v1")).source,
+      () => JSON.parse(localStorage.getItem("atlasweave-board-v1")).source,
     )
     .then(parse);
 const node = (id) => page.locator(`.node[id*="flowchart-${id}-"]`);
@@ -73,7 +73,7 @@ try {
   await page.addInitScript(
     (source) =>
       localStorage.setItem(
-        "rea-whimsical-board-v1",
+        "atlasweave-board-v1",
         JSON.stringify({ source, title: "Live writing" }),
       ),
     source,
