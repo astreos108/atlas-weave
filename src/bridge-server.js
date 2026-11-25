@@ -11,7 +11,7 @@ import {
 } from "./bridge-operations.js";
 import { parse } from "./model.js";
 import { noteTargets, isLinkableNote } from "./note-links.js";
-const VIEW = "rea-whimsical";
+const VIEW = "atlasweave";
 export function createBoardService(app, plugin, hash) {
   const serializeWrite = createKeyedQueue();
   async function flush(path) {

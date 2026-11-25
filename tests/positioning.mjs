@@ -8,7 +8,7 @@ const errors = [];
 page.on("pageerror", (e) => errors.push(e.message));
 const source = () =>
   page.evaluate(
-    () => JSON.parse(localStorage.getItem("rea-whimsical-board-v1")).source,
+    () => JSON.parse(localStorage.getItem("atlasweave-board-v1")).source,
   );
 const positions = (s) => JSON.parse(s.split("%% board-layout: ")[1]).nodes;
 async function more() {
@@ -38,7 +38,7 @@ async function drag(locator, dx, dy) {
 }
 try {
   await page.addInitScript(() =>
-    localStorage.setItem("rea-whimsical-snap", "false"),
+    localStorage.setItem("atlasweave-snap", "false"),
   );
   await page.goto(process.env.REA_BOARD_TEST_URL || "http://127.0.0.1:5178");
   await page.locator(".node").first().waitFor();
@@ -55,7 +55,7 @@ try {
     path = await page.locator(".rea-wires path").first().getAttribute("d");
   await drag(node, 100, -150);
   await page.waitForFunction(() =>
-    localStorage.getItem("rea-whimsical-board-v1")?.includes("board-layout"),
+    localStorage.getItem("atlasweave-board-v1")?.includes("board-layout"),
   );
   const end = await center(node);
   assert.ok(Math.abs(end.x - start.x - 100) < 2);

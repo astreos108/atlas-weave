@@ -31,10 +31,10 @@ Built primarily for learning—connecting concepts, tracing mechanisms, and expl
 This repository is independently downloadable. **Publication on GitHub does not mean the plugin has passed Obsidian Community review or is listed in the in-app directory.**
 
 1. Download `main.js`, `manifest.json`, `styles.css` and `THIRD_PARTY_NOTICES.txt` from a [release](https://github.com/astreos108/atlas-weave/releases).
-2. Create `CONFIG_DIR/plugins/rea-whimsical/` inside your vault and put the files there. `CONFIG_DIR` is your vault configuration folder, usually `.obsidian`.
+2. Create `CONFIG_DIR/plugins/atlasweave/` inside your vault and put the files there. `CONFIG_DIR` is your vault configuration folder, usually `.obsidian`.
 3. Enable **AtlasWeave** under Community plugins. Use the ribbon's easel icon or the **New board** command.
 
-The historical plugin ID `rea-whimsical` remains stable for existing installations and MCP configuration. The product name is AtlasWeave. Initial public support is **desktop Obsidian 1.13.0+**. Mobile is not declared supported until tested; desktop-only clipboard and optional transport adapters are guarded separately.
+The plugin ID is `atlasweave`. Install it in the matching folder and update MCP bridge paths to that folder. Initial public support is **desktop Obsidian 1.13.0+**. Mobile is not declared supported until tested; desktop-only clipboard and optional transport adapters are guarded separately.
 
 Existing Markdown notes with a Mermaid block can open through **Open current note as board**. Other Markdown content and later Mermaid blocks are retained. Conflicting saves are rejected rather than overwritten. Unsaved failed saves are retained in plugin data and can be restored **as a separate board** from plugin settings.
 
@@ -82,7 +82,7 @@ Install this checkout's dependencies with `npm ci`, then configure your MCP clie
 ```json
 {
   "command": "node",
-  "args": ["/path/to/atlas-weave/mcp/server.mjs", "--bridge-file", "/path/to/vault/CONFIG_DIR/plugins/rea-whimsical/bridge.json"]
+  "args": ["/path/to/atlas-weave/mcp/server.mjs", "--bridge-file", "/path/to/vault/CONFIG_DIR/plugins/atlasweave/bridge.json"]
 }
 ```
 

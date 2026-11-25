@@ -210,6 +210,8 @@ export function parse(source) {
         )
           return null;
         for (const p of Object.values(saved.nodes)) {
+          if (p.textWrap !== undefined && typeof p.textWrap !== "boolean")
+            return null;
           if (!p || typeof p !== "object") return null;
           if (saved.version === 1 || p.x !== undefined || p.y !== undefined)
             if (
@@ -252,8 +254,8 @@ export function parse(source) {
             if (
               !Number.isFinite(p.width) ||
               !Number.isFinite(p.height) ||
-              p.width < 80 ||
-              p.height < 48 ||
+              p.width < (p.annotation === "text" ? 16 : 80) ||
+              p.height < (p.annotation === "text" ? 24 : 48) ||
               p.width > 4000 ||
               p.height > 4000
             )
@@ -431,6 +433,7 @@ export function parse(source) {
         if (p.link !== undefined) node.link = p.link;
         if (p.outlineStyle) node.outlineStyle = p.outlineStyle;
         if (p.textSize !== undefined) node.textSize = p.textSize;
+        if (p.textWrap !== undefined) node.textWrap = p.textWrap;
         if (p.textAlign !== undefined) node.textAlign = p.textAlign;
         if (p.textAlignments !== undefined)
           node.textAlignments = p.textAlignments;
@@ -499,6 +502,7 @@ export function serialize(model) {
           ...(n.card ? { card: n.card } : {}),
           ...(n.outlineStyle ? { outlineStyle: n.outlineStyle } : {}),
           ...(n.textSize ? { textSize: n.textSize } : {}),
+          ...(n.shape === "text" ? { textWrap: !!n.textWrap } : {}),
           ...(n.textAlign ? { textAlign: n.textAlign } : {}),
           ...(n.textAlignments?.length
             ? { textAlignments: n.textAlignments }

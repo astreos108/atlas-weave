@@ -2,7 +2,7 @@ import { mount } from "./canvas.js";
 import { INITIAL } from "./model.js";
 import "../styles.css";
 import "./browser.css";
-const key = "rea-whimsical-board-v1";
+const key = "atlasweave-board-v1";
 let saved;
 try {
   saved = JSON.parse(localStorage.getItem(key));
@@ -23,10 +23,10 @@ mount(document.querySelector("#app"), {
     localStorage.setItem("rea-board-counter", String(counterEnabled));
     localStorage.setItem("rea-board-character-target", String(characterTarget));
   },
-  snap: localStorage.getItem("rea-whimsical-snap") !== "false",
-  setSnap: (value) => localStorage.setItem("rea-whimsical-snap", String(value)),
-  theme: localStorage.getItem("rea-whimsical-theme") || "light",
-  setTheme: (theme) => localStorage.setItem("rea-whimsical-theme", theme),
+  snap: localStorage.getItem("atlasweave-snap") !== "false",
+  setSnap: (value) => localStorage.setItem("atlasweave-snap", String(value)),
+  theme: localStorage.getItem("atlasweave-theme") || "light",
+  setTheme: (theme) => localStorage.setItem("atlasweave-theme", theme),
   source: saved?.source || INITIAL,
   title: saved?.title || "A little room to think",
   save: async (source, title) =>

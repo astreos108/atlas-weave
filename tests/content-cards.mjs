@@ -23,7 +23,7 @@ try {
   const saved = async () =>
     parse(
       await page.evaluate(
-        () => JSON.parse(localStorage.getItem("rea-whimsical-board-v1")).source,
+        () => JSON.parse(localStorage.getItem("atlasweave-board-v1")).source,
       ),
     );
   await paste("| Phase | Meaning |\n| --- | --- |\n| One | First |");

@@ -303,6 +303,9 @@ export function createPointerInteractions({
                   (n) => n.id !== board.drag.id && n.shape !== "frame",
                 ),
             threshold: 6 / board.zoom,
+            ...(board.layout.nodes.get(board.drag.id)?.shape === "text"
+              ? { minWidth: 16, minHeight: 24 }
+              : {}),
           },
         );
       if (e.shiftKey && board.drag.corner.length === 2) {
@@ -324,6 +327,8 @@ export function createPointerInteractions({
             2;
       }
       board.drag.moved = true;
+      const resized = board.layout.nodes.get(board.drag.id);
+      if (resized.shape === "text") resized.textWrap = true;
       const actual = board.layout.resize(board.drag.id, next);
       board.layout.move(board.drag.id, {
         x:
@@ -495,6 +500,9 @@ export function createPointerInteractions({
     }
     if (done.kind === "resize") {
       if (cancel) {
+        board.layout.nodes.get(done.id).textWrap = board.model.nodes.find(
+          (n) => n.id === done.id,
+        ).textWrap;
         board.layout.resize(done.id, {
           width: done.width,
           height: done.height,
@@ -507,6 +515,7 @@ export function createPointerInteractions({
         change((m) => {
           const node = m.nodes.find((x) => x.id === done.id);
           node.size = { width: n.width, height: n.height };
+          if (node.shape === "text") node.textWrap = true;
           node.position = positions[done.id];
         });
       }

@@ -8,7 +8,7 @@ const browser = await chromium.launch(browserOptions),
 page.on("pageerror", (e) => errors.push(e.message));
 const source = () =>
     page.evaluate(
-      () => JSON.parse(localStorage.getItem("rea-whimsical-board-v1")).source,
+      () => JSON.parse(localStorage.getItem("atlasweave-board-v1")).source,
     ),
   model = async () => parse(await source());
 const center = async (l) => {

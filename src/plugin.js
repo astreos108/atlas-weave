@@ -16,7 +16,7 @@ import { mount } from "./canvas.js";
 import { BoardSettings } from "./plugin-settings.js";
 import { suggestNoteLinks } from "./inline-note-links.js";
 import { readBoard, replaceBoard } from "./model.js";
-const VIEW = "rea-whimsical";
+const VIEW = "atlasweave";
 class BoardView extends FileView {
   getViewType() {
     return VIEW;

@@ -50,7 +50,7 @@ const source = serialize({
 });
 const saved = () =>
     page.evaluate(
-      () => JSON.parse(localStorage.getItem("rea-whimsical-board-v1")).source,
+      () => JSON.parse(localStorage.getItem("atlasweave-board-v1")).source,
     ),
   model = async () => parse(await saved());
 const input = page.getByRole("textbox", { name: "Shape text", exact: true });
@@ -58,7 +58,7 @@ try {
   await page.addInitScript(
     (source) =>
       localStorage.setItem(
-        "rea-whimsical-board-v1",
+        "atlasweave-board-v1",
         JSON.stringify({ source, title: "Text editing" }),
       ),
     source,

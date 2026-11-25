@@ -14,7 +14,7 @@ try {
   await page.addInitScript(
     (source) =>
       localStorage.setItem(
-        "rea-whimsical-board-v1",
+        "atlasweave-board-v1",
         JSON.stringify({ source, title: "Math round trip" }),
       ),
     serialize(initial),

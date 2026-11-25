@@ -6,6 +6,7 @@ dist/
 bridge.json
 data.json
 *.board
+!/docs/launch/Seasons study map.board
 *.bak*
 *.recovery*
 research/*
@@ -15,3 +16,7 @@ research/*
 !research/grid-alignment.png
 
 Pro feature ideas.local.md
+
+# Local launch review runs and diagnostic logs
+docs/launch/court/
+docs/launch/qa-0.10.0/court/

@@ -3,17 +3,23 @@ export function resizeBox(
   box,
   handle,
   delta,
-  { snap = true, others = [], threshold = 6 } = {},
+  {
+    snap = true,
+    others = [],
+    threshold = 6,
+    minWidth = 80,
+    minHeight = 48,
+  } = {},
 ) {
   let l = box.x - box.width / 2,
     r = box.x + box.width / 2,
     t = box.y - box.height / 2,
     b = box.y + box.height / 2;
   const round = (v) => (snap ? Math.round(v / 20) * 20 : v);
-  if (handle.includes("w")) l = Math.min(r - 80, round(l + delta.x));
-  if (handle.includes("e")) r = Math.max(l + 80, round(r + delta.x));
-  if (handle.includes("n")) t = Math.min(b - 48, round(t + delta.y));
-  if (handle.includes("s")) b = Math.max(t + 48, round(b + delta.y));
+  if (handle.includes("w")) l = Math.min(r - minWidth, round(l + delta.x));
+  if (handle.includes("e")) r = Math.max(l + minWidth, round(r + delta.x));
+  if (handle.includes("n")) t = Math.min(b - minHeight, round(t + delta.y));
+  if (handle.includes("s")) b = Math.max(t + minHeight, round(b + delta.y));
   const next = { x: (l + r) / 2, y: (t + b) / 2, width: r - l, height: b - t },
     guides = [];
   for (const axis of ["x", "y"]) {
@@ -44,7 +50,10 @@ export function resizeBox(
         )
           best = { d, v, n };
       }
-    if (best && next[size] + sign * best.d >= (axis === "x" ? 80 : 48)) {
+    if (
+      best &&
+      next[size] + sign * best.d >= (axis === "x" ? minWidth : minHeight)
+    ) {
       next[axis] += best.d / 2;
       next[size] += sign * best.d;
       const cross = axis === "x" ? "y" : "x",

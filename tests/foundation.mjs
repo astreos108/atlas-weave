@@ -13,7 +13,7 @@ page.on("pageerror", (e) => errors.push(e.message));
 page.setDefaultTimeout(8000);
 const src = () =>
     page.evaluate(
-      () => JSON.parse(localStorage.getItem("rea-whimsical-board-v1")).source,
+      () => JSON.parse(localStorage.getItem("atlasweave-board-v1")).source,
     ),
   model = async () => parse(await src());
 const paste = async (text) =>
@@ -229,7 +229,7 @@ try {
   const guidePage = await context.newPage();
   await guidePage.addInitScript(() =>
     localStorage.setItem(
-      "rea-whimsical-board-v1",
+      "atlasweave-board-v1",
       JSON.stringify({
         source:
           'flowchart LR\\n a["Snap A"]\\n b["Snap B"]\\n %% board-layout: {"version":2,"nodes":{"a":{"x":300,"y":300,"width":160,"height":80},"b":{"x":700,"y":460,"width":160,"height":80}}}'.replaceAll(
@@ -264,7 +264,7 @@ try {
   assert.equal(await guidePage.locator(".rea-guides line").count(), 0);
   const saved = parse(
     await guidePage.evaluate(
-      () => JSON.parse(localStorage.getItem("rea-whimsical-board-v1")).source,
+      () => JSON.parse(localStorage.getItem("atlasweave-board-v1")).source,
     ),
   );
   assert.equal(saved.nodes[0].position.x, 700);

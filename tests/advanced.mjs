@@ -8,7 +8,7 @@ const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } }),
 page.on("pageerror", (e) => errors.push(e.message));
 const saved = () =>
   page.evaluate(
-    () => JSON.parse(localStorage.getItem("rea-whimsical-board-v1")).source,
+    () => JSON.parse(localStorage.getItem("atlasweave-board-v1")).source,
   );
 const model = async () => parse(await saved());
 const node = (label) =>
@@ -52,7 +52,7 @@ async function imported(text) {
 }
 try {
   await page.addInitScript(() =>
-    localStorage.setItem("rea-whimsical-snap", "false"),
+    localStorage.setItem("atlasweave-snap", "false"),
   );
   await page.goto(process.env.REA_BOARD_TEST_URL || "http://127.0.0.1:5178");
   await page.locator(".node").first().waitFor();

@@ -76,7 +76,7 @@ export function createSelectionControls({
     const n = board.layout?.nodes.get(board.hoveredNode || board.selected);
     handles.hidden =
       !n ||
-      n.shape === "frame" ||
+      ["frame", "text"].includes(n.shape) ||
       !!board.editing ||
       !!board.drag ||
       board.presenting ||
@@ -147,6 +147,7 @@ export function createSelectionControls({
         sw: toLocal({ x: n.x - n.width / 2, y: n.y + n.height / 2 }),
       })) {
         const b = resizers.querySelector(`[data-resize=${corner}]`);
+        b.hidden = n.shape === "text" && !["e", "w"].includes(corner);
         b.style.left = `${p.x}px`;
         b.style.top = `${p.y}px`;
         if (corner.length === 1) {
@@ -232,6 +233,10 @@ export function createSelectionControls({
       if (n.shape === "line")
         context.querySelector("[data-selection=text]").hidden = true;
       type.disabled = true;
+      if (n.shape === "text") {
+        type.hidden = true;
+        context.querySelector("[data-selection=color]").hidden = true;
+      }
     }
     if (n && !n.card && n.shape !== "frame" && clipboardCard(n.label, "", doc))
       appendMarkup(

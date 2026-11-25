@@ -14,7 +14,7 @@ const flag = process.argv.indexOf("--bridge-file"),
     flag >= 0 ? process.argv[flag + 1] : process.env.REA_BOARD_BRIDGE_FILE;
 if (!bridgeFile) {
   process.stderr.write(
-    "Supply --bridge-file /path/to/vault/.obsidian/plugins/rea-whimsical/bridge.json\n",
+    "Supply --bridge-file /path/to/vault/.obsidian/plugins/atlasweave/bridge.json\n",
   );
   process.exit(1);
 }
