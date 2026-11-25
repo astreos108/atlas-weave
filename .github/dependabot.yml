@@ -4,7 +4,22 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    ignore:
+      # Current typescript-eslint supports TypeScript below 6.1.
+      - dependency-name: typescript
+        versions: ["7.x"]
+      # eslint-plugin-obsidianmd currently pulls plugins constrained to ESLint 9.
+      - dependency-name: eslint
+        versions: ["10.x"]
+    groups:
+      npm-updates:
+        applies-to: version-updates
+        patterns: ["*"]
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: monthly
+    groups:
+      actions-updates:
+        applies-to: version-updates
+        patterns: ["*"]
