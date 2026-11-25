@@ -1737,3 +1737,16 @@
 .rea .rea-text-node .rea-link-indicator {
   display: none;
 }
+
+/* Display AtlasWeave's Mermaid badge without changing saved .board paths. */
+.workspace-leaf-content[data-type="file-explorer"]
+  .nav-file-title[data-path$=".board"]
+  .nav-file-tag {
+  font-size: 0;
+}
+.workspace-leaf-content[data-type="file-explorer"]
+  .nav-file-title[data-path$=".board"]
+  .nav-file-tag::after {
+  content: "MRMD";
+  font-size: 10px;
+}

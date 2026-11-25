@@ -17,7 +17,7 @@ const schema = (properties, required = []) => ({
   additionalProperties: false,
 });
 export const BRIDGE_CAPABILITIES = {
-  version: "0.10.0",
+  version: "0.10.1",
   storage:
     "Plain Mermaid .board files, geometry/link metadata in Mermaid comments. No embedded AI or provider API keys.",
   patterns: MAP_PATTERNS,

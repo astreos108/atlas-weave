@@ -212,10 +212,12 @@ export default class AtlasWeave extends Plugin {
       return view;
     });
     this.registerExtensions(["board"], VIEW);
-    this.addRibbonIcon("rea-board", "New board", () => this.createBoard());
+    this.addRibbonIcon("rea-board", "New Mermaid board", () =>
+      this.createBoard(),
+    );
     this.addCommand({
       id: "new-board",
-      name: "New board",
+      name: "New Mermaid board",
       callback: () => this.createBoard(),
     });
     this.addCommand({
@@ -233,7 +235,8 @@ export default class AtlasWeave extends Plugin {
         if (file instanceof TFolder)
           menu.addItem((item) =>
             item
-              .setTitle("New board")
+              .setSection("action-primary")
+              .setTitle("New Mermaid board")
               .setIcon("rea-board")
               .onClick(() => this.createBoard(file.path)),
           );
