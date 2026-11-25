@@ -2194,7 +2194,7 @@ SOFTWARE.
 
 
 ========================================================================
-dompurify@3.4.17
+dompurify@3.5.0
 License: (MPL-2.0 OR Apache-2.0)
 
 LICENSE
