@@ -8,6 +8,9 @@ updates:
       # Current typescript-eslint supports TypeScript below 6.1.
       - dependency-name: typescript
         versions: ["7.x"]
+      # Keep the config package on the same major as ESLint.
+      - dependency-name: "@eslint/js"
+        versions: ["10.x"]
       # eslint-plugin-obsidianmd currently pulls plugins constrained to ESLint 9.
       - dependency-name: eslint
         versions: ["10.x"]
