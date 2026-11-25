@@ -26,8 +26,7 @@ export function createTextSession({
       edge = edgeIndex !== null && board.model?.edges[edgeIndex];
     if (!n && !edge) return;
     if (n?.card) return cardEditor.editCard(n);
-    let p,
-      width = 200;
+    let p, width;
     if (n) {
       board.selection = new Set([id]);
       board.selected = id;
